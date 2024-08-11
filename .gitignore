@@ -1,4 +1,8 @@
+# IDE dirs
 .idea/
+
+# auth files
+src/auth.yaml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
