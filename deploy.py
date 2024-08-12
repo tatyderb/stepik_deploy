@@ -54,7 +54,7 @@ def main():
     if args.gift:
         raise NotImplemented
     else:
-        lesson = Lesson(filename=lesson_file, position=position, id=args.id)
+        lesson = Lesson(filename=lesson_file, position=position, lesson_id=args.id)
     lesson.deploy()
 
 
