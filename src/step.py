@@ -10,6 +10,9 @@ class Step(ABC):
         self.lines = []         # строки содержимого шага в формате markdown
         self.text = ''          # html текст
 
+    def __repr__(self):
+        return f'skip={self.skip}\nheader={self.header}\nlines={self.lines}\ntext={self.text}'
+
     @abstractmethod
     def parse(self, lines: list[str]):
         """Обрабатываем содержимое шага, разбирая его на составные части согласно типу."""
@@ -25,6 +28,8 @@ class Step(ABC):
         match step_type:
             case 'TEXT':
                 return StepText(header=header, skip=skip)
+            case '_':
+                raise NotImplemented(f'Step type {step_type}')
 
 
 class StepText(Step):
@@ -33,6 +38,7 @@ class StepText(Step):
 
     def parse(self, lines: list[str]):
         """Обрабатываем содержимое шага, разбирая его на составные части согласно типу."""
+        self.lines = lines
         markdown_text = '\n'.join(['## ' + self.header] + self.lines)
         self.text = markdown_text
 

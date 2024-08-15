@@ -10,7 +10,7 @@ class Lesson:
     def __init__(self, position: int | None = None, lesson_id: int = 0):
         self.position = position    # номер шага урока, начиная с 1, None - если все шаги
         self.lesson_id = lesson_id  # id урока
-        self.steps: list[Step] = [] # шаги урока
+        self.steps: list[Step] = []  # шаги урока
         self.title: str = ''        # заголовок урока (в левом меню)
         # TODO: перенести в конфиги, минимум куда-нибудь в переменную класса или модуля
         self.task_language = 'python3.12'
@@ -19,17 +19,16 @@ class Lesson:
         """Загружает один или все шаги на Stepik."""
         pass
 
-    def validate_lesson_ID(self, lesson_id: int):
+    def validate_lesson_id(self, lesson_id: int):
         """Проверяем, что новый lesson_id не противоречит предыдущей информации и ID определен"""
-
+        # print(f'{lesson_id=} {self.lesson_id=}')
         # если не даны lesson_id ни в аргументах, ни в файле, ошибка, не знаем куда деплоить
         if not lesson_id and not self.lesson_id:
             parse_error(error_msg='Lesson ID должен быть задан или в файле, или в аргументе --lesson_id ID')
 
         # оба ID не ноль и разные - пусть авторы разбираются, что куда понаписали
         if lesson_id != self.lesson_id and lesson_id != 0 and self.lesson_id != 0:
-            parse_error(error_msg=f'Переопределение lesson ID: в markdown файле равен {self.lesson_id}, \
-            в аргументе/toc {lesson_id}')
+            parse_error(error_msg=f'Переопределение lesson ID: в markdown файле равен {self.lesson_id}, в аргументе/toc {lesson_id}')
 
         self.lesson_id = max(lesson_id, self.lesson_id)
 
@@ -37,12 +36,20 @@ class Lesson:
         """Разбирает файл урока с указанным именем и возвращает список шагов и lesson_id урока из файла.
         Если указан position, то все остальные шаги в списке None.
         """
-        self.title = ParseSchema.parse_h1(text[0])
-        variables = self.split_lines_by_h2_and_parse_steps(text[1:])
+        # skip empty lines
+        linenumber = 0
+        while text[linenumber] == pp.Empty():
+            linenumber += 1
+        self.title = ParseSchema.parse_h1(text[linenumber])
+        variables, self.steps = self.split_lines_by_h2_and_parse_steps(text[linenumber + 1:])
+        # print(variables)
         if 'lang' in variables:
             self.task_language = variables['lang']
         if 'lesson' in variables:
-            self.validate_lesson_ID(lesson_id=int(variables['lesson']))
+            self.validate_lesson_id(lesson_id=int(variables['lesson']))
+        else:
+            self.validate_lesson_id(lesson_id=0)
+
 
     def split_lines_by_h2_and_parse_steps(self, lines: list[str]) -> (list[Step], dict):
         """Разбивает строки на списки строк по ##, один список - один шаг, разбирает конфиг.
@@ -107,5 +114,5 @@ class Lesson:
 
         # последний шаг, закончен концом файла
         end_of_step(current_step, step_text, position)
-        return config
+        return config, steps
 

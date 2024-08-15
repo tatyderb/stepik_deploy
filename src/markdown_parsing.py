@@ -8,7 +8,10 @@ _PARSE_ERROR_EXIT_CODE = 1
 
 
 def parse_error(line_number: int = -1, line: str = '', error_msg: str = '', exit_program: bool = True):
-    print(f'{error_msg}\n{line_number}: <{line}>', file=sys.stderr)
+
+    line_number_str = f'{line_number}: ' if line_number >= 0 else ''
+    displayed_line = f'{line_number_str}<{line}>' if line else ''
+    print(f'{error_msg}\n{displayed_line}', file=sys.stderr)
     if exit_program:
         sys.exit(_PARSE_ERROR_EXIT_CODE)
 
@@ -66,8 +69,12 @@ class ParseSchema:
             return False, False, None, ''
 
         try:
-            res = cls.step_header().parseString(line)
-            return True, res.skip == 'SKIP', res.type, res.header.strip()
+            res = cls.step_header().parseString(line).asDict()
+            print(res)
+            # TEXT type by default
+            if 'type' not in res:
+                res['type'] = 'TEXT'
+            return True, 'skip' in res, res['type'], res['header'].strip()
         except pp.ParseException:
             return False, False, None, ''
 
