@@ -1,5 +1,7 @@
 from abc import abstractmethod, ABC
 
+from src.utils import markdown_to_html
+
 
 class Step(ABC):
     STEP_TYPES = ['QUIZ', 'CHOICE', 'TEXT', 'STRING', 'NUMBER', 'TASKINLINE']
@@ -41,6 +43,7 @@ class StepText(Step):
         self.lines = lines
         markdown_text = '\n'.join(['## ' + self.header] + self.lines)
         self.text = markdown_text
+        # self.html = markdown_to_html(markdown_text)
 
     def to_dict(self) -> dict:
         return {}
