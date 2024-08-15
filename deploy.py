@@ -51,10 +51,14 @@ def main():
         print('TOC update not implemented yet!')
         return
     lesson_file, position = get_lesson_file(args)
+    lesson = Lesson(position=position, lesson_id=args.id)
     if args.gift:
         raise NotImplemented
     else:
-        lesson = Lesson(filename=lesson_file, position=position, lesson_id=args.id)
+        # lesson in markdown format
+        with open(lesson_file, 'r', encoding='utf8') as fin:
+            lines = fin.readlines()
+            lesson.parse_markdown(lines)
     lesson.deploy()
 
 
