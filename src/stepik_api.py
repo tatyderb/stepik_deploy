@@ -8,7 +8,7 @@ import requests
 import sys
 import traceback
 
-from src.auth import API_HOST, get_creds #CLIENT_ID, CLIENT_SECRET
+from src.auth import API_HOST, get_creds    # CLIENT_ID, CLIENT_SECRET
 from src.logged_requests import LoggedSession, LOGGER_NAME
 
 
@@ -27,8 +27,9 @@ class Session(LoggedSession):
         logger.info(f'{client_id=}, {client_secret=}')
         auth = requests.auth.HTTPBasicAuth(client_id, client_secret)
         logger.info(f'{auth=}')
-        response = self.request('POST', f'{API_HOST}/oauth2/token/', data={'grant_type': 'client_credentials'},
-                                 auth=auth)
+        response = self.request('POST', f'{API_HOST}/oauth2/token/',
+                                data={'grant_type': 'client_credentials'},
+                                auth=auth)
         # print(response)
         # status code should be 200 (HTTP OK)
         assert (response.status_code == 200)
@@ -44,7 +45,7 @@ class Session(LoggedSession):
         # status code should be 200 (HTTP OK)
         try:
             assert (response.status_code == 200)
-        except AssertionError as e:
+        except AssertionError:
             traceback.print_exc()
             print(response.status_code)
             pprint.pprint(response.content)
@@ -68,7 +69,7 @@ class Session(LoggedSession):
         step_size = 30
         for i in range(0, len(obj_ids), step_size):
             obj_ids_slice = obj_ids[i:i + step_size]
-            params = '&'.join(['ids[]={obj_id}' for obj_id in obj_ids_slice])
+            params = '&'.join([f'ids[]={obj_id}' for obj_id in obj_ids_slice])
             api_url = f'{API_HOST}/api/{obj_class}s?' + params
             response = self.request('GET', api_url,
                                     headers={'Authorization': 'Bearer ' + self.token}
