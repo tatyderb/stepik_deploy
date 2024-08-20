@@ -1,9 +1,15 @@
 """Lesson with several various steps."""
+import logging
 
 import pyparsing as pp
 
-from src.step import Step
+from src.logged_requests import LOGGER_NAME
 from src.markdown_parsing import ParseSchema, parse_error
+from src.step import Step
+from src.stepik_api import Session
+
+
+logger = logging.getLogger(LOGGER_NAME)
 
 
 class Lesson:
@@ -14,6 +20,22 @@ class Lesson:
         self.title: str = ''        # заголовок урока (в левом меню)
         # TODO: перенести в конфиги, минимум куда-нибудь в переменную класса или модуля
         self.task_language = 'python3.12'
+
+    #################################################################
+    # Stepik API wrappers
+    #################################################################
+    def info(self, session: Session) -> (dict, list[int]):
+        """Информация об уроке в целом"""
+        lesson_info = session.fetch_object('lesson', self.lesson_id)
+        step_ids = lesson_info['steps']
+        return lesson_info, step_ids
+
+    def steps_info(self, session: Session) -> list[dict]:
+        """Информация о всех шагах урока."""
+        lesson_info, step_ids = self.info(session)
+        steps = session.fetch_objects('step-source', step_ids)
+        logger.info(steps)
+        return steps
 
     def deploy(self):
         """Загружает один или все шаги на Stepik."""
@@ -32,6 +54,9 @@ class Lesson:
 
         self.lesson_id = max(lesson_id, self.lesson_id)
 
+    #################################################################
+    # Markdown parsing
+    #################################################################
     def parse_markdown(self, text: list[str]) -> (list[Step], int | None):
         """Разбирает файл урока с указанным именем и возвращает список шагов и lesson_id урока из файла.
         Если указан position, то все остальные шаги в списке None.
@@ -49,7 +74,6 @@ class Lesson:
             self.validate_lesson_id(lesson_id=int(variables['lesson']))
         else:
             self.validate_lesson_id(lesson_id=0)
-
 
     def split_lines_by_h2_and_parse_steps(self, lines: list[str]) -> (list[Step], dict):
         """Разбивает строки на списки строк по ##, один список - один шаг, разбирает конфиг.
@@ -115,4 +139,3 @@ class Lesson:
         # последний шаг, закончен концом файла
         end_of_step(current_step, step_text, position)
         return config, steps
-

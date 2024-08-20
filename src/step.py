@@ -1,16 +1,17 @@
 from abc import abstractmethod, ABC
 
 from src.utils import markdown_to_html
+from src.stepik_api import Session
 
 
 class Step(ABC):
     STEP_TYPES = ['QUIZ', 'CHOICE', 'TEXT', 'STRING', 'NUMBER', 'TASKINLINE']
 
     def __init__(self, header: str = '', skip: bool = False):
-        self.header = header    # текст заголовка шага без ##
-        self.skip = skip        # надо ли пропускать шаг при деплое
-        self.lines = []         # строки содержимого шага в формате markdown
-        self.text = ''          # html текст
+        self.header = header  # текст заголовка шага без ##
+        self.skip = skip  # надо ли пропускать шаг при деплое
+        self.lines = []  # строки содержимого шага в формате markdown
+        self.text = ''  # html текст
 
     def __repr__(self):
         return f'skip={self.skip}\nheader={self.header}\nlines={self.lines}\ntext={self.text}'
@@ -36,12 +37,47 @@ class Step(ABC):
     #################################################################
     # Stepik API wrappers
     #################################################################
-    def update(self, step_id: int):
-        """Update step."""
+    def body(self, lesson_id: int, position: int) -> dict:
+        body = self.to_dict()
+        body['stepSource']['lesson'] = lesson_id
+        body['stepSource']['position'] = position
+        return body
 
+    def info(self, session: Session, step_id: int) -> dict:
+        """GET step info."""
+        step_info = session.fetch_object('step', step_id)
+        return step_info
+
+    def update(self, session: Session, lesson_id: int, step_id: int, position: int):
+        """Update step."""
+        body = self.body(lesson_id, position)
+        session.update_object('step-sources', step_id, body)
+
+    def create(self, session: Session, lesson_id: int, position: int) -> int:
+        """Create step in lesson_id at position (start with 1).
+        Return new step ID.
+        """
+        body = self.body(lesson_id, position)
+        step_id = session.create_object('step-sources', body)
+        return step_id
+
+    def delete(self, session: Session, step_id: int):
+        """Update step."""
+        session.delete_object('step-sources', step_id)
 
 
 class StepText(Step):
+    BODY = {
+        'stepSource': {
+            'block': {
+                'name': 'text',                 # тип шага
+                'text': 'Hello World!'          #
+            },
+            'lesson': 0,
+            'position': 1
+        }
+    }
+
     def __init__(self, header: str = '', skip: bool = False):
         super().__init__(header=header, skip=skip)
 
@@ -53,4 +89,6 @@ class StepText(Step):
         # self.html = markdown_to_html(markdown_text)
 
     def to_dict(self) -> dict:
-        return {}
+        d = self.BODY.copy()
+        d['stepSource']['block']['text'] = markdown_to_html(self.text)
+        return d

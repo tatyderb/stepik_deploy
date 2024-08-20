@@ -14,6 +14,6 @@ def markdown_to_html(text_md):
     #    output_format="html5"
     )
 
-def current_md_hm(date_template: str = "%m%d_%H%M%S"):
+def generate_timestring(date_template: str = "%m%d_%H%M%S"):
     """ Время в формате md_HMS """
     return datetime.now().strftime(date_template)

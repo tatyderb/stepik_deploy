@@ -4,7 +4,7 @@ import pytest
 
 from src.logged_requests import LOGGER_NAME
 from src.stepik_api import Session
-from src.utils import current_md_hm
+from src.utils import generate_timestring
 
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -12,7 +12,7 @@ logger = logging.getLogger(LOGGER_NAME)
 
 @pytest.fixture(scope='module')
 def choice_body():
-    date_str = current_md_hm()
+    date_str = generate_timestring()
     data = {
         'stepSource': {
             'block': {
@@ -80,7 +80,7 @@ def test_update_step(auth, choice_body):
     # https://stepik.org/lesson/374339/step/1
     lesson_id = 374339
 
-    date_str = f'Date: {current_md_hm()}'
+    date_str = f'Date: {generate_timestring()}'
 
     session = Session()
     lesson_info = session.fetch_object('lesson', lesson_id)
@@ -107,7 +107,7 @@ def test_create_delete_step(auth, choice_body):
     # https://stepik.org/lesson/374339/step/1
     lesson_id = 374339
 
-    date_str = f'Date: {current_md_hm()}'
+    date_str = f'Date: {generate_timestring()}'
 
     session = Session()
     lesson_info = session.fetch_object('lesson', lesson_id)
@@ -135,9 +135,3 @@ def test_create_delete_step(auth, choice_body):
     lesson_info = session.fetch_object('lesson', lesson_id)
     logger.info(lesson_info)
     assert lesson_info['steps'] == step_ids_before
-
-
-
-
-
-
