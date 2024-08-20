@@ -26,12 +26,19 @@ class Step(ABC):
         pass
 
     @classmethod
-    def create(cls, step_type: str = 'TEXT', header: str = '', skip: bool = False):
+    def create_by_type(cls, step_type: str = 'TEXT', header: str = '', skip: bool = False):
         match step_type:
             case 'TEXT':
                 return StepText(header=header, skip=skip)
             case '_':
                 raise NotImplemented(f'Step type {step_type}')
+
+    #################################################################
+    # Stepik API wrappers
+    #################################################################
+    def update(self, step_id: int):
+        """Update step."""
+
 
 
 class StepText(Step):

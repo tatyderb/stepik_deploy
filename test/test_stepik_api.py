@@ -39,10 +39,21 @@ def choice_body():
     return data
 
 
+def fill_body(body: dict, text: str, lesson_id: int, position: int = 0) -> dict:
+    """Заполняет в копии body поля text, lesson_id, position (начиная с 1) и
+    возвращает заполненную копию.
+    """
+    d = body.copy()
+    d['stepSource']['block']['text'] = text
+    d['stepSource']['lesson'] = lesson_id
+    d['stepSource']['position'] = position
+    return d
+
 
 def test_get_token(auth):
     session = Session()
     # assert внутри, если дошли, то 200 ОК и токен вернули
+
 
 def test_get_lesson_and_step(auth):
     """Получаем инфу об уроке (проверяем id и количество шагов) и о шаге (проверяем его id)"""
@@ -58,10 +69,40 @@ def test_get_lesson_and_step(auth):
     step_id = lesson_info['steps'][-1]
 
     step_info = session.fetch_object('step', step_id)
-    logger.info = step_info
+    logger.info(step_info)
     assert step_info['id'] == step_id
 
-def test_create_delete(auth, choice_body):
+
+def test_update_step(auth, choice_body):
+    """ В уроке изменяем текст последнего шага, ставим временную метку.
+    Проверяем, что в уроке не изменилось количество шагов и текст этого шага содержит метку.
+    """
+    # https://stepik.org/lesson/374339/step/1
+    lesson_id = 374339
+
+    date_str = f'Date: {current_md_hm()}'
+
+    session = Session()
+    lesson_info = session.fetch_object('lesson', lesson_id)
+    step_ids = lesson_info['steps']
+    step_id = step_ids[-1]
+
+    # исправляем последний шаг
+    body = fill_body(choice_body, text=date_str, lesson_id=lesson_id, position=len(step_ids))
+    session.update_object('step-sources', step_id, body)
+
+    # проверяем, что количество шагов не изменилось
+    lesson_info = session.fetch_object('lesson', lesson_id)
+    assert lesson_info['steps'] == step_ids
+
+    # проверяем, что на последнем шаге стоит нужная временная метка
+    step_info = session.fetch_object('step', step_id)
+    logger.info(step_info)
+    assert step_info['id'] == step_id
+    assert step_info['block']['text'] == date_str
+
+
+def test_create_delete_step(auth, choice_body):
     """ В урок добавляем шаг, проверяем, что в шаге наша метка времени, удаляем шаг."""
     # https://stepik.org/lesson/374339/step/1
     lesson_id = 374339
@@ -74,11 +115,7 @@ def test_create_delete(auth, choice_body):
     steps_length_before = len(step_ids_before)
 
     # добавим последним шагом выбор с текстом date_str
-    body: dict = choice_body.copy()
-    body['stepSource']['block']['text'] = date_str
-    body['stepSource']['lesson'] = lesson_id
-    body['stepSource']['position'] = steps_length_before + 1
-
+    body = fill_body(choice_body, text=date_str, lesson_id=lesson_id, position=steps_length_before + 1)
     new_step_id = session.create_object('step-sources', body)
 
     # проверим, что добавилось именно так и именно туда

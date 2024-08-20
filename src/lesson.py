@@ -105,7 +105,7 @@ class Lesson:
                 ok, skip, step_type, header = ParseSchema.parse_step_header(line)
                 if ok:
                     end_of_step(current_step, step_text, position)
-                    current_step = Step.create(step_type=step_type, header=header, skip=skip)
+                    current_step = Step.create_by_type(step_type=step_type, header=header, skip=skip)
                     step_text = []
                     # в конце, потому что мы добавили изначальный current_step=None с position=0
                     position += 1

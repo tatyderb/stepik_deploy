@@ -81,7 +81,7 @@ class Session(LoggedSession):
 
     def create_object(self, object_name, data: dict):
         api_url = f'{API_HOST}/api/{object_name}'
-        # use POST to create new objects
+        # use POST to create_by_type new objects
         response = self.request('POST', api_url, headers={'Authorization': 'Bearer ' + self.token}, json=data)
         # status code should be 201 (HTTP Created)
         assert (response.status_code == 201)
