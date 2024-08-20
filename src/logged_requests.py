@@ -102,7 +102,7 @@ class LoggedSession:
         }
         '''
         if self.log_url:
-            logger.info('%s %s' % (method, url), stacklevel=stacklevel)
+            logger.info(f'{method} {url}', stacklevel=stacklevel)
         if self.log_header:
             logger.info(f"Request Headers: {json.dumps(kwargs.get('headers', None))}", stacklevel=stacklevel)
             if kwargs.get('cookies'):
