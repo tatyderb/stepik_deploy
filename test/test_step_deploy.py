@@ -90,3 +90,37 @@ def test_step_update_create_delete(auth):
     assert len(new_step_ids) == len(old_step_ids)
     assert new_step_ids == old_step_ids
 
+
+def test_lesson_deploy(auth):
+    """Делаем урок на два шага длиннее, добавляем шаги, проверка, удаляем шаги, проверка."""
+    lesson = Lesson(lesson_id=LESSON_ID)
+    session = Session()
+    old_lesson_info, old_step_ids = lesson.info(session)
+    old_max_position = len(old_step_ids)
+    new_max_position = old_max_position + 2
+
+    lesson_more_text_steps = generate_lesson_text_steps(new_max_position)
+    lesson_old_text_steps = lesson_more_text_steps[:-2]
+
+    # добавим два шага
+    lesson.steps = lesson_more_text_steps
+    lesson.deploy(session)
+
+    # проверим, что шаги добавились
+    new_lesson_info, new_step_ids = lesson.info(session)
+    assert len(new_step_ids) == new_max_position
+    new_steps_info = lesson.steps_info(session)
+    for step_info, step in zip(new_steps_info, lesson_more_text_steps):
+        assert step_info['block']['text'] == f'<p>{step.text}</p>'
+
+    # убираем два шага
+    lesson.steps = lesson_old_text_steps
+    lesson.deploy(session)
+
+    # проверяем, что урок возвратился к исходному состоянию
+    new_lesson_info, new_step_ids = lesson.info(session)
+    assert len(new_step_ids) == len(old_step_ids)
+    assert new_step_ids == old_step_ids
+    new_steps_info = lesson.steps_info(session)
+    for step_info, step in zip(new_steps_info, lesson_old_text_steps):
+        assert step_info['block']['text'] == f'<p>{step.text}</p>'

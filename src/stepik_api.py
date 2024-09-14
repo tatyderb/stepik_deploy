@@ -77,7 +77,8 @@ class Session(LoggedSession):
 
             objs += response[f'{obj_class}s']
         if keep_order:
-            return sorted(objs, key=lambda x: obj_ids.index(x['id']))
+            # return sorted(objs, key=lambda x: obj_ids.index(x['id']))
+            return sorted(objs, key=lambda x: x['position'])
         return objs
 
     def create_object(self, object_name, data: dict):

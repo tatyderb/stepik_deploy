@@ -2,6 +2,7 @@ import argparse
 
 from src.auth import read_or_create_auth_data
 from src.lesson import Lesson
+from src.logged_requests import LoggedSession
 from src.toc import get_file_from_toc
 
 
@@ -59,7 +60,8 @@ def main():
         with open(lesson_file, 'r', encoding='utf8') as fin:
             lines = fin.readlines()
             lesson.parse_markdown(lines)
-    lesson.deploy()
+    session = LoggedSession()
+    lesson.deploy(session)
 
 
 if __name__ == '__main__':

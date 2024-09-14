@@ -50,6 +50,7 @@ class Step(ABC):
 
     def update(self, session: Session, lesson_id: int, step_id: int, position: int):
         """Update step."""
+        print(f'UPDATE step: {step_id=}, {position=}, {lesson_id=}')
         body = self.body(lesson_id, position)
         session.update_object('step-sources', step_id, body)
 
@@ -57,12 +58,16 @@ class Step(ABC):
         """Create step in lesson_id at position (start with 1).
         Return new step ID.
         """
+        print(f'CREATE step: {position=}, {lesson_id=}')
         body = self.body(lesson_id, position)
         step_id = session.create_object('step-sources', body)
+        print(f'NEW {step_id=}')
         return step_id
 
-    def delete(self, session: Session, step_id: int):
+    @staticmethod
+    def delete(session: Session, step_id: int):
         """Update step."""
+        print(f'DELETE step: {step_id=}')
         session.delete_object('step-sources', step_id)
 
 
