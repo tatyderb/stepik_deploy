@@ -53,6 +53,10 @@ def fill_body(body: dict, text: str, lesson_id: int, position: int = 0) -> dict:
 def test_get_token(auth):
     session = Session()
     # assert внутри, если дошли, то 200 ОК и токен вернули
+    # чтобы добыть токен и потом записать его в Postman
+    # print()
+    # print(session.token)
+    # print()
 
 
 def test_get_lesson_and_step(auth):
