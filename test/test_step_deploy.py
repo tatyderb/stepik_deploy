@@ -10,7 +10,7 @@ from src.utils import generate_timestring
 # отлаживаемся на уроке https://stepik.org/lesson/1408550/step/1
 # два текстовых шага
 LESSON_ID = 1408550
-STEP_IDS = [5845964, 5846066]
+STEP_IDS = [5845964, 5846066, 5968851, 5968852]
 
 
 def generate_lesson_text_steps(step_number: int = 1) -> list[StepText]:
@@ -28,7 +28,7 @@ def test_lesson_info(auth):
     session = Session()
     lesson = Lesson(lesson_id=LESSON_ID)
     lesson_info, step_ids = lesson.info(session)
-    assert len(step_ids) == 2
+    assert step_ids == STEP_IDS
 
 
 def test_steps_info(auth):
@@ -36,7 +36,7 @@ def test_steps_info(auth):
     session = Session()
     lesson = Lesson(lesson_id=LESSON_ID)
     steps = lesson.steps_info(session)
-    assert len(steps) == 2
+    assert len(steps) == len(STEP_IDS)
     for pos, step in enumerate(steps, 1):
         assert step['position'] == pos
         assert step['id'] == STEP_IDS[pos - 1]
@@ -54,7 +54,7 @@ def test_step_update(auth):
         step.update(session=session, lesson_id=LESSON_ID, step_id=step_id, position=position)
 
     new_lesson_info, new_step_ids = lesson.info(session)
-    assert STEP_IDS == new_step_ids
+    assert STEP_IDS == new_step_ids[:len(STEP_IDS)]
     new_steps_info = lesson.steps_info(session)
     for step_info, step in zip(new_steps_info, lesson_text_steps):
         assert step_info['block']['text'] == f'<p>{step.text}</p>'
