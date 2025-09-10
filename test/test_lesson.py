@@ -1,7 +1,8 @@
 from src.lesson import Lesson
+from src.markdown_parsing import ParseSchema
 
-text = '''
-# Урок 1
+text = \
+'''# Урок 1
 lesson = 123
 lang = python3.10
 
@@ -41,6 +42,17 @@ def test_split_by_h2():
     assert steps[0].lines == step1.splitlines()
     assert steps[1].lines == step2.splitlines()
     assert steps[2].lines == step3.splitlines()
+
+def test_split_document():
+
+    # res = ParseSchema.document().parseString(text)
+    res = ParseSchema.parse_document(text)
+    print(f'\n{res=}')
+    for item in res:
+        print(f'{item=}')
+        # print(f'{item.h1_header=}')
+        # print(f'{item.text=}')
+
 
 
 def test_parse_lesson():
