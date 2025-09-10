@@ -2,11 +2,26 @@ import pytest
 from pyparsing import ParseException
 import sys
 
-from src.markdown_parsing import ParseSchema
+from src.markdown_parsing import ParseSchema, ParseSchemaStepNumber
 
 @pytest.fixture(scope="module")
 def md_file():
     return ['']
+
+
+@pytest.mark.parametrize("text, number", [
+    ('123', '123'),
+    ('-123', '-123'),
+    ('3.14', '3.14'),
+    ('-3.14', '-3.14'),
+    ('0.15', '0.15'),
+    ('-0.123', '-0.123')
+])
+def test_number_schema(text, number):
+    res = ParseSchema.number().parseString(text)
+    print(res)
+    # print(f'{res=}, {res.step_type=}, {res.skip=}, {res.header=}')
+    assert res.number == number
 
 
 @pytest.mark.parametrize("text", [
@@ -96,5 +111,36 @@ def test_parse_step_header(text, ok, step_type, skip, header):
     assert res_skip == skip
     assert res_step_type == step_type
     assert res_header == header
+
+@pytest.mark.parametrize('text, ok, number', [
+    ('SCORE: 2', True, 2),
+    ('score: 12', True, 12),
+    ('SCORE :0', True, 0),
+    ('   SCORE: 1', False, 0),
+    ('SCORE=1', False, 0),
+])
+def test_parse_score(text, ok, number):
+    res_ok, res_number = ParseSchema.parse_score(text)
+    assert res_ok == ok
+    assert res_number == number
+
+@pytest.mark.parametrize('text, ok, number, accuracy', [
+    ('ANSWER: 123', True, 123, 0),
+    ('ANSWER: -123', True, -123, 0),
+    ('ANSWER: 3.14', True, 3.14, 0),
+    ('ANSWER: -3.14', True, -3.14, 0),
+    ('ANSWER: 123 +-7', True, 123, 7),
+    ('ANSWER: 123 +- 5', True, 123, 5),
+    ('ANSWER: -123 +-1', True, -123, 1),
+    ('ANSWER: 3.14 +-0.1', True, 3.14, 0.1),
+    ('ANSWER: -234.567 +-0.002', True, -234.567, 0.002),
+])
+def test_parse_step_number_answer(text, ok, number, accuracy):
+    res_ok, res_number, res_accuracy = ParseSchemaStepNumber.parse_answer(text)
+    assert res_ok == ok
+    assert res_number == number
+    assert res_accuracy == accuracy
+
+
 
 

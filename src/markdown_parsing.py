@@ -18,10 +18,15 @@ def parse_error(line_number: int = -1, line: str = '', error_msg: str = '', exit
 
 class ParseSchema:
     LANGUAGE = ['c', 'c_valgrind', 'python', 'python310']
+    LESSON_VALUES = ['lesson', 'lang']
     @classmethod
     def lesson_variables(cls) -> pp.ParserElement:
-        lesson_id = pp.LineStart() + 'lesson_id' + ':' + pp.pyparsing_common.number('lesson_id')
-        # lang = pp.LineStart() + 'lang' + ':' +
+        identifier = pp.one_of(cls.LESSON_VALUES)('identifier')
+        equals = pp.Literal("=").suppress()
+        value = pp.Word(pp.alphanums + '._-')('value')
+        assignment = pp.Group(identifier + equals + value + pp.restOfLine().suppress())
+        lesson_variables = pp.Dict(pp.ZeroOrMore(assignment))
+        return lesson_variables
 
     @classmethod
     def document(cls) -> pp.ParserElement:
@@ -47,7 +52,8 @@ class ParseSchema:
         # Элементы документа
         h1_entry = h1_header + text
         # h1_entry.setParseAction(cls.parse_lesson_variables)
-        h1_entry.setParseAction(lambda t: {'h1': t.h1_header, 'text': t.text})
+        h1_entry.setParseAction(lambda t: {'title': t.h1_header, 'variables': cls.lesson_variables().parseString(t.text).asDict()})
+        # h1_entry.setParseAction(lambda t: {'h1': t.h1_header, 'text': t.text})
 
         h2_entry = h2_header + text
         h2_entry.setParseAction(lambda t: {'h2': t.h2_header, 'text': t.text})
@@ -55,6 +61,7 @@ class ParseSchema:
         # Весь документ может содержать любую комбинацию этих элементов
         markdown_document = h1_entry + pp.OneOrMore(h2_entry)
         return markdown_document
+
 
     @classmethod
     def parse_document(cls, line: str) -> str:
