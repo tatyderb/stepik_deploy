@@ -1,6 +1,8 @@
 import pyparsing as pp
 import sys
 
+from pyparsing import ParseException
+
 import src.step as step
 
 
@@ -17,16 +19,90 @@ def parse_error(line_number: int = -1, line: str = '', error_msg: str = '', exit
 
 
 class ParseSchema:
+    __step_types = step.Step.STEP_TYPES
+    __skip_keyword = 'SKIP'
+    __markdown_variables = ['lesson', 'lang']
+    # символы, допустимые в значении переменных
+    __variable_value_chars = pp.alphanums + '._-'
+    number_int = pp.Combine(pp.Opt('-') + pp.Word(pp.nums))('int')
+    number_float = pp.Combine(pp.Opt('-') + pp.Word(pp.nums) + '.' + pp.Word(pp.nums))('float')
+    number = (number_float | number_int)('number')
+    # TODO: не надо ограничивать, только кидать предупреждение, что разобранный язык не в списке и добавлять по возможности,
+    #  список языков держать в файле конфигурации
     LANGUAGE = ['c', 'c_valgrind', 'python', 'python310']
-    LESSON_VALUES = ['lesson', 'lang']
+
     @classmethod
-    def lesson_variables(cls) -> pp.ParserElement:
-        identifier = pp.one_of(cls.LESSON_VALUES)('identifier')
-        equals = pp.Literal("=").suppress()
-        value = pp.Word(pp.alphanums + '._-')('value')
+    def variables(cls) -> pp.ParserElement:
+        """
+        Parse schema for text with
+        variable1 = value1
+        or
+        variable2 : value2
+        return
+        {variable1: value1, variable2, value2}
+        """
+
+        identifier = pp.one_of(cls.__markdown_variables)('identifier')
+        equals = (pp.Literal("=") | (pp.Literal(':'))).suppress()
+        value = pp.Word(cls.__variable_value_chars)('value')
         assignment = pp.Group(identifier + equals + value + pp.restOfLine().suppress())
         lesson_variables = pp.Dict(pp.ZeroOrMore(assignment))
         return lesson_variables
+
+    @classmethod
+    def parse_variables(cls, text: str, default_values: dict | None = None, test_mode: bool = False):
+        """
+        Parse text with
+        variable1 = value1
+        or
+        variable2 : value2
+        return
+        {variable1: value1, variable2, value2},
+        допустимы только переменные из default_values: если None, то допустимы любые переменные,
+        иначе берет из указанных переменных значения по умолчанию для тех переменных, что не заданы.
+        """
+        try:
+            d = cls.variables().parseString(text, parse_all=True).asDict()
+            if default_values is None:
+                return d
+
+            vars = set(d.keys())
+            vars_allow = set(default_values.keys())
+            unexpected_vars = vars - vars_allow
+            if unexpected_vars:
+                parse_error(line='text', error_msg=f'Unexpected variables {unexpected_vars}')
+            # берем значения по умолчанию и дополняем разобранными
+            dres = default_values.copy()
+            dres.update(d)
+            return dres
+
+        except ParseException as e:
+            # в тестах проверяем, что схема ловит проблему
+            if test_mode:
+                raise e
+            # вне теста выводим сообщление об ошибке
+            parse_error(line=text, error_msg=e.msg)
+
+
+
+    @classmethod
+    def variable_value(cls) -> pp.ParserElement:
+        # TODO: убрать, так как есть схема variables
+        """Scheme 'variable = value' to (variable_str, value_str)"""
+        variable = pp.one_of(cls.__markdown_variables, as_keyword=True)('variable')
+        value = pp.rest_of_line()('value')
+        sign = (pp.Literal('=')  | pp.Literal(':'))
+        configure_set = variable + pp.Suppress(sign + pp.White()[...]) + value
+        return configure_set
+
+    @classmethod
+    def parse_variable_value(cls, line: str) -> (bool, str, str):
+        # TODO: убрать, так как есть схема variables и parse_variables
+        try:
+            res = cls.variable_value().parseString(line)
+            return True, res.variable, res.value.strip()
+        except pp.ParseException:
+            return False, None, None
 
     @classmethod
     def document(cls) -> pp.ParserElement:
@@ -43,7 +119,7 @@ class ParseSchema:
 
         # Определяем грамматику
         h1_header = pp.LineStart() + "#" + pp.Suppress(pp.White()) + pp.restOfLine("h1_header")  # Заголовок уровня 1
-        h2_header = pp.LineStart() + "##" + pp.restOfLine("h2_header")  # Заголовок уровня 2
+        h2_header = pp.LineStart() + "##" + pp.Suppress(pp.White()) + pp.restOfLine("h2_header")  # Заголовок уровня 2
 
         # Текст до следующего заголовка или конца документа
         text = pp.SkipTo(h1_header | h2_header | pp.stringEnd)("text")
@@ -52,7 +128,7 @@ class ParseSchema:
         # Элементы документа
         h1_entry = h1_header + text
         # h1_entry.setParseAction(cls.parse_lesson_variables)
-        h1_entry.setParseAction(lambda t: {'title': t.h1_header, 'variables': cls.lesson_variables().parseString(t.text).asDict()})
+        h1_entry.setParseAction(lambda t: {'title': t.h1_header, 'variables': cls.variables().parseString(t.text).asDict()})
         # h1_entry.setParseAction(lambda t: {'h1': t.h1_header, 'text': t.text})
 
         h2_entry = h2_header + text
@@ -60,26 +136,56 @@ class ParseSchema:
 
         # Весь документ может содержать любую комбинацию этих элементов
         markdown_document = h1_entry + pp.OneOrMore(h2_entry)
+        def format_data(t: list[dict]):
+            d = t[0]
+            d['steps'] = t[1:]
+            return d
+        markdown_document.setParseAction(lambda t: print(f'{t=}') or format_data(t))
         return markdown_document
 
-
     @classmethod
-    def parse_document(cls, line: str) -> str:
+    def parse_document(cls, line: str) -> [dict]:
         """Разбивает файл на крупные блоки и возвращает их в формате
+        @TODO: проверять, что переменные из списка, если еще какие - сообщение об ошибке
         {
-        'h1': lesson_header,
-        'lesson_id': 1234,
-        'lang': None,
+        'title': lesson_header,
+        'variables': {
+            'lesson_id': 1234,
+            'lang': None,
+        },
         steps: [
             {'h2': 'QUIZ Формат вывода', 'text': 'длинный текст на много строк в markdown'},
             {'h2': 'SKIP SORT Типы данных', 'text': 'длинный текст на много строк в markdown'}
         ]}
         """
         try:
-            return ParseSchema.document().parseString(line).as_list()
+            return ParseSchema.document().parseString(line).as_list()[0]
         except pp.ParseException:
             parse_error(1, line, 'Expect H1 line started with # and space symbol.')
 
+    @classmethod
+    def step_header(cls) -> pp.ParserElement:
+        """Scheme '## [[SKIP] TYPE] header' to (type, header, skip)"""
+        step_type = pp.one_of(cls.__step_types, as_keyword=True)('type')
+        header = pp.rest_of_line()('header')
+        skip = pp.Keyword(cls.__skip_keyword)('skip')
+        # step_module = pp.Suppress('##' + pp.White()[1, ...]) + skip[0, 1] + step_type[0, 1] + skip[0, 1] + header
+        step_module = skip[0, 1] + step_type[0, 1] + skip[0, 1] + header
+        return step_module
+
+    @classmethod
+    def parse_step_header(cls, line: str) -> (bool, bool, str, str):
+        """Разбор заголовка шага.'## [[SKIP] TYPE] header' to (ok, skip, type, header)"""
+        try:
+            res = cls.step_header().parseString(line).asDict()
+            # print(res)
+            # TEXT type by default
+            if 'type' not in res:
+                res['type'] = 'TEXT'
+            return True, res['type'], 'skip' in res, res['header'].strip()
+        except pp.ParseException:
+
+            return False, False, None, ''
 
 
 class ParseSchemaOLD:

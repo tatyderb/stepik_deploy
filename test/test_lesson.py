@@ -1,7 +1,9 @@
+import pytest
+
 from src.lesson import Lesson
 from src.markdown_parsing import ParseSchema
 
-text = \
+lesson_text = \
 '''# Урок 1
 lesson = 123
 lang = python3.10
@@ -30,34 +32,40 @@ step3 = '''
     '''
 
 
-def test_split_by_h2():
-
-    lines = text.splitlines()
-    lesson = Lesson()
-    config, steps = lesson.split_lines_by_h2_and_parse_steps(lines[2:])
-    print(config)
-    print(lesson.steps)
-    assert config == {'lesson': '123', 'lang': 'python3.10'}
-    print(steps)
-    assert steps[0].lines == step1.splitlines()
-    assert steps[1].lines == step2.splitlines()
-    assert steps[2].lines == step3.splitlines()
+# def test_split_by_h2():
+#
+#     lines = text.splitlines()
+#     lesson = Lesson()
+#     config, steps = lesson.split_lines_by_h2_and_parse_steps(lines[2:])
+#     print(config)
+#     print(lesson.steps)
+#     assert config == {'lesson': '123', 'lang': 'python3.10'}
+#     print(steps)
+#     assert steps[0].lines == step1.splitlines()
+#     assert steps[1].lines == step2.splitlines()
+#     assert steps[2].lines == step3.splitlines()
 
 def test_split_document():
 
     # res = ParseSchema.document().parseString(text)
-    res = ParseSchema.parse_document(text)
-    print(f'\n{res=}')
-    for item in res:
-        print(f'{item=}')
-        # print(f'{item.h1_header=}')
-        # print(f'{item.text=}')
+    res = ParseSchema.parse_document(lesson_text)
+    # print(f'\n{res=}')
+    # for item in res:
+    #     print(f'{item=}')
+    assert res['title'] == 'Урок 1'
+    assert res['variables'] ==  {'lesson': '123', 'lang': 'python3.10'}
+    assert len(res['steps']) == 3
 
 
-
-def test_parse_lesson():
-    lines = text.splitlines()
-    lesson = Lesson()
-    lesson.parse_markdown(lines)
-    assert lesson.lesson_id == 123
-    assert len(lesson.steps) == 3
+@pytest.mark.parametrize('text, expected_dict', [
+    ('\nlesson = 123\nlang = python3.10\n', {'lesson':'123', 'lang': 'python3.10' }),
+    ('\nlesson = 123\n\n', {'lesson':'123'}),
+    ('lang = python3.10\n', {'lang': 'python3.10' }),
+    ('\n\n', { }),
+    ]
+)
+def test_parse_lesson(text, expected_dict):
+    res = ParseSchema.parse_variables(text)
+    # print(f'\n{res=}')
+    # print(f'\n{res.as_dict()=}')
+    assert res == expected_dict

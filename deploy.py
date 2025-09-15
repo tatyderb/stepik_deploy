@@ -1,8 +1,10 @@
 import argparse
 
+from src import logged_requests
 from src.auth import read_or_create_auth_data
 from src.lesson import Lesson
 from src.logged_requests import LoggedSession
+from src.stepik_api import StepikSession
 from src.toc import get_file_from_toc
 
 
@@ -45,6 +47,7 @@ def parse_args():
 
 
 def main():
+    logged_requests.setup_logger()
     read_or_create_auth_data()
     args = parse_args()
     print('Args=', args)
@@ -58,9 +61,9 @@ def main():
     else:
         # lesson in markdown format
         with open(lesson_file, 'r', encoding='utf8') as fin:
-            lines = fin.readlines()
-            lesson.parse_markdown(lines)
-    session = LoggedSession()
+            text = fin.read()
+            lesson.parse_markdown(text)
+    session = StepikSession()
     lesson.deploy(session)
 
 

@@ -15,7 +15,7 @@ from src.logged_requests import LoggedSession, LOGGER_NAME
 logger = logging.getLogger(LOGGER_NAME)
 
 
-class Session(LoggedSession):
+class StepikSession(LoggedSession):
     def __init__(self):
         # TODO: параметры конфигурации брать не дефолтные, а из конфигурационного файла
         super().__init__({})
@@ -26,6 +26,7 @@ class Session(LoggedSession):
     def get_token(self, client_id, client_secret):
         logger.info(f'{client_id=}, {client_secret=}')
         auth = requests.auth.HTTPBasicAuth(client_id, client_secret)
+        print(f'{auth=}', file=sys.stderr)
         logger.info(f'{auth=}')
         response = self.request('POST', f'{API_HOST}/oauth2/token/',
                                 data={'grant_type': 'client_credentials'},

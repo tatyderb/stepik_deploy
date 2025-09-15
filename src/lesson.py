@@ -3,10 +3,10 @@ import logging
 
 import pyparsing as pp
 
-from src.logged_requests import LOGGER_NAME
+from src.logged_requests import LOGGER_NAME, LoggedSession
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
-from src.stepik_api import Session
+from src.stepik_api import StepikSession
 
 
 logger = logging.getLogger(LOGGER_NAME)
@@ -24,20 +24,20 @@ class Lesson:
     #################################################################
     # Stepik API wrappers
     #################################################################
-    def info(self, session: Session) -> (dict, list[int]):
+    def info(self, session: StepikSession) -> (dict, list[int]):
         """Информация об уроке в целом"""
         lesson_info = session.fetch_object('lesson', self.lesson_id)
         step_ids = lesson_info['steps']
         return lesson_info, step_ids
 
-    def steps_info(self, session: Session) -> list[dict]:
+    def steps_info(self, session: StepikSession) -> list[dict]:
         """Информация о всех шагах урока."""
         lesson_info, step_ids = self.info(session)
         steps = session.fetch_objects('step-source', step_ids)
         logger.info(steps)
         return steps
 
-    def deploy(self, session: Session):
+    def deploy(self, session: StepikSession):
         """Загружает один или все шаги на Stepik."""
         old_lesson_info, old_step_ids = self.info(session)
         old_length = len(old_step_ids)
@@ -69,17 +69,25 @@ class Lesson:
     #################################################################
     # Markdown parsing
     #################################################################
-    def parse_markdown(self, text: list[str]) -> (list[Step], int | None):
-        """Разбирает файл урока с указанным именем и возвращает список шагов и lesson_id урока из файла.
+    def parse_markdown(self, text: str) -> (list[Step], int | None):
+        """Разбирает текст и возвращает список шагов и словарь с заданными переменными
+        {'lesson_id': nnn, 'lang': www} из файла.
         Если указан position, то все остальные шаги в списке None.
         """
-        # skip empty lines
-        linenumber = 0
-        while text[linenumber] == pp.Empty():
-            linenumber += 1
-        self.title = ParseSchema.parse_h1(text[linenumber])
-        variables, self.steps = self.split_lines_by_h2_and_parse_steps(text[linenumber + 1:])
-        # print(variables)
+
+        lesson_info = ParseSchema.parse_document(text)
+        print(f'{lesson_info=}')
+        # res=[{
+        #   'title': 'Урок 1',
+        #   'variables': {'lesson': '123', 'lang': 'python3.10'}
+        #   'steps': [
+        #       {'h2': ' Шаг 1', 'text': '\nСодержимое шага один.\n'},
+        #       {'h2': ' SKIP Шаг 2 пропускаем', 'text': '\nВторой шаг.\nПишем много чего интересного\n'},
+        #       {'h2': ' TEXT Шаг третий', 'text': '\n\nТут много пустых строк.\n\nКоторые нужно тоже обработать.'}
+        #   ]
+        #   }]
+        variables = lesson_info['variables']
+        self.title = lesson_info['title']
         if 'lang' in variables:
             self.task_language = variables['lang']
         if 'lesson' in variables:
@@ -87,67 +95,10 @@ class Lesson:
         else:
             self.validate_lesson_id(lesson_id=0)
 
-    def split_lines_by_h2_and_parse_steps(self, lines: list[str]) -> (list[Step], dict):
-        """Разбивает строки на списки строк по ##, один список - один шаг, разбирает конфиг.
-        Возвращает step_list, config
-        Структура markdown файла (может быть добавлено в любом месте любое количество пустых строк):
-        # Заголовок урока (надо бы его в левом меню писать)
-        lesson = 123456    - опционально, lessonID
-        lang = python3.12  - опционально, язык задач урока, допускается ANY (без перечисления языка).
-        ## TYPE Заголовок шага 1
-        содержимое шага
-        ## TYPE Заголовок шага 2
-        содержимое шага
-        Часть TYPE может быть дополнена частью SKIP, что значит, что деплоить этот шаг автоматически запрещено.
-        """
-        states = (
-            'CONFIG',   # заголовок H1 разобран, ждем или строку конфига, или H2
-            'BODY'      # читаем тело шага, если натыкаемся на H2 или EOF, заканчиваем предыдущий шаг
-        )
-        mode = states[0]
-        steps = []      # список шагов
-        config = {}     # словарь переменных в начале файла
-        current_step = None
-        step_text = []  # строки текущего шага
-
-        def end_of_step(step: Step, text: list[str], current_position: int):
-            """Дошли до конца тела шага, шаг разобрать и добавить в список шагов."""
-            if step is None:
-                return
-            # честно разбираем только те шаги, которые собираемся деплоить
-            if self.position is None or self.position == current_position:
-                step.parse(text)
-            steps.append(step)
-
-        position = 0
-        for line_number, line in enumerate(lines, 2):
-            # сначала обработаем пустые строки, не двигать, ибо собьется переход с CONFIG на BODY
-            if line == pp.Empty():
-                if mode == 'BODY':
-                    step_text.append(line)
-                continue
-
-            # обрабатываем variable=value пока не закончатся (пустые строки обработали выше)
-            if mode == 'CONFIG':
-                ok, variable, value = ParseSchema.parse_variable_value(line)
-                if ok:
-                    config[variable] = value
-                else:
-                    mode = 'BODY'
-
-            # обрабатываем шаги: h2 - новый шаг, добавляем в список уже сделанный шаг
-            # иначе добавляем строку в список строк шага
-            if mode == 'BODY':
-                ok, skip, step_type, header = ParseSchema.parse_step_header(line)
-                if ok:
-                    end_of_step(current_step, step_text, position)
-                    current_step = Step.create_by_type(step_type=step_type, header=header, skip=skip)
-                    step_text = []
-                    # в конце, потому что мы добавили изначальный current_step=None с position=0
-                    position += 1
-                else:
-                    step_text.append(line)
-
-        # последний шаг, закончен концом файла
-        end_of_step(current_step, step_text, position)
-        return config, steps
+        self.steps = []
+        for entity in lesson_info['steps']:
+            ok, step_type, skip, h2 = ParseSchema.parse_step_header(entity['h2'])
+            print(f'{ok=}, {step_type=}, {skip=}, {h2=}')
+            step = Step.create_by_type(step_type=step_type, header=h2, skip=skip)
+            step.parse(entity['text'])
+            self.steps.append(step)

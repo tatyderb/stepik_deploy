@@ -1,7 +1,7 @@
 from abc import abstractmethod, ABC
 
 from src.utils import markdown_to_html
-from src.stepik_api import Session
+from src.stepik_api import StepikSession
 
 
 class Step(ABC):
@@ -27,7 +27,7 @@ class Step(ABC):
         pass
 
     @classmethod
-    def create_by_type(cls, step_type: str = 'TEXT', header: str = '', skip: bool = False):
+    def create_by_type(cls, step_type: str = 'TEXT', header: str = '', skip: bool = False, step_body: str=''):
         match step_type:
             case 'TEXT':
                 return StepText(header=header, skip=skip)
@@ -43,18 +43,18 @@ class Step(ABC):
         body['stepSource']['position'] = position
         return body
 
-    def info(self, session: Session, step_id: int) -> dict:
+    def info(self, session: StepikSession, step_id: int) -> dict:
         """GET step info."""
         step_info = session.fetch_object('step', step_id)
         return step_info
 
-    def update(self, session: Session, lesson_id: int, step_id: int, position: int):
+    def update(self, session: StepikSession, lesson_id: int, step_id: int, position: int):
         """Update step."""
         print(f'UPDATE step: {step_id=}, {position=}, {lesson_id=}')
         body = self.body(lesson_id, position)
         session.update_object('step-sources', step_id, body)
 
-    def create(self, session: Session, lesson_id: int, position: int) -> int:
+    def create(self, session: StepikSession, lesson_id: int, position: int) -> int:
         """Create step in lesson_id at position (start with 1).
         Return new step ID.
         """
@@ -65,7 +65,7 @@ class Step(ABC):
         return step_id
 
     @staticmethod
-    def delete(session: Session, step_id: int):
+    def delete(session: StepikSession, step_id: int):
         """Update step."""
         print(f'DELETE step: {step_id=}')
         session.delete_object('step-sources', step_id)
@@ -86,12 +86,10 @@ class StepText(Step):
     def __init__(self, header: str = '', skip: bool = False):
         super().__init__(header=header, skip=skip)
 
-    def parse(self, lines: list[str]):
+    def parse(self, text: str):
         """Обрабатываем содержимое шага, разбирая его на составные части согласно типу."""
-        self.lines = lines
-        markdown_text = '\n'.join(['## ' + self.header] + self.lines)
+        markdown_text = '## ' + self.header + '\n' + text
         self.text = markdown_text
-        # self.html = markdown_to_html(markdown_text)
 
     def to_dict(self) -> dict:
         d = self.BODY.copy()
