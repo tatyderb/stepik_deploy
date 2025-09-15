@@ -3,7 +3,7 @@ import logging
 import pytest
 
 from src.logged_requests import LOGGER_NAME
-from src.stepik_api import Session
+from src.stepik_api import StepikSession
 from src.utils import generate_timestring
 
 
@@ -51,7 +51,7 @@ def fill_body(body: dict, text: str, lesson_id: int, position: int = 0) -> dict:
 
 
 def test_get_token(auth):
-    session = Session()
+    session = StepikSession()
     # assert внутри, если дошли, то 200 ОК и токен вернули
     # чтобы добыть токен и потом записать его в Postman
     # print()
@@ -64,7 +64,7 @@ def test_get_lesson_and_step(auth):
     # https://stepik.org/lesson/374339/step/1
     lesson_id = 374339
 
-    session = Session()
+    session = StepikSession()
     lesson_info = session.fetch_object('lesson', lesson_id)
     logger.info(lesson_info)
     assert lesson_info['id'] == lesson_id
@@ -86,7 +86,7 @@ def test_update_step(auth, choice_body):
 
     date_str = f'Date: {generate_timestring()}'
 
-    session = Session()
+    session = StepikSession()
     lesson_info = session.fetch_object('lesson', lesson_id)
     step_ids = lesson_info['steps']
     step_id = step_ids[-1]
@@ -113,7 +113,7 @@ def test_create_delete_step(auth, choice_body):
 
     date_str = f'Date: {generate_timestring()}'
 
-    session = Session()
+    session = StepikSession()
     lesson_info = session.fetch_object('lesson', lesson_id)
     step_ids_before = lesson_info['steps']
     steps_length_before = len(step_ids_before)

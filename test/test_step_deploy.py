@@ -3,7 +3,7 @@ import pytest
 
 from src.lesson import Lesson
 from src.step import StepText
-from src.stepik_api import Session
+from src.stepik_api import StepikSession
 from src.utils import generate_timestring
 
 
@@ -25,7 +25,7 @@ def generate_lesson_text_steps(step_number: int = 1) -> list[StepText]:
 
 def test_lesson_info(auth):
     """В уроке два шага."""
-    session = Session()
+    session = StepikSession()
     lesson = Lesson(lesson_id=LESSON_ID)
     lesson_info, step_ids = lesson.info(session)
     assert step_ids == STEP_IDS
@@ -33,7 +33,7 @@ def test_lesson_info(auth):
 
 def test_steps_info(auth):
     """В уроке два шага. И это правильные шаги."""
-    session = Session()
+    session = StepikSession()
     lesson = Lesson(lesson_id=LESSON_ID)
     steps = lesson.steps_info(session)
     assert len(steps) == len(STEP_IDS)
@@ -44,7 +44,7 @@ def test_steps_info(auth):
 
 def test_step_update(auth):
     lesson_text_steps = generate_lesson_text_steps(2)
-    session = Session()
+    session = StepikSession()
 
     lesson = Lesson(lesson_id=LESSON_ID)
     max_position = len(lesson_text_steps)
@@ -62,7 +62,7 @@ def test_step_update(auth):
 def test_step_update_create_delete(auth):
     """Делаем урок на два шага длиннее, добавляем шаги, проверка, удаляем шаги, проверка."""
     lesson = Lesson(lesson_id=LESSON_ID)
-    session = Session()
+    session = StepikSession()
     old_lesson_info, old_step_ids = lesson.info(session)
     old_max_position = len(old_step_ids)
     new_max_position = old_max_position + 2
@@ -94,7 +94,7 @@ def test_step_update_create_delete(auth):
 def test_lesson_deploy(auth):
     """Делаем урок на два шага длиннее, добавляем шаги, проверка, удаляем шаги, проверка."""
     lesson = Lesson(lesson_id=LESSON_ID)
-    session = Session()
+    session = StepikSession()
     old_lesson_info, old_step_ids = lesson.info(session)
     old_max_position = len(old_step_ids)
     new_max_position = old_max_position + 2

@@ -1,5 +1,5 @@
 """
-Wrapper for requests.Session get/post/patch/
+Wrapper for requests.StepikSession get/post/patch/
 """
 
 import inspect
@@ -13,7 +13,7 @@ LOGGER_NAME = 'stepik'
 logger: logging.Logger = None       # setuped logger
 
 
-def setup_logger(log_cli_level, log_file_level):
+def setup_logger(log_cli_level=logging.INFO, log_file_level=logging.INFO):
     """
     Use own logger for logging into out.log file and console(?)
     """
@@ -51,15 +51,14 @@ def setup_logger(log_cli_level, log_file_level):
     # logger.addHandler(ch)
     logger.addHandler(fh)
 
-
-class LoggedSession:
-    """Обертка для requeists.Session с логированием запросов и ответов."""
+class LoggedSession(requests.Session):
+    """Обертка для requeists.StepikSession с логированием запросов и ответов."""
 
     def __init__(self, cfg: dict):
-        """ requests.Session with request/response dump,
+        """ requests.StepikSession with request/response dump,
         kwargs - environment config dict
         """
-        self.__session = requests.Session()
+        super().__init__()
 
         # что именно логировать в запросе и ответе
         self.log_url = True
@@ -114,8 +113,8 @@ class LoggedSession:
             if 'json' in kwargs:
                 logger.info(f"json = {json.dumps(kwargs['json'])}", stacklevel=stacklevel)
 
-        # verify=False only for disable ssl certificate check in stage.
-        res = self.__session.request(
+        # verify=False only for disable ssl certificate check in stage.\
+        res = super().request(
             method=method,
             url=url,
             verify=not self.ignore_ssl_certificate_errors,
@@ -134,3 +133,12 @@ class LoggedSession:
 
         logger.info('-' * 10, stacklevel=stacklevel)
         return res
+
+    def get(self, *args, **kwargs):
+        self.request(method='GET', *args, **kwargs)
+
+    def post(self, *args, **kwargs):
+        self.request(method='POST', *args, **kwargs)
+
+    def put(self, *args, **kwargs):
+        self.request(method='PUT', *args, **kwargs)
