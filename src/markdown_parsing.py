@@ -299,45 +299,6 @@ class ParseSchemaOLD:
             return False, 0
 
 
-class ParseSchemaStepNumber(ParseSchema):
-    @classmethod
-    def answer(cls) -> pp.ParserElement:
-        """Scheme 'ANSWER: 10.5 [+-0.1]'"""
-        keyword = pp.Literal('ANSWER') | pp.Literal('answer')
-        number = cls.number('answer')
-        accuracy = (pp.Suppress(pp.Literal('+-')) + cls.number)('accuracy')
-        schema = pp.Suppress(pp.Combine(pp.LineStart() + keyword) + ':') + number + pp.Opt(accuracy)
-        return schema
-
-    @classmethod
-    def parse_answer(cls, line: str) -> (bool, int | float, int | float):
-        """Разбор заголовка шага.'ANSWER: 10.5 [+-0.1]' to (ok, number, accuracy).
-        По умолчанию accuracy=0
-        """
-        try:
-            res = cls.answer().parseString(line, parse_all=True).asDict()
-            print(res)
-            number = cls.to_number(res['answer'])
-            accuracy = cls.to_number(res['accuracy'][0]) if 'accuracy' in res else 0
-            return True, number, accuracy
-        except pp.ParseException:
-            return False, 0, 0
-
-    @classmethod
-    def step_number(cls) -> pp.ParserElement:
-        answer = cls.answer()('answer')
-        config = cls.config()('config')
-        sections = answer & pp.Opt(config)
-        statement = pp.SkipTo(sections)('text')
-        schema = statement + sections
-        return schema
-
-    @classmethod
-    def parse_step_number(cls, text: str) -> dict:
-        try:
-            return cls.step_number().parseString(text)
-        except pp.ParseException as e:
-            parse_error(1, text, e.msg)
 
 
 
