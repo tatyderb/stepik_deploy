@@ -24,12 +24,19 @@ class ParseSchema:
     __markdown_variables = ['lesson', 'lang']
     # символы, допустимые в значении переменных
     __variable_value_chars = pp.alphanums + '._-'
-    number_int = pp.Combine(pp.Opt('-') + pp.Word(pp.nums))('int')
-    number_float = pp.Combine(pp.Opt('-') + pp.Word(pp.nums) + '.' + pp.Word(pp.nums))('float')
-    number = (number_float | number_int)('number')
+    # number_int = pp.Combine(pp.Opt('-') + pp.Word(pp.nums))('int')
+    # number_float = pp.Combine(pp.Opt('-') + pp.Word(pp.nums) + '.' + pp.Word(pp.nums))('float')
+    # number = (number_float | number_int)('number')
+    number = pp.common.number
+    quoted = pp.QuotedString('```', multiline=True, unquote_results=False)
     # TODO: не надо ограничивать, только кидать предупреждение, что разобранный язык не в списке и добавлять по возможности,
     #  список языков держать в файле конфигурации
     LANGUAGE = ['c', 'c_valgrind', 'python', 'python310']
+
+    @classmethod
+    def to_number(cls, text: str) -> int | float:
+        """Преобразует строку в int или float. Убедитесь сначала, что это число."""
+        return float(text) if '.' in text else int(text)
 
     @classmethod
     def variables(cls) -> pp.ParserElement:
@@ -42,7 +49,8 @@ class ParseSchema:
         {variable1: value1, variable2, value2}
         """
 
-        identifier = pp.one_of(cls.__markdown_variables)('identifier')
+        # identifier = pp.one_of(cls.__markdown_variables)('identifier')
+        identifier = pp.Word(pp.alphanums + '_')('identifier')
         equals = (pp.Literal("=") | (pp.Literal(':'))).suppress()
         value = pp.Word(cls.__variable_value_chars)('value')
         assignment = pp.Group(identifier + equals + value + pp.restOfLine().suppress())
@@ -83,6 +91,17 @@ class ParseSchema:
             # вне теста выводим сообщление об ошибке
             parse_error(line=text, error_msg=e.msg)
 
+    @classmethod
+    def config(cls) -> pp.ParserElement:
+        """
+        Parsing schema for:
+        CONFIG
+        var1: val1
+        var2: val2
+        """
+        section_title = pp.AtLineStart('CONFIG') + pp.LineEnd()
+        schema = pp.Suppress(section_title) + cls.variables()('config')
+        return schema
 
 
     @classmethod
@@ -121,8 +140,12 @@ class ParseSchema:
         h1_header = pp.LineStart() + "#" + pp.Suppress(pp.White()) + pp.restOfLine("h1_header")  # Заголовок уровня 1
         h2_header = pp.LineStart() + "##" + pp.Suppress(pp.White()) + pp.restOfLine("h2_header")  # Заголовок уровня 2
 
-        # Текст до следующего заголовка или конца документа
-        text = pp.SkipTo(h1_header | h2_header | pp.stringEnd)("text")
+        # Текст до следующего заголовка или конца документа с учетом ## внутри вставок кода
+        text_bound = cls.quoted | h2_header | pp.stringEnd
+        text_part = pp.SkipTo(text_bound)
+        text = (text_part + pp.ZeroOrMore(cls.quoted + text_part))("text")
+        text.setParseAction(lambda t: ''.join(t.text))
+        # text = pp.SkipTo(h2_header | pp.stringEnd)("text")
         # text = pp.SkipTo(h1_header | pp.stringEnd)("text")
 
         # Элементы документа
@@ -186,6 +209,7 @@ class ParseSchema:
         except pp.ParseException:
 
             return False, False, None, ''
+
 
 
 class ParseSchemaOLD:
@@ -291,13 +315,29 @@ class ParseSchemaStepNumber(ParseSchema):
         По умолчанию accuracy=0
         """
         try:
-            res = cls.answer().parseString(line).asDict()
+            res = cls.answer().parseString(line, parse_all=True).asDict()
             print(res)
             number = cls.to_number(res['answer'])
             accuracy = cls.to_number(res['accuracy'][0]) if 'accuracy' in res else 0
             return True, number, accuracy
         except pp.ParseException:
             return False, 0, 0
+
+    @classmethod
+    def step_number(cls) -> pp.ParserElement:
+        answer = cls.answer()('answer')
+        config = cls.config()('config')
+        sections = answer & pp.Opt(config)
+        statement = pp.SkipTo(sections)('text')
+        schema = statement + sections
+        return schema
+
+    @classmethod
+    def parse_step_number(cls, text: str) -> dict:
+        try:
+            return cls.step_number().parseString(text)
+        except pp.ParseException as e:
+            parse_error(1, text, e.msg)
 
 
 
