@@ -1,0 +1,5 @@
+pyaml-env
+markdown
+pyparsing
+requests
+pytest
