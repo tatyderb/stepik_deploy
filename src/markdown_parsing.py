@@ -144,7 +144,8 @@ class ParseSchema:
         text_bound = cls.quoted | h2_header | pp.stringEnd
         text_part = pp.SkipTo(text_bound)
         text = (text_part + pp.ZeroOrMore(cls.quoted + text_part))("text")
-        text.setParseAction(lambda t: ''.join(t.text))
+        # лишние \n будут убраны при конвертации в html, а недостающие \n могут испортить формат markdown
+        text.setParseAction(lambda t: '\n'.join(t.text))
         # text = pp.SkipTo(h2_header | pp.stringEnd)("text")
         # text = pp.SkipTo(h1_header | pp.stringEnd)("text")
 
