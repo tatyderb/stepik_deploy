@@ -41,6 +41,24 @@ from src.step import Step
 from src.utils import markdown_to_html
 
 DEFAULT_BODY = {
+        'stepSource': {
+            'block': {
+                'name': 'number',
+                'text': 'Enter the answer',  # task text in html
+                'source': {
+                    'options': [],  # add answer variants here, use option_template
+                    'sample_size': 0,  # len of 'options' list
+                    'is_options_feedback': False
+                }
+            },
+            'lesson': None,
+            'position': None,
+            'cost': 0
+        }
+    }
+OPTION_TEMPLATE = {'answer': '4', 'max_error': '0'}
+
+DEFAULT_BODY_JSON = {
     "block": {
         "name": "number",  # ключевое слово
         "text": "",        # условие задачи в html
@@ -64,26 +82,40 @@ DEFAULT_BODY = {
 }
 
 class StepNumber(Step):
+    DEFAULT_SCORE = 2
     def __init__(self, header: str = '', skip: bool = False):
         super().__init__(header=header, skip=skip)
 
     def parse(self, text: str):
         """Обрабатываем содержимое шага, разбирая его на составные части согласно типу."""
         # TODO: разобрать текст шага
-        statement = text
+        res = ParseSchemaStepNumber.parse_step_number(text)
+        print(f'StepNumber.parse: {res=}')
 
-        markdown_text = '## ' + self.header + '\n' + statement
+        self.answer = dict()
+        answer = res['answer']
+        self.answer['answer'] = str(float(answer['number']))
+        self.answer['max_error']  = str(float(answer.get('accuracy', 0)))
+
+        self.text = res['text']
+        markdown_text = '## ' + self.header + '\n' + self.text
         self.text = markdown_text
 
     def to_dict(self) -> dict:
         d = DEFAULT_BODY.copy()
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
+        # один ответ
+        d['stepSource']['block']['source']['options'] = [self.answer]
+        d['stepSource']['block']['source']['sample_size'] = 1
+
+        d['stepSource']['score'] = self.DEFAULT_SCORE
+
         return d
 
 class ParseSchemaStepNumber(ParseSchema):
     @classmethod
     def answer(cls) -> pp.ParserElement:
-        """Scheme 'ANSWER: 10.5 [+-0.1]'"""
+        """Scheme 'ANSWER: 10.5 [+-0.1]' """
         keyword = pp.Literal('ANSWER') | pp.Literal('answer')
         number = cls.number
         accuracy = (pp.Suppress(pp.Literal('+-')) + cls.number)('accuracy')
@@ -131,7 +163,7 @@ class ParseSchemaStepNumber(ParseSchema):
         return schema
 
     @classmethod
-    def parse_step_number(cls, text: str) -> dict:
+    def parse_step_number(cls, text: str) -> ParseResults:
         try:
             return cls.step_number().parseString(text).as_dict()
         except pp.ParseException as e:

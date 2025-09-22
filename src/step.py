@@ -17,7 +17,7 @@ class Step(ABC):
         return f'skip={self.skip}\nheader={self.header}\nlines={self.lines}\ntext={self.text}'
 
     @abstractmethod
-    def parse(self, lines: list[str]):
+    def parse(self, lines: str):
         """Обрабатываем содержимое шага, разбирая его на составные части согласно типу."""
         pass
 
@@ -31,6 +31,9 @@ class Step(ABC):
         match step_type:
             case 'TEXT':
                 return StepText(header=header, skip=skip)
+            case 'NUMBER':
+                from src.step_number import StepNumber
+                return StepNumber(header=header, skip=skip)
             case '_':
                 raise NotImplemented(f'Step type {step_type}')
 
