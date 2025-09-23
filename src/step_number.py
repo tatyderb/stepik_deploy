@@ -90,7 +90,7 @@ class ParseSchemaStepNumber(ParseSchema):
     @classmethod
     def answer(cls) -> pp.ParserElement:
         """Scheme 'ANSWER: 10.5 [+-0.1]' """
-        keyword = pp.Literal('ANSWER') | pp.Literal('answer')
+        keyword = pp.Keyword('ANSWER', caseless=True)
         number = cls.number
         accuracy = (pp.Suppress(pp.Literal('+-')) + cls.number)('accuracy')
         accuracy.setParseAction(lambda t: t.as_list()[0] if isinstance(t, ParseResults) else t)
