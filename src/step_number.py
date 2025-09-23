@@ -31,7 +31,6 @@ https://stepik.org/lesson/308220/step/9
 }
 
 """
-from urllib.parse import ParseResult
 
 import pyparsing as pp
 from pyparsing import ParseResults
@@ -40,7 +39,10 @@ from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
 
-DEFAULT_BODY = {
+
+class StepNumber(Step):
+    DEFAULT_SCORE = 2
+    DEFAULT_BODY = {
         'stepSource': {
             'block': {
                 'name': 'number',
@@ -53,42 +55,16 @@ DEFAULT_BODY = {
             },
             'lesson': None,
             'position': None,
-            'cost': 0
+            'cost': DEFAULT_SCORE
         }
     }
-OPTION_TEMPLATE = {'answer': '4', 'max_error': '0'}
+    OPTION_TEMPLATE = {'answer': '4', 'max_error': '0'}
 
-DEFAULT_BODY_JSON = {
-    "block": {
-        "name": "number",  # ключевое слово
-        "text": "",        # условие задачи в html
-        "video": None,
-        "options": {},          # ?
-        "subtitle_files": [],   # видимо, субтитры для видео
-        "is_deprecated": False,
-        "source": {
-            "options": [
-            ],
-            "sample_size": 0,   # по размеру списка в "options"
-            "is_options_feedback": False
-        },
-        "subtitles": {},
-        "tests_archive": None,  # на этом шаге нельзя заливать тесты
-        "feedback_correct": "",
-        "feedback_wrong": ""
-    },
-    "id": "",  # id шага
-    "has_review": False
-}
-
-class StepNumber(Step):
-    DEFAULT_SCORE = 2
     def __init__(self, header: str = '', skip: bool = False):
         super().__init__(header=header, skip=skip)
 
     def parse(self, text: str):
         """Обрабатываем содержимое шага, разбирая его на составные части согласно типу."""
-        # TODO: разобрать текст шага
         res = ParseSchemaStepNumber.parse_step_number(text)
         print(f'StepNumber.parse: {res=}')
 
@@ -102,13 +78,11 @@ class StepNumber(Step):
         self.text = markdown_text
 
     def to_dict(self) -> dict:
-        d = DEFAULT_BODY.copy()
+        d = self.DEFAULT_BODY.copy()
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
         # один ответ
         d['stepSource']['block']['source']['options'] = [self.answer]
         d['stepSource']['block']['source']['sample_size'] = 1
-
-        d['stepSource']['score'] = self.DEFAULT_SCORE
 
         return d
 
