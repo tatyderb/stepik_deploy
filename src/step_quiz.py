@@ -98,7 +98,7 @@ class StepQuiz(Step):
         print(f'StepQuiz.parse: {res=}')
 
         self.options = [
-            {'is_correct': d['letter'] in res['answer'], 'text': d['text'], 'feedback': ''}
+            {'is_correct': d['letter'] in res['answer'], 'text': markdown_to_html(d['text']), 'feedback': ''}
             for d in res['variants']
         ]
         self.is_multiple_choice = len(res['answer']) > 1
