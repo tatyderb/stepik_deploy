@@ -56,6 +56,21 @@ ANSWER: 6
 Постусловие.
 ANSWER: 7
 """
+
+text3 = """
+Найдите ошибку в задаче, замените на правильный ответ:
+```
+## NUMBER
+
+Найдите x: x^2-6x+5=0
+
+ANSWER = 1
+ANSWER = -3
+```
+ANSWER = 5
+"""
+
+
 def test_parse_step_number():
     res = ParseSchemaStepNumber.parse_step_number(text1)
     print(f'\nparse_step_number: {res=}')
@@ -67,6 +82,12 @@ def test_parse_step_number():
     expected_dict = {
         'text': 'Условие задачи.\n```python\nANSWER: 5\n```\nМежду блоками.\n```cpp\nANSWER: 6\n```\nПостусловие.',
         'answer': {'number': 7, 'accuracy': 0}
+    }
+    res = ParseSchemaStepNumber.parse_step_number(text3)
+    print(f'\nparse_step_number: {res=}')
+    expected_dict = {
+        'text': 'Найдите ошибку в задаче, замените на правильный ответ:\n```\n## NUMBER\n\nНайдите x: x^2-6x+5=0\n\nANSWER = 1\nANSWER = -3\n```',
+        'answer': {'number': 5, 'accuracy': 0}
     }
     assert res == expected_dict
 
