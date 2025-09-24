@@ -77,23 +77,31 @@ shuffle: false
 
 ## QUIZ Код
 
-Варианты с кодом.
+Варианты с кодом. 
+Используйте только `<pre>` для обрамления кода. 
+Остальное показывается некорректно.
 
 Какой код написан на языке С?
 
-A.
-```
+A. with &lt;code&gt; tag
+<code>
 int main(void) {
     printf("Hello\n");
     return 0;
 }
-```
-B. 
-```
+</code>
+B. with &lt;pre&gt; tag
+<pre>
+
 int main(void) {
     cout << "Hello";
     return 0;
 }
+</pre>
+
+C. 
+```python
+print("Hello")
 ```
 
 ANSWER: A
