@@ -75,9 +75,28 @@ ANSWER: A, B
 CONFIG
 shuffle: false
 
-## Код
+## QUIZ Код
 
-Варианты с кодом
+Варианты с кодом.
+
+Какой код написан на языке С?
+
+A.
+```
+int main(void) {
+    printf("Hello\n");
+    return 0;
+}
+```
+B. 
+```
+int main(void) {
+    cout << "Hello";
+    return 0;
+}
+```
+
+ANSWER: A
 
 ## Картинки
 
