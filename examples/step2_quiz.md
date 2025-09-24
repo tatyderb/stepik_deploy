@@ -104,7 +104,7 @@ C.
 # текст как markdown code 
 print("Hello")
 print("Goodbye")
-```
+
 
 ANSWER: A
 
