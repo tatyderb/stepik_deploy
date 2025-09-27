@@ -1,3 +1,4 @@
+from collections import ChainMap
 import pyparsing as pp
 import sys
 
@@ -105,6 +106,7 @@ class ParseSchema:
         """
         section_title = cls.section_name('CONFIG')
         schema = pp.Suppress(section_title) + cls.variables()('config')
+        schema.setParseAction(lambda t: t.as_dict()['config'][0] )
         return schema
 
 
