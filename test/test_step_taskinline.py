@@ -1,8 +1,6 @@
 from src.step_tasklinline import ParseSchemaStepTaskinline, StepTaskinline
 
-
-def test_step_inline_simple():
-    text="""
+text1 = """
 Даны два целых числа на одной строке через пробел. Напечатайте их сумму.
 
 TEST
@@ -15,15 +13,13 @@ TEST
 -40
 ====    
 """
-    res = ParseSchemaStepTaskinline.step_taskinline().parseString(text).as_dict()
-    print(f'\nParseSchemaStepTaskinline.step_taskinline: \n{res=}')
-    expected_res = {'text': 'Даны два целых числа на одной строке через пробел. Напечатайте их сумму.',
-                    'tests': ['2 3', '5', '-17 -23', '-40']}
-    assert res == expected_res
+expected_res1 = {'text': 'Даны два целых числа на одной строке через пробел. Напечатайте их сумму.',
+                 'tests': ['2 3', '5', '-17 -23', '-40']}
 
-    text2 = """
+text2 = """
 HEADER
 #include <stdio.h>
+    // нужно сохранять отступы в начале строки
 int module(int x);
 FOOTER
 int main()
@@ -39,15 +35,24 @@ int module(int x) {
 }
 CONFIG
 lang: c
+score: 5
 """
-    res = ParseSchemaStepTaskinline.step_taskinline().parseString(text + text2).as_dict()
-    print(f'\nParseSchemaStepTaskinline.step_taskinline: \n{res=}')
-    expected_res = {'text': 'Даны два целых числа на одной строке через пробел. Напечатайте их сумму.',
-           'tests': ['2 3', '5', '-17 -23', '-40'], 'header': '#include <stdio.h>\nint module(int x);',
-           'footer': 'int main()\n{\n    int x;\n    scanf("%d", &x);\n    printf("%d\n", module(x));\n    return 0;\n}',
-           'code': 'int module(int x) {\n    // здесь нужно написать код\n}', 'config': [{'lang': 'c'}]}
+expected_res2 = {'text': 'Даны два целых числа на одной строке через пробел. Напечатайте их сумму.',
+                 'tests': ['2 3', '5', '-17 -23', '-40'],
+                 'header': '#include <stdio.h>\n    // нужно сохранять отступы в начале строки\nint module(int x);',
+                 'footer': 'int main()\n{\n    int x;\n    scanf("%d", &x);\n    printf("%d\n", module(x));\n    return 0;\n}',
+                 'code': 'int module(int x) {\n    // здесь нужно написать код\n}', 'config': {'lang': 'c', 'score': '5'}}
 
-    assert res == expected_res
+
+def test_step_inline_simple():
+    res = ParseSchemaStepTaskinline.step_taskinline().parseString(text1).as_dict()
+    print(f'\nParseSchemaStepTaskinline.step_taskinline: \n{res=}')
+    assert res == expected_res1
+
+    res = ParseSchemaStepTaskinline.step_taskinline().parseString(text1 + text2).as_dict()
+    print(f'\nParseSchemaStepTaskinline.step_taskinline: \n{res=}')
+
+    assert res == expected_res2
 
 def test_example_section():
     # все тесты (по умолчанию)
@@ -74,3 +79,10 @@ def test_example_section():
     res = s.test_examples(tests, visible_tests_number=-2)
     print(f'\n{res=}')
     assert res == expected_html
+
+def test_to_dict():
+    import json
+    step = StepTaskinline(header='')
+    step.parse(text1)
+    res = step.to_dict()
+    print(json.dumps(res, indent=4))

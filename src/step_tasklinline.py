@@ -131,6 +131,10 @@ from src.utils import markdown_to_html
 
 # https://stepik.org/lesson/59057/step/9
 LANG_LIMITS = {
+    "all": {
+        "time": 5,
+        "memory": 256
+    },
     "c": {
         "time": 5,
         "memory": 256
@@ -157,6 +161,7 @@ LANG_LIMITS = {
 
 class StepTaskinline(Step):
     DEFAULT_SCORE = 10
+    DEFAULT_LANG = 'all'
     LANG_TEMPLATE = '::{lang}\n'
     CODE_TEMPLATE = '::code\n{code}\n'
     HEADER_TEMPLATE = '::header\n{header}\n'
@@ -170,89 +175,168 @@ class StepTaskinline(Step):
 """
     TEST_CLOSED = '<p>Остальные тесты закрыты авторами курса.</p>\n'
     # кроме заполнения темплит, нужно еще посчитать количество строк после ключевого слова
+#     DATA_TEMPLATE = {
+#     "stepSource": {
+#         "reason_of_failure": "",
+#         "error": {
+#             "text": "",
+#             "code": "",
+#             "params": {}
+#         },
+#         "warnings": [],
+#         "instruction_id": None,
+#         "has_instruction": False,
+#         "cost": DEFAULT_SCORE,
+#         "is_solutions_unlocked": False,
+#         "solutions_unlocked_attempts": 3,
+#         "max_submissions_count": 3,
+#         "has_submissions_restrictions": False,
+#         "actions": {
+#             "edit_instructions": "#",
+#             "submit": "#"
+#         },
+#         "block": {
+#             "name": "code",
+#             "text": "",  # условие задачи
+#             "video": None,
+#             "options": {    # stepSource.block.options -ограничения на время и память, почему дублируется???
+#                 "execution_time_limit": 5,
+#                 "execution_memory_limit": 256,
+#                 "limits": {
+#                     "python3": {
+#                         "time": 15,
+#                         "memory": 256
+#                     }
+#                 },
+#                 "code_templates": {
+#                     "python3": ""  # stepSource.block.options.code_templates тут вставка шаблона для ученика, куда он будет всписывать код, секция CODE
+#                 },
+#                 "code_templates_header_lines_count": {
+#                     "python3": 0   # от метки ::header до конца, не считая метки сколько линий
+#                 },
+#                 "code_templates_footer_lines_count": {
+#                     "python3": 0
+#                 },
+#                 "code_templates_options": {},
+#                 "samples": [     # сюда первый тест записать
+#                     [
+#                         "3 0 0 4 0 0",
+#                         "6.0"
+#                     ]
+#                 ],
+#                 "is_run_user_code_allowed": True
+#             },
+#             "subtitle_files": [],
+#             "source": {
+#                 "code": "", # содержимое последней вкладки: check, solve, generate
+#                 "execution_memory_limit": 256,   # еще одни лимиты....
+#                 "execution_time_limit": 5,
+#                 "is_memory_limit_scaled": True,
+#                 "is_run_user_code_allowed": True,
+#                 "is_time_limit_scaled": True,
+#                 "manual_memory_limits": [],
+#                 "manual_time_limits": [],
+#                 "samples_count": 1,       # сколько надо выводить примеров, оставляем 1
+#                 "templates_data": "",  # содержимое второй вкладки Языки и шаблоны, всей (видимо)
+#                 "test_archive": [],
+#                 "test_cases": [],    # список тестов, [["input1", "output1"], ["input2", "output2"]]
+#                 "are_all_tests_scored": False
+#             },
+#             "subtitles": {},
+#             "tests_archive": "/api/step-sources/1576649/tests",    # id шага
+#             "feedback_correct": "",
+#             "feedback_wrong": ""
+#         },
+#         "instruction_type": None,
+#         "lesson_id": "408292",    # id урока
+#         "position": 6,            # позиция шага от 1
+#         "status": "ready",
+#         "instruction": None,
+#         "lesson": "408292"       # id урока
+#     }
+# }
     DATA_TEMPLATE = {
     "stepSource": {
-        "reason_of_failure": "",
-        "error": {
-            "text": "",
-            "code": "",
-            "params": {}
-        },
-        "warnings": [],
+        "reason_of_failure": None,
         "instruction_id": None,
         "has_instruction": False,
         "cost": DEFAULT_SCORE,
-        "is_solutions_unlocked": False,
-        "solutions_unlocked_attempts": 3,
+        "is_solutions_unlocked": True,
+        "solutions_unlocked_attempts": 4,
         "max_submissions_count": 3,
         "has_submissions_restrictions": False,
-        "actions": {
-            "edit_instructions": "#",
-            "submit": "#"
-        },
+        "create_date": None,
         "block": {
+            "text": "<p>Вы можете изменить условие задания в этом поле и указать настройки ниже.<br />\n<br />\nНапишите функцию <code>int sum(int a, int b)</code>, которая считает сумму двух чисел.</p>",
             "name": "code",
-            "text": "",  # условие задачи
             "video": None,
-            "options": {    # stepSource.block.options -ограничения на время и память, почему дублируется???
+            "options": None,
+            "source": {
+                "code": "# This is a sample Code Challenge\n# Learn more: https://stepik.org/lesson/9172\n# Ask your questions via help@stepik.org\n\ndef generate():\n    return []\n\ndef check(reply, clue):\n    return reply.strip() == clue.strip()\n\n# def solve(dataset):\n#     a, b = dataset.split()\n#     return str(int(a) + int(b))",
                 "execution_time_limit": 5,
                 "execution_memory_limit": 256,
-                "limits": {
-                    "python3": {
-                        "time": 15,
-                        "memory": 256
-                    }
-                },
-                "code_templates": {
-                    "python3": ""  # stepSource.block.options.code_templates тут вставка шаблона для ученика, куда он будет всписывать код, секция CODE
-                },
-                "code_templates_header_lines_count": {
-                    "python3": 0   # от метки ::header до конца, не считая метки сколько линий
-                },
-                "code_templates_footer_lines_count": {
-                    "python3": 0
-                },
-                "code_templates_options": {},
-                "samples": [     # сюда первый тест записать
-                    [
-                        "3 0 0 4 0 0",
-                        "6.0"
-                    ]
-                ],
-                "is_run_user_code_allowed": True
-            },
-            "subtitle_files": [],
-            "source": {
-                "code": "", # содержимое последней вкладки: check, solve, generate
-                "execution_memory_limit": 256,   # еще одни лимиты....
-                "execution_time_limit": 5,
+                "samples_count": 1,
+                "templates_data": "::c\n::header\n#include <stdio.h>\nint main()\n{\n    int a, b;\n    scanf(\"%d%d\", &a, &b);\n::footer\n    printf(\"%d\\n\", sum(a, b));\n    return 0;\n}\n::code\nint sum(int a, int b)\n{\n    // тут нужно написать код на С, ничего печатать не надо\n    \n}\n\n::c++\n::header\n#include <iostream>\nint main()\n{\n    int a, b;\n    std::cin >> a >> b;\n::footer\n    std::count << sum(a, b) << std::endl;\n    return 0;\n}\n::code\nint sum(int a, int b)\n{\n    // тут нужно написать код на С++, ничего печатать не надо\n    \n}\n\n\n\n\n",
+                "is_time_limit_scaled": True,
                 "is_memory_limit_scaled": True,
                 "is_run_user_code_allowed": True,
-                "is_time_limit_scaled": True,
-                "manual_memory_limits": [],
-                "manual_time_limits": [],
-                "samples_count": 1,       # сколько надо выводить примеров, оставляем 1
-                "templates_data": "",  # содержимое второй вкладки Языки и шаблоны, всей (видимо)
+                "manual_time_limits": [
+                    {
+                        "language": "c++",
+                        "time": 7
+                    },
+                    {
+                        "language": "c++11",
+                        "time": 8
+                    }
+                ],
+                "manual_memory_limits": [
+                    {
+                        "language": "c++",
+                        "memory": 261
+                    },
+                    {
+                        "language": "c++11",
+                        "memory": 262
+                    }
+                ],
                 "test_archive": [],
-                "test_cases": [],    # список тестов, [["input1", "output1"], ["input2", "output2"]]
-                "are_all_tests_scored": False
+                "test_cases": [
+                    [
+                        "8 11\n",
+                        "19\n"
+                    ],
+                    [
+                        "2 3",
+                        "5"
+                    ]
+                ]
             },
-            "subtitles": {},
-            "tests_archive": "/api/step-sources/1576649/tests",    # id шага
-            "feedback_correct": "",
-            "feedback_wrong": ""
+            "feedback_correct": "", # '"Это комментарий к верному ответу.",
+            "feedback_wrong": "", # "Это комментарий к неверному ответу."
         },
         "instruction_type": None,
-        "lesson_id": "408292",    # id урока
-        "position": 6,            # позиция шага от 1
+        "lesson_id": None,
+        "position": 2,
         "status": "ready",
+        "is_enabled": True,
+        "needs_plan": None,
         "instruction": None,
-        "lesson": "408292"       # id урока
+        "lesson": "1950070"
     }
 }
 
     def __init__(self, header: str = '', skip: bool = False):
         super().__init__(header=header, skip=skip)
+        self.lang = self.DEFAULT_LANG
+        self.tests = []
+        self.header = ''
+        self.footer = ''
+        self.code = ''
+        self.checker = None     # TODO: чекеры
+        # нужно, чтобы полностью задать содержимое вкладок
+        self.template = '' # содержимое вкладки Языки и Шаблоны, вместо набора self.header, self.footer, self.code,
+        self.generate_check_solve_tab = '' # содержимое вкладки Расширенный редактор
 
     def parse(self, text: str):
         """Обрабатываем содержимое шага, разбирая его на составные части согласно типу."""
@@ -265,11 +349,22 @@ class StepTaskinline(Step):
         # 'config': [{'lang': 'c'}]}
         print(f'StepTaskinline.parse: {res=}')
 
-        input_data = res['tests'][::1]
-        output_data = res['tests'][1::1]
+        input_data = res['tests'][::2]
+        output_data = res['tests'][1::2]
         self.tests = list(zip(input_data, output_data))
 
         self.config = res.get('config', {})
+        if self.config.get('lang'):
+            self.lang = self.config['lang']
+
+        self.header = res.get('header', '')
+        self.footer = res.get('footer', '')
+        self.code = res.get('code', '')
+        self.template = res.get('template', '')
+        self.generate_check_solve_tab = res.get('gencheksolve', '')
+
+        # пока чекер по умолчанию от Степика
+        self.checker = Checker().stepik_checker()
 
         self.text = res['text']
         markdown_text = '## ' + self.header + '\n' + self.text + \
@@ -280,12 +375,29 @@ class StepTaskinline(Step):
     def to_dict(self) -> dict:
         d = self.DATA_TEMPLATE.copy()
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
-        # один ответ
-        d['stepSource']['block']['source']['options'] = self.options
-        d['stepSource']['block']['source']['sample_size'] = len(self.options)
-        d['stepSource']['block']['source']['is_multiple_choice'] = self.is_multiple_choice
+        # лимиты на память и время размазаны по разным местам
+        limits = LANG_LIMITS[self.lang]
+        d['stepSource']['block']['source']['execution_time_limit'] = limits['time']
+        d['stepSource']['block']['source']['execution_memory_limit'] = limits['memory']
+        d['stepSource']['block']['source']["manual_memory_limits"] = []
+        d['stepSource']['block']['source']["manual_time_limits"] = []
 
-        d['stepSource']['score'] = self.DEFAULT_SCORE
+        if self.lang != 'all':
+            d['stepSource']['block']['source']['templates_data'] = self.template or self.templates_data()
+
+        # содержимое последней вкладки с generate, check, solve
+        d['stepSource']['block']['source']['code'] = self.generate_check_solve_tab or self.gen_check_solve()
+
+        # все в разделе Тестовые данные
+        d['stepSource']['block']['source']['samples_count'] = 1
+
+        # TODO: выяснить в каком виде загружается тестовый архив
+        # d['stepSource']['block']['source']['test_archive'] = []
+        # d['stepSource']['block']['tests_archive'] = "/api/step-sources/{}/tests",  # id шага
+
+        # тесты
+        d['stepSource']['block']['source']['test_cases'] = self.tests
+        d['stepSource']['score'] = self.config.get('score', self.DEFAULT_SCORE)
 
         return d
 
@@ -310,6 +422,19 @@ class StepTaskinline(Step):
             tests_text += self.TEST_CLOSED
 
         return self.TEST_EXAMPLE_SECTION_TEMPLATE.format(tests_text)
+
+    def gen_check_solve(self):
+        """Возвращает содержимое вкладки Расширенный редактор (generate, check, solve)."""
+        return  Checker().stepik_checker()
+
+    def templates_data(self):
+        """Возвращает содержимое вкладки Языки и Шаблоны, собранное из self.lang, self.code, self.header, self.footer."""
+        return '\n'.join ([
+            '::' + self.lang,
+            '::code\n' + self.code,
+            '::header\n' + self.header,
+            '::footer\n' + self.footer
+        ])
 
 
 class ParseSchemaStepTaskinline(ParseSchema):
@@ -348,11 +473,17 @@ class ParseSchemaStepTaskinline(ParseSchema):
         header_title = cls.section_name('HEADER')
         footer_title = cls.section_name('FOOTER')
         code_title = cls.section_name('CODE')
-        section_bound = header_title | footer_title | code_title | tests | config | pp.StringEnd()
+        template_title = cls.section_name('TEMPLATE')
+        genchecksolve_title = cls.section_name('GENCHECKSOLVE')
+        section_bound = header_title | footer_title | code_title | template_title | genchecksolve_title | \
+                        tests | config | pp.StringEnd()
         header = pp.Suppress(header_title) + pp.SkipTo(section_bound)('header')
         footer = pp.Suppress(footer_title) + pp.SkipTo(section_bound)('footer')
         code = pp.Suppress(code_title) + pp.SkipTo(section_bound)('code')
-        section = tests & pp.Opt(config) & pp.Opt(header) & pp.Opt(footer) & pp.Opt(code)
+        template = pp.Suppress(template_title) + pp.SkipTo(section_bound)('template')
+        genchecksolve = pp.Suppress(genchecksolve_title) + pp.SkipTo(section_bound)('genchecksolve')
+        section = tests & pp.Opt(config) & \
+                  pp.Opt(header) & pp.Opt(footer) & pp.Opt(code) & pp.Opt(template) & pp.Opt(genchecksolve)
         # section = tests & config & header & footer & code
 
         # условие - все до первой секции
@@ -372,3 +503,24 @@ class ParseSchemaStepTaskinline(ParseSchema):
         except pp.ParseException as e:
             parse_error(1, text, e.msg)
 
+
+class Checker:
+    """Описываем вкладку Расширенный редактор."""
+
+    def stepik_checker(self) -> str:
+        """Степик по умолчанию вставляет это содержимое при создании задачи на программирование."""
+        return """
+# This is a sample Code Challenge
+# Learn more: https://stepik.org/lesson/9172
+# Ask your questions via help@stepik.org
+
+def generate():
+    return []
+
+def check(reply, clue):
+    return reply.strip() == clue.strip()
+
+# def solve(dataset):
+#     a, b = dataset.split()
+#     return str(int(a) + int(b))        
+        """

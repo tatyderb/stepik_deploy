@@ -37,6 +37,9 @@ class Step(ABC):
             case 'QUIZ':
                 from src.step_quiz import StepQuiz
                 return StepQuiz(header=header, skip=skip)
+            case 'TASKINLINE':
+                from src.step_tasklinline import StepTaskinline
+                return StepTaskinline(header=header, skip=skip)
             case '_':
                 raise NotImplemented(f'Step type {step_type}')
 
