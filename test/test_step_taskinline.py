@@ -43,7 +43,46 @@ expected_res2 = {'text': 'Даны два целых числа на одной 
                  'footer': 'int main()\n{\n    int x;\n    scanf("%d", &x);\n    printf("%d\n", module(x));\n    return 0;\n}',
                  'code': 'int module(int x) {\n    // здесь нужно написать код\n}', 'config': {'lang': 'c', 'score': '5'}}
 
+expected_template_text = """
+::c
+::header
+#include <stdio.h>
+int module(int x);
+::footer
+int main()
+{
+  int x;
+  scanf("%d", &x);
+  printf("%d\n", module(x));
+  return 0;
+}
+::code
+int module(int x) {
+  // здесь нужно написать код
+}
 
+::c++
+::header
+#include <iostream>
+int module(int x);
+::footer
+int main()
+{
+  int x;
+  std::cin >> x;
+  std::cout << module(x)) << std::endl;
+  return 0;
+}
+::code
+int module(int x) {
+  // здесь нужно написать код
+}
+"""
+text3 = "TEMPLATE\n" + expected_template_text
+expected_res3 = {'text': 'Даны два целых числа на одной строке через пробел. Напечатайте их сумму.',
+                 'tests': ['2 3', '5', '-17 -23', '-40'],
+                 'template': expected_template_text.rstrip()
+                 }
 def test_step_inline_simple():
     res = ParseSchemaStepTaskinline.step_taskinline().parseString(text1).as_dict()
     print(f'\nParseSchemaStepTaskinline.step_taskinline: \n{res=}')
@@ -53,6 +92,11 @@ def test_step_inline_simple():
     print(f'\nParseSchemaStepTaskinline.step_taskinline: \n{res=}')
 
     assert res == expected_res2
+
+    res = ParseSchemaStepTaskinline.step_taskinline().parseString(text1 + text3).as_dict()
+    print(f'\nParseSchemaStepTaskinline.step_taskinline: \n{res=}')
+
+    assert res == expected_res3
 
 def test_example_section():
     # все тесты (по умолчанию)
@@ -80,9 +124,11 @@ def test_example_section():
     print(f'\n{res=}')
     assert res == expected_html
 
+
+
 def test_to_dict():
     import json
     step = StepTaskinline(header='')
-    step.parse(text1)
+    step.parse(text1+text3)
     res = step.to_dict()
     print(json.dumps(res, indent=4))

@@ -12,6 +12,7 @@ class Step(ABC):
         self.skip = skip  # надо ли пропускать шаг при деплое
         self.lines = []  # строки содержимого шага в формате markdown
         self.text = ''  # html текст
+        self.config = {}    # словарь опций конфигурации (есть общая часть по всем шагам, есть отдельная по типам шагов)
 
     def __repr__(self):
         return f'skip={self.skip}\nheader={self.header}\nlines={self.lines}\ntext={self.text}'

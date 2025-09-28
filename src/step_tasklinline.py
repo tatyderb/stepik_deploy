@@ -276,7 +276,7 @@ class StepTaskinline(Step):
                 "execution_time_limit": 5,
                 "execution_memory_limit": 256,
                 "samples_count": 1,
-                "templates_data": "::c\n::header\n#include <stdio.h>\nint main()\n{\n    int a, b;\n    scanf(\"%d%d\", &a, &b);\n::footer\n    printf(\"%d\\n\", sum(a, b));\n    return 0;\n}\n::code\nint sum(int a, int b)\n{\n    // тут нужно написать код на С, ничего печатать не надо\n    \n}\n\n::c++\n::header\n#include <iostream>\nint main()\n{\n    int a, b;\n    std::cin >> a >> b;\n::footer\n    std::count << sum(a, b) << std::endl;\n    return 0;\n}\n::code\nint sum(int a, int b)\n{\n    // тут нужно написать код на С++, ничего печатать не надо\n    \n}\n\n\n\n\n",
+                "templates_data": "",  # все содержимое вкладки Языки и Шаблоны одной строкой.
                 "is_time_limit_scaled": True,
                 "is_memory_limit_scaled": True,
                 "is_run_user_code_allowed": True,
@@ -329,13 +329,13 @@ class StepTaskinline(Step):
     def __init__(self, header: str = '', skip: bool = False):
         super().__init__(header=header, skip=skip)
         self.lang = self.DEFAULT_LANG
-        self.tests = []
-        self.header = ''
-        self.footer = ''
-        self.code = ''
+        self.tests = []         # список тестов в формате [['in1', 'out1'], ['in2', 'out2']]
+        self.part_before = ''   # код, вставляемый до студенческого, секция HEADER и часть после ::header
+        self.part_after = ''    # код, вставляемый после студенческого, секция FOOTER и часть после ::footer
+        self.code = ''          # код, который показывается студенту в онлайн-редакторе, когда он переходит на задачу
         self.checker = None     # TODO: чекеры
         # нужно, чтобы полностью задать содержимое вкладок
-        self.template = '' # содержимое вкладки Языки и Шаблоны, вместо набора self.header, self.footer, self.code,
+        self.template = ''      # содержимое вкладки Языки и Шаблоны, вместо набора self.header, self.footer, self.code,
         self.generate_check_solve_tab = '' # содержимое вкладки Расширенный редактор
 
     def parse(self, text: str):
@@ -347,7 +347,7 @@ class StepTaskinline(Step):
         # 'footer': 'int main()\n{\n    int x;\n    scanf("%d", &x);\n    printf("%d\n", module(x));\n    return 0;\n}',
         # 'code': 'int module(int x) {\n    // здесь нужно написать код\n}',
         # 'config': [{'lang': 'c'}]}
-        print(f'StepTaskinline.parse: {res=}')
+        print(f'\nStepTaskinline.parse: {res=}')
 
         input_data = res['tests'][::2]
         output_data = res['tests'][1::2]
@@ -357,8 +357,8 @@ class StepTaskinline(Step):
         if self.config.get('lang'):
             self.lang = self.config['lang']
 
-        self.header = res.get('header', '')
-        self.footer = res.get('footer', '')
+        self.part_before = res.get('header', '')
+        self.part_after = res.get('footer', '')
         self.code = res.get('code', '')
         self.template = res.get('template', '')
         self.generate_check_solve_tab = res.get('gencheksolve', '')
@@ -375,6 +375,7 @@ class StepTaskinline(Step):
     def to_dict(self) -> dict:
         d = self.DATA_TEMPLATE.copy()
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
+
         # лимиты на память и время размазаны по разным местам
         limits = LANG_LIMITS[self.lang]
         d['stepSource']['block']['source']['execution_time_limit'] = limits['time']
@@ -382,8 +383,7 @@ class StepTaskinline(Step):
         d['stepSource']['block']['source']["manual_memory_limits"] = []
         d['stepSource']['block']['source']["manual_time_limits"] = []
 
-        if self.lang != 'all':
-            d['stepSource']['block']['source']['templates_data'] = self.template or self.templates_data()
+        d['stepSource']['block']['source']['templates_data'] = self.templates_data()
 
         # содержимое последней вкладки с generate, check, solve
         d['stepSource']['block']['source']['code'] = self.generate_check_solve_tab or self.gen_check_solve()
@@ -428,12 +428,24 @@ class StepTaskinline(Step):
         return  Checker().stepik_checker()
 
     def templates_data(self):
-        """Возвращает содержимое вкладки Языки и Шаблоны, собранное из self.lang, self.code, self.header, self.footer."""
+        """Возвращает содержимое вкладки Языки и Шаблоны, записанное в self.template
+        или собранное из self.lang, self.code, self.header, self.footer.
+        """
+        # руками описанная вкладка Языки и Шаблоны
+        if self.template:
+            # return ''.join (self.template)
+            return self.template
+
+        # иначе, если языки не ограничены, вкладка должна быть пуста
+        # (а как же блок ::code, он может быть определен вне языка?)
+        if self.lang == 'all':
+            return ''
+
         return '\n'.join ([
             '::' + self.lang,
             '::code\n' + self.code,
-            '::header\n' + self.header,
-            '::footer\n' + self.footer
+            '::header\n' + self.part_before,
+            '::footer\n' + self.part_after
         ])
 
 

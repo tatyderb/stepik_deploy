@@ -84,22 +84,24 @@ TEST
 -21
 ====
 
-## TASKINLINE Напишите функцию
+## TASKINLINE Напишите функцию (HEADER, FOOTER, CODE)
 
 Напишите функцию, которая вычисляет модуль числа.
+
+Функцию нужно написать на языке Си.
 
 ```cpp
 int module(int x); 
 ```
 
 TEST
-2 3
+-5
 ----
 5
 ====
--7 -14
+21
 ----
--21
+21
 ====
 
 HEADER
@@ -108,14 +110,69 @@ int module(int x);
 FOOTER
 int main()
 {
-int x;
-scanf("%d", &x);
-printf("%d\n", module(x));
-return 0;
+    int x;
+    scanf("%d", &x);
+    printf("%d\n", module(x));
+    return 0;
 }
 CODE
 int module(int x) {
-// здесь нужно написать код
+    // здесь нужно написать код
 }
 CONFIG
 lang: c
+
+## TASKINLINE Напишите функцию (TEMPLATE)
+
+Напишите функцию, которая вычисляет модуль числа.
+
+Функцию нужно написать на языке С или С++.
+
+```cpp
+int module(int x); 
+```
+
+TEST
+-5
+----
+5
+====
+21
+----
+21
+====
+
+TEMPLATE
+::c
+::header
+#include <stdio.h>
+int module(int x);
+::footer
+int main()
+{
+  int x;
+  scanf("%d", &x);
+  printf("%d\n", module(x));
+  return 0;
+}
+::code
+int module(int x) {
+  // здесь нужно написать код
+}
+
+::c++
+::header
+#include <iostream>
+int module(int x);
+::footer
+int main()
+{
+  int x;
+  std::cin >> x;
+  std::cout << module(x) << std::endl;
+  return 0;
+}
+::code
+int module(int x) {
+  // здесь нужно написать код
+}
