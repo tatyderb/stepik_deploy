@@ -12,6 +12,7 @@ class Step(ABC):
         self.skip = skip  # надо ли пропускать шаг при деплое
         self.lines = []  # строки содержимого шага в формате markdown
         self.text = ''  # html текст
+        self.config = {}    # словарь опций конфигурации (есть общая часть по всем шагам, есть отдельная по типам шагов)
 
     def __repr__(self):
         return f'skip={self.skip}\nheader={self.header}\nlines={self.lines}\ntext={self.text}'
@@ -37,6 +38,9 @@ class Step(ABC):
             case 'QUIZ':
                 from src.step_quiz import StepQuiz
                 return StepQuiz(header=header, skip=skip)
+            case 'TASKINLINE':
+                from src.step_tasklinline import StepTaskinline
+                return StepTaskinline(header=header, skip=skip)
             case '_':
                 raise NotImplemented(f'Step type {step_type}')
 

@@ -40,7 +40,7 @@ shuffle: false
                      {'letter': 'B', 'text': ' variant2'},
                      {'letter': 'C', 'text': ' variant 3'}],
         'answer': ['A', 'C'],
-        'config': [{'shuffle': 'false'}]
+        'config': {'shuffle': 'false'}
     }
     res = ParseSchemaStepQuiz.step_quiz().parseString(text).as_dict()
     print(f'\nParseSchemaStepQuiz.step_quiz: {res=}')
@@ -74,7 +74,8 @@ shuffle: false
         'variants': [{'letter': 'A', 'text': ' variant1'},
                      {'letter': 'B', 'text': ' variant2'},
                      {'letter': 'C', 'text': ' variant 3'}],
-        'answer': ['B']
+        'answer': ['B'],
+        'config': {'shuffle': 'false'}
     }
     res = ParseSchemaStepQuiz.step_quiz().parseString(text).as_dict()
     print(f'\nParseSchemaStepQuiz.step_quiz: {res=}')

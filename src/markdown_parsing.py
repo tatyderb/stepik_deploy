@@ -1,3 +1,4 @@
+from collections import ChainMap
 import pyparsing as pp
 import sys
 
@@ -92,6 +93,10 @@ class ParseSchema:
             parse_error(line=text, error_msg=e.msg)
 
     @classmethod
+    def section_name(cls, name: str) -> pp.ParserElement:
+        return pp.AtLineStart(name) + pp.LineEnd()
+
+    @classmethod
     def config(cls) -> pp.ParserElement:
         """
         Parsing schema for:
@@ -99,8 +104,9 @@ class ParseSchema:
         var1: val1
         var2: val2
         """
-        section_title = pp.AtLineStart('CONFIG') + pp.LineEnd()
+        section_title = cls.section_name('CONFIG')
         schema = pp.Suppress(section_title) + cls.variables()('config')
+        schema.setParseAction(lambda t: t.as_dict()['config'][0] )
         return schema
 
 
