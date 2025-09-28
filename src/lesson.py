@@ -39,19 +39,25 @@ class Lesson:
 
     def deploy(self, session: StepikSession):
         """Загружает один или все шаги на Stepik."""
+
         old_lesson_info, old_step_ids = self.info(session)
         old_length = len(old_step_ids)
         new_length = len(self.steps)
         update_length = min(old_length, new_length)
+
         logger.info(f'UPDATE from 0 till {update_length} steps {old_step_ids[:update_length]}')
         for i in range(update_length):
             self.steps[i].update(session, lesson_id=self.lesson_id, step_id=old_step_ids[i], position=i+1)
-        logger.info(f'DELETE from {update_length} till {old_length} steps {old_step_ids[update_length:old_length]}')
-        for i in range(update_length, old_length):
-            Step.delete(session, step_id=old_step_ids[i])
-        logger.info(f'CREATE from {update_length} till {new_length} steps')
-        for i in range(update_length, new_length):
-            self.steps[i].create(session, lesson_id=self.lesson_id, position=i+1)
+
+        if update_length < old_length:
+            logger.info(f'DELETE from {update_length} till {old_length} steps {old_step_ids[update_length:old_length]}')
+            for i in range(update_length, old_length):
+                Step.delete(session, step_id=old_step_ids[i])
+
+        if update_length < new_length:
+            logger.info(f'CREATE from {update_length} till {new_length} steps')
+            for i in range(update_length, new_length):
+                self.steps[i].create(session, lesson_id=self.lesson_id, position=i+1)
 
     def validate_lesson_id(self, lesson_id: int):
         """Проверяем, что новый lesson_id не противоречит предыдущей информации и ID определен"""
@@ -100,5 +106,6 @@ class Lesson:
             ok, step_type, skip, h2 = ParseSchema.parse_step_header(entity['h2'])
             print(f'{ok=}, {step_type=}, {skip=}, {h2=}')
             step = Step.create_by_type(step_type=step_type, header=h2, skip=skip)
-            step.parse(entity['text'])
+            if not skip:
+                step.parse(entity['text'])
             self.steps.append(step)

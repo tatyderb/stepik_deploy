@@ -1,4 +1,5 @@
 from abc import abstractmethod, ABC
+import sys
 
 from src.utils import markdown_to_html
 from src.stepik_api import StepikSession
@@ -60,6 +61,9 @@ class Step(ABC):
 
     def update(self, session: StepikSession, lesson_id: int, step_id: int, position: int):
         """Update step."""
+        if self.skip:
+            print(f'SKIP UPDATE step: {step_id=}, {position=}, {lesson_id=}')
+            return
         print(f'UPDATE step: {step_id=}, {position=}, {lesson_id=}')
         body = self.body(lesson_id, position)
         session.update_object('step-sources', step_id, body)
@@ -68,6 +72,11 @@ class Step(ABC):
         """Create step in lesson_id at position (start with 1).
         Return new step ID.
         """
+        if self.skip:
+            print(f'ERROR: SKIP CREATE step: {position=}, {lesson_id=}')
+            print(f'Добавьте вручную шаг любого типа на позицию {position} урока {lesson_id} и запустите загрузку еще раз.')
+            sys.exit(1)
+
         print(f'CREATE step: {position=}, {lesson_id=}')
         body = self.body(lesson_id, position)
         step_id = session.create_object('step-sources', body)
