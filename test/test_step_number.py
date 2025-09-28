@@ -58,6 +58,13 @@ ANSWER: 7
 """
 
 text3 = """
+Найдите x: x^2-6x+5=0
+
+ANSWER = 1
+ANSWER = 5
+"""
+
+text4 = """
 Найдите ошибку в задаче, замените на правильный ответ:
 ```
 ## NUMBER
@@ -74,20 +81,28 @@ ANSWER = 5
 def test_parse_step_number():
     res = ParseSchemaStepNumber.parse_step_number(text1)
     print(f'\nparse_step_number: {res=}')
-    expected_dict = res={'text': ['Условие задачи.\nМного строк'], 'answer': {'number': 3.14, 'accuracy': 0.1}, 'config': [{'score': '5'}]}
+    expected_dict = {'text': 'Условие задачи.\nМного строк', 'answer': [{'number': 3.14, 'accuracy': 0.1}], 'config': [{'score': '5'}]}
     assert res == expected_dict
 
     res = ParseSchemaStepNumber.parse_step_number(text2)
     print(f'\nparse_step_number: {res=}')
     expected_dict = {
         'text': 'Условие задачи.\n```python\nANSWER: 5\n```\nМежду блоками.\n```cpp\nANSWER: 6\n```\nПостусловие.',
-        'answer': {'number': 7, 'accuracy': 0}
+        'answer': [{'number': 7, 'accuracy': 0}]
     }
+    assert res == expected_dict
     res = ParseSchemaStepNumber.parse_step_number(text3)
     print(f'\nparse_step_number: {res=}')
     expected_dict = {
-        'text': 'Найдите ошибку в задаче, замените на правильный ответ:\n```\n## NUMBER\n\nНайдите x: x^2-6x+5=0\n\nANSWER = 1\nANSWER = -3\n```',
-        'answer': {'number': 5, 'accuracy': 0}
+        'text': 'Найдите x: x^2-6x+5=0',
+        'answer': [{'number': 1, 'accuracy': 0}, {'number': 5, 'accuracy': 0}]
+    }
+    assert res == expected_dict
+    res = ParseSchemaStepNumber.parse_step_number(text4)
+    print(f'\nparse_step_number: {res=}')
+    expected_dict = {
+        'text': 'Найдите ошибку в задаче, замените на правильный ответ:\n```\n## NUMBER\n\nНайдите x: x^2-6x+5=0\n\nANSWER = 1\nANSWER = -3\n```\n',
+        'answer': [{'number': 5, 'accuracy': 0}]
     }
     assert res == expected_dict
 

@@ -33,7 +33,7 @@ https://stepik.org/lesson/308220/step/9
 """
 
 import pyparsing as pp
-from pyparsing import ParseResults
+from pyparsing import ParseResults, oneOf
 
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
@@ -94,7 +94,9 @@ class ParseSchemaStepNumber(ParseSchema):
         number = cls.number
         accuracy = (pp.Suppress(pp.Literal('+-')) + cls.number)('accuracy')
         accuracy.setParseAction(lambda t: t.as_list()[0] if isinstance(t, ParseResults) else t)
-        schema = pp.Suppress(pp.Combine(pp.LineStart() + keyword) + ':') + number('answer') + pp.Opt(accuracy)
+        schema = (pp.Suppress(pp.Combine(pp.LineStart() + keyword) + oneOf([":", "="]))
+                  + number('answer')
+                  + pp.Opt(accuracy))
         schema.setParseAction(
             lambda t: {'number': t.answer.as_list()[0] if isinstance(t.answer, ParseResults) else t.answer,
                  'accuracy': t.accuracy or 0})
@@ -120,11 +122,12 @@ class ParseSchemaStepNumber(ParseSchema):
         text
         ANSWER: number +-accuracy
         to dict
-        {'text': ['Условие задачи.\nМного строк'], 'answer': {'number': 3.14, 'accuracy': 0.1}, 'config': [{'score': '5'}]}
+        {'text': ['Условие задачи.\nМного строк'], 'answer': [{'number': 3.14, 'accuracy': 0.1}], 'config': [{'score': '5'}]}
         """
-        answer = cls.answer()('answer')
+        answer = cls.answer()
         config = cls.config()('config')
-        sections = (answer & pp.Opt(config))
+        answers = pp.OneOrMore(answer)('answer')
+        sections = answers & pp.Opt(config)
 
         text_bound = cls.quoted() | sections
         text_part = pp.SkipTo(text_bound)
