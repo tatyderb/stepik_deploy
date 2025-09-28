@@ -81,7 +81,7 @@ ANSWER = 5
 def test_parse_step_number():
     res = ParseSchemaStepNumber.parse_step_number(text1)
     print(f'\nparse_step_number: {res=}')
-    expected_dict = {'text': 'Условие задачи.\nМного строк', 'answer': [{'number': 3.14, 'accuracy': 0.1}], 'config': [{'score': '5'}]}
+    expected_dict = {'text': 'Условие задачи.\nМного строк', 'answer': [{'number': 3.14, 'accuracy': 0.1}], 'config': {'score': '5'}}
     assert res == expected_dict
 
     res = ParseSchemaStepNumber.parse_step_number(text2)

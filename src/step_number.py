@@ -33,7 +33,7 @@ https://stepik.org/lesson/308220/step/9
 """
 
 import pyparsing as pp
-from pyparsing import ParseResults, oneOf
+from pyparsing import ParseResults
 
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
@@ -94,7 +94,7 @@ class ParseSchemaStepNumber(ParseSchema):
         number = cls.number
         accuracy = (pp.Suppress(pp.Literal('+-')) + cls.number)('accuracy')
         accuracy.setParseAction(lambda t: t.as_list()[0] if isinstance(t, ParseResults) else t)
-        schema = (pp.Suppress(pp.Combine(pp.LineStart() + keyword) + oneOf([":", "="]))
+        schema = (pp.Suppress(pp.Combine(pp.LineStart() + keyword) + pp.oneOf([":", "="]))
                   + number('answer')
                   + pp.Opt(accuracy))
         schema.setParseAction(
