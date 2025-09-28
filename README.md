@@ -1,5 +1,7 @@
-# stepik_deploy
+# StepKIT
 Deploy a course to stepik.org, markdown and GIFT format.
+
+По работе с утилитами, форматам шагов и примерами есть онлайн-курс [https://stepik.org/course/253149](https://stepik.org/course/253149)
 
 ## Загрузка данных в курс на Stepik
 
