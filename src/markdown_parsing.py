@@ -170,7 +170,8 @@ class ParseSchema:
             d = t[0]
             d['steps'] = t[1:]
             return d
-        markdown_document.setParseAction(lambda t: print(f'{t=}') or format_data(t))
+        # markdown_document.setParseAction(lambda t: print(f'{t=}') or format_data(t))
+        markdown_document.setParseAction(lambda t: format_data(t))
         return markdown_document
 
     @classmethod
