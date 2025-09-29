@@ -136,3 +136,18 @@ print('hello')
     # print(res)
     assert res == expected_dict
 
+@pytest.mark.parametrize('position, expected_position', [
+    (1, 1),
+    (3, 3),
+    (-1, 5),
+    (-3, 3),
+    (-5, 1),
+])
+def test_make_position_positive(position, expected_position):
+    """Позиция нумеруется с 1."""
+    lesson = Lesson()
+    lesson.steps = [1, 2, 3, 4, 5]
+
+    res = lesson.make_position_positive(position)
+    assert res == expected_position
+

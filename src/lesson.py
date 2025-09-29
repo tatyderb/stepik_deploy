@@ -1,5 +1,6 @@
 """Lesson with several various steps."""
 import logging
+import sys
 
 import pyparsing as pp
 
@@ -37,14 +38,40 @@ class Lesson:
         logger.info(steps)
         return steps
 
-    def deploy(self, session: StepikSession):
-        """Загружает один или все шаги на Stepik."""
+    def deploy(self, session: StepikSession, step_position: int = 0):
+        """Загружает один или все шаги на Stepik.
+        step_position - позиция ОДНОГО шага, который UPDATE (остальные пропускаем):
+        * нумерация с 1
+        * 0 - все шаги (UPDATE, DELETE, CREATE)
+        При попытке CREATE или DELETE одного шага, программа останавливается.
+        """
 
         old_lesson_info, old_step_ids = self.info(session)
         old_length = len(old_step_ids)
         new_length = len(self.steps)
         update_length = min(old_length, new_length)
 
+        # Проверяем, что деплой одного шага не приходится на удаление или создание шага
+        if step_position > new_length:
+            print(f'Нельзя удалить один шаг урока {self.lesson_id} на позиции {step_position}. \
+            Запустите загрузку всего урока для удаления лишних шагов в конце или удалите лишние шаги вручную.')
+            sys.exit(1)
+        if step_position > old_length:
+            print(f'Нельзя создать один шаг урока {self.lesson_id} на позиции {step_position}. \
+            Запустите загрузку всего урока для создания шагов или создайте недостающие шаги вручную.')
+            sys.exit(1)
+
+        # если один шаг, то только UPDATE
+        if step_position:
+            self.steps[step_position-1].update(
+                session,
+                lesson_id=self.lesson_id,
+                step_id=old_step_ids[step_position-1],
+                position=step_position)
+            # после апдейта конкретного шага больше делать нечего, выходим
+            return
+
+        # сюда доходим только если надо деплоить весь урок
         logger.info(f'UPDATE from 0 till {update_length} steps {old_step_ids[:update_length]}')
         for i in range(update_length):
             self.steps[i].update(session, lesson_id=self.lesson_id, step_id=old_step_ids[i], position=i+1)
@@ -75,14 +102,17 @@ class Lesson:
     #################################################################
     # Markdown parsing
     #################################################################
-    def parse_markdown(self, text: str) -> (list[Step], int | None):
+    def parse_markdown(self, text: str, step_position: int = 0) -> (list[Step], int | None):
         """Разбирает текст и возвращает список шагов и словарь с заданными переменными
         {'lesson_id': nnn, 'lang': www} из файла.
-        Если указан position, то все остальные шаги в списке None.
+        Если указан step_position, то все остальные шаги в списке не парсятся:
+        * 0 - все шаги,
+        * от 1 и далее - позиция шага с начала,
+        * от -1 и далее - позиция шага с конца
         """
 
         lesson_info = ParseSchema.parse_document(text)
-        print(f'{lesson_info=}')
+        # print(f'{lesson_info=}')
         # res=[{
         #   'title': 'Урок 1',
         #   'variables': {'lesson': '123', 'lang': 'python3.10'}
@@ -102,10 +132,20 @@ class Lesson:
             self.validate_lesson_id(lesson_id=0)
 
         self.steps = []
-        for entity in lesson_info['steps']:
+        step_position = self.make_position_positive(step_position)
+        for position, entity in enumerate(lesson_info['steps'], 1):
             ok, step_type, skip, h2 = ParseSchema.parse_step_header(entity['h2'])
             print(f'{ok=}, {step_type=}, {skip=}, {h2=}')
             step = Step.create_by_type(step_type=step_type, header=h2, skip=skip)
-            if not skip:
+
+            # парсим только если не SKIP и надо парсить все или нужный номер позиции
+            if not skip and (step_position == 0 or position == step_position):
                 step.parse(entity['text'])
             self.steps.append(step)
+
+    def make_position_positive(self, step_position: int):
+        """Если step_position < 0, то возвращает положительную позицию этого шага (нумеруем с 1)."""
+        if step_position >= 0:
+            return step_position
+        # переводим номер позиции из отрицательной в положительную
+        return len(self.steps) + step_position + 1

@@ -32,7 +32,7 @@ def parse_args():
     parser.add_argument('filename', metavar='FILE', type=str, help='input file (markdown, gift or yaml)')
     # или step, или toc, подумать, что можно оставить один и разбирать в нем {'module': , 'lesson':, 'step':}
     command_group = parser.add_mutually_exclusive_group()
-    command_group.add_argument('-s', '--step', type=int, default=None,
+    command_group.add_argument('-s', '--step', type=int, default=0,
                                help='update only the step N, start N from 1, numbers <0 as step number are allowed too')
     command_group.add_argument('-t', '--toc', type=str, default='',
                                help='module.lesson[.step] format, e.g 3.8 for whole lesson, or 3.8.2 for step only')
@@ -62,9 +62,10 @@ def main():
         # lesson in markdown format
         with open(lesson_file, 'r', encoding='utf8') as fin:
             text = fin.read()
-            lesson.parse_markdown(text)
+            lesson.parse_markdown(text, step_position=args.step)
+
     session = StepikSession()
-    lesson.deploy(session)
+    lesson.deploy(session, step_position=args.step)
 
 
 if __name__ == '__main__':
