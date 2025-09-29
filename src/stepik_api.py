@@ -26,7 +26,7 @@ class StepikSession(LoggedSession):
     def get_token(self, client_id, client_secret):
         logger.info(f'{client_id=}, {client_secret=}')
         auth = requests.auth.HTTPBasicAuth(client_id, client_secret)
-        print(f'{auth=}', file=sys.stderr)
+        # print(f'{auth=}', file=sys.stderr)
         logger.info(f'{auth=}')
         response = self.request('POST', f'{API_HOST}/oauth2/token/',
                                 data={'grant_type': 'client_credentials'},

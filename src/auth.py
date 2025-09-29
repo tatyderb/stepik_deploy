@@ -39,7 +39,7 @@ def read_or_create_auth_data():
     global CLIENT_ID
     global CLIENT_SECRET
     filename = Path(__file__).resolve().parent / AUTH_FILENAME
-    print(filename)
+    # print(filename)
     # файла нет? пишем креды
     if not filename.exists():
         print(f'No file {filename}')
