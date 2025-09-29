@@ -68,10 +68,13 @@ class StepNumber(Step):
         res = ParseSchemaStepNumber.parse_step_number(text)
         print(f'StepNumber.parse: {res=}')
 
-        self.answer = dict()
-        answer = res['answer']
-        self.answer['answer'] = str(float(answer['number']))
-        self.answer['max_error']  = str(float(answer.get('accuracy', 0)))
+        self.answer = [
+            {
+                'answer': str(float(item['number'])),
+                'max_error': str(float(item.get('accuracy', 0)))
+            }
+            for item in res['answer']
+        ]
 
         self.text = res['text']
         markdown_text = '## ' + self.header + '\n' + self.text
@@ -80,9 +83,9 @@ class StepNumber(Step):
     def to_dict(self) -> dict:
         d = self.DEFAULT_BODY.copy()
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
-        # один ответ
-        d['stepSource']['block']['source']['options'] = [self.answer]
-        d['stepSource']['block']['source']['sample_size'] = 1
+        # реализовано для множественного ответа
+        d['stepSource']['block']['source']['options'] = self.answer
+        d['stepSource']['block']['source']['sample_size'] = len(self.answer)
 
         return d
 

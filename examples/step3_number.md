@@ -28,13 +28,12 @@ ANSWER: 4
 
 ANSWER: 0.333 +-0.01
 
-## Два ответа
+## NUMBER Два ответа
 
 Напишите значение любого корня уравнения $sin(x) = x^2$ с точностью до 0.1
 
 ![Графики функций sin(x) и x*x](https://stepik.org/media/attachments/lesson/1950069/sinx_x2.png)
 
-АNSWER: 0
+ANSWER: 0
 ANSWER: 0.87 +- 0.1
-
 
