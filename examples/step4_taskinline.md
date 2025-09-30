@@ -4,7 +4,7 @@ lesson = 1950070
 
 ## Шаблон
 
-[Тест](https://stepik.org/lesson/59057/step/1)
+[Задача на программирование](https://stepik.org/lesson/59057/step/1)
 
 ```
 ## TASKINLINE Заголовок
@@ -178,6 +178,15 @@ int main()
 int module(int x) {
   // здесь нужно написать код
 }
+
+## TASKINLINE Нет входных данных
+
+Напечатайте `Hello`
+
+TEST
+----
+Hello
+====
 
 ## TASKINLINE SKIP тут должно падать при создании
 
