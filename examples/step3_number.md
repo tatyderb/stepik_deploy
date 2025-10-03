@@ -38,3 +38,5 @@ ANSWER: 0.333 +-0.01
 ANSWER: 0
 ANSWER: 0.87 +- 0.1
 
+CONFIG
+score: 3
