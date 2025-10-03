@@ -79,6 +79,9 @@ class StepNumber(Step):
         self.text = res['text']
         markdown_text = '## ' + self.header + '\n' + self.text
         self.text = markdown_text
+        self.config = {}
+        if 'config' in res:
+            self.config = res['config']
 
     def to_dict(self) -> dict:
         d = self.DEFAULT_BODY.copy()
@@ -86,6 +89,8 @@ class StepNumber(Step):
         # реализовано для множественного ответа
         d['stepSource']['block']['source']['options'] = self.answer
         d['stepSource']['block']['source']['sample_size'] = len(self.answer)
+        if 'score' in self.config:
+            d['stepSource']['cost'] = self.config['score']
 
         return d
 
