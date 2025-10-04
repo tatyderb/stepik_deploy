@@ -1,12 +1,11 @@
 from abc import abstractmethod, ABC
-import sys
 
 from src.utils import markdown_to_html
 from src.stepik_api import StepikSession
 
 
 class Step(ABC):
-    STEP_TYPES = ['QUIZ', 'CHOICE', 'TEXT', 'STRING', 'NUMBER', 'TASKINLINE']
+    STEP_TYPES = ['QUIZ', 'CHOICE', 'TEXT', 'STRING', 'NUMBER', 'TASKINLINE', 'ESSAY']
 
     def __init__(self, header: str = '', skip: bool = False):
         self.header = header  # текст заголовка шага без ##
@@ -42,6 +41,9 @@ class Step(ABC):
             case 'TASKINLINE':
                 from src.step_tasklinline import StepTaskinline
                 return StepTaskinline(header=header, skip=skip)
+            case 'ESSAY':
+                from src.step_essay import StepEssay
+                return StepEssay(header=header, skip=skip)
             case '_':
                 raise NotImplemented(f'Step type {step_type}')
 
