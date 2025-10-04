@@ -66,6 +66,8 @@ ANSWER: A, D
 
 Какие функции изображены на графике?
 
+![Графики функций](https://stepik.org/media/attachments/lesson/1950069/sinx_x2.png)
+
 A. $sin(x)$
 B. $x^2$
 C. x < 0
