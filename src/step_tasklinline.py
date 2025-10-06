@@ -72,7 +72,7 @@ https://stepik.org/lesson/59057/step/1
             },
             "subtitle_files": [],
             "source": {
-                "code": "# This is a sample Code Challenge\n# Learn more: https://stepik.org/lesson/9173\n# Ask your questions via support@stepik.org\n\nimport math\n\ndef generate():\n    return [] \n\ndef check(reply, clue):\n    if reply == '':\n        return False\n    reply = float(reply)\n    clue = float(clue)\n    return abs(float(reply) - float(clue)) < 0.01\n    #return replay.strip() == clue.strip()\n\ndef dist(x1, y1, x2, y2):\n    dx = x1 - x2\n    dy = y1 - y2\n    return math.sqrt(dx*dx + dy*dy)\n    \n#def solve(dataset):\n#    x1, y1, x2, y2, x3, y3 = map(float, dataset.split())\n#    a = dist(x1, y1, x2, y2)\n#    b = dist(x1, y1, x3, y3)\n#    c = dist(x2, y2, x3, y3)\n#    p = (a + b + c) / 2\n#    return str(math.sqrt(p*(p-a)*(p-b)*(p-c)))",
+                "code": "# This is a sample Code Challenge\n# Learn more: https://stepik.org/lesson/9173\n# Ask your questions via support@stepik.org\n\nimport math\n\ndef generate():\n    return [] \n\ndef check(reply, clue):\n    if reply == '':\n        return False\n    reply = float(reply)\n    clue = float(clue)\n    return abs(float(reply) - float(clue)) < 0.01\n    #return reply.strip() == clue.strip()\n\ndef dist(x1, y1, x2, y2):\n    dx = x1 - x2\n    dy = y1 - y2\n    return math.sqrt(dx*dx + dy*dy)\n    \n#def solve(dataset):\n#    x1, y1, x2, y2, x3, y3 = map(float, dataset.split())\n#    a = dist(x1, y1, x2, y2)\n#    b = dist(x1, y1, x3, y3)\n#    c = dist(x2, y2, x3, y3)\n#    p = (a + b + c) / 2\n#    return str(math.sqrt(p*(p-a)*(p-b)*(p-c)))",
                 "execution_memory_limit": 256,
                 "execution_time_limit": 5,
                 "is_memory_limit_scaled": true,
@@ -125,7 +125,7 @@ https://stepik.org/lesson/59057/step/1
 import pyparsing as pp
 from pyparsing import ParseResults
 
-from src.checker import stepik_genchecksolve
+from src.checker import stepik_genchecksolve, get_checker_function_by_name, myself_genchecksolve
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
@@ -163,6 +163,8 @@ LANG_LIMITS = {
 class StepTaskinline(Step):
     DEFAULT_SCORE = 10
     DEFAULT_LANG = 'all'
+    DEFAULT_CHECKER_NAME = 'check_asis'
+    DEFAULT_MODE = 'stepik'
     LANG_TEMPLATE = '::{lang}\n'
     CODE_TEMPLATE = '::code\n{code}\n'
     HEADER_TEMPLATE = '::header\n{header}\n'
@@ -336,7 +338,11 @@ class StepTaskinline(Step):
         self.part_before = ''   # код, вставляемый до студенческого, секция HEADER и часть после ::header
         self.part_after = ''    # код, вставляемый после студенческого, секция FOOTER и часть после ::footer
         self.code = ''          # код, который показывается студенту в онлайн-редакторе, когда он переходит на задачу
-        self.checker = None     # TODO: чекеры
+        self.checker = self.DEFAULT_CHECKER_NAME
+        self.additional_parameter = ''  # дополнительные параметры для чекера
+        self.mode = self.DEFAULT_MODE   # 'stepik', 'myself' - как показывать тестовые данные и результаты тестирования
+        self.open_tests = -1     # количество открытых тестов, -1 - все тесты открыты
+
         # нужно, чтобы полностью задать содержимое вкладок
         self.template = ''      # содержимое вкладки Языки и Шаблоны, вместо набора self.header, self.footer, self.code,
         self.generate_check_solve_tab = '' # содержимое вкладки Расширенный редактор
@@ -359,6 +365,11 @@ class StepTaskinline(Step):
         self.config = res.get('config', {})
         if self.config.get('lang'):
             self.lang = self.config['lang']
+        # -1 - все тесты открыты
+        self.open_tests = int(self.config.get('open_tests', -1))
+        if self.open_tests < 0 or self.open_tests > len(self.tests):
+            self.open_tests = len(self.tests)
+        print(f'{self.open_tests=}')
 
         self.part_before = res.get('header', '')
         self.part_after = res.get('footer', '')
@@ -367,17 +378,17 @@ class StepTaskinline(Step):
         self.generate_check_solve_tab = res.get('gencheksolve', '')
 
         # пока чекер по умолчанию от Степика
-        self.checker = stepik_genchecksolvestepik_checker()
+        self.checker = res.get('checker', self.DEFAULT_CHECKER_NAME)
 
         self.text = res['text']
-        markdown_text = '## ' + self.header + '\n' + self.text + \
-                        self.test_examples(self.tests, visible_tests_number=self.config.get('visible_tests_number', -1))
+        markdown_text = '## ' + self.header + '\n' + self.text
+
 
         self.text = markdown_text
 
     def to_dict(self) -> dict:
         d = self.DATA_TEMPLATE.copy()
-        d['stepSource']['block']['text'] = markdown_to_html(self.text)
+        # при self.mode == 'myself' добавится раздел с тестовыми данными, см. ниже
 
         # лимиты на память и время размазаны по разным местам
         limits = LANG_LIMITS[self.lang]
@@ -388,21 +399,52 @@ class StepTaskinline(Step):
 
         d['stepSource']['block']['source']['templates_data'] = self.templates_data()
 
-        # содержимое последней вкладки с generate, check, solve
-        d['stepSource']['block']['source']['code'] = self.generate_check_solve_tab or self.gen_check_solve()
+        # Представление тестовых данных и реакция на запуск программы определяется
+        # self.mode == 'stepik'
+        # * все тестовые данные заданы в d['stepSource']['block']['source']['test_cases']
+        # * открытые и закрытые тесты регулируются силами Stepik через d['stepSource']['block']['source']['samples_count']
+        # self.mode == 'myself'
+        # * samples = 0,
+        # * показ тестовых данных в условии; первый тест развернут, остальные под <details>
+        # * результата прогонов регулируется через generate + check
 
-        # все в разделе Тестовые данные
-        d['stepSource']['block']['source']['samples_count'] = 1
+        function = get_checker_function_by_name(self.checker)
+
+        match self.mode:
+            case 'stepik':
+                # используем функциональность степика
+                # содержимое последней вкладки с generate, check, solve
+                d['stepSource']['block']['source']['code'] = \
+                    self.generate_check_solve_tab or \
+                    stepik_genchecksolve(checker_function=function, additional_parameter=self.additional_parameter)
+                # тесты
+                d['stepSource']['block']['source']['test_cases'] = self.tests
+                d['stepSource']['block']['source']['samples_count'] = self.open_tests
+
+            case 'myself':
+                # используем функциональность степика
+                # содержимое последней вкладки с generate, check, solve
+                d['stepSource']['block']['source']['code'] = \
+                    self.generate_check_solve_tab or \
+                    myself_genchecksolve(tests=self.tests, checker_function=function, additional_parameter=self.additional_parameter)
+                # тесты
+                d['stepSource']['block']['source']['test_cases'] = []
+                d['stepSource']['block']['source']['samples_count'] = 0
+
+                self.text += self.test_examples(self.tests, visible_tests_number=self.open_tests)
+
+            case '_':
+                raise ValueError(f'mode {self.mode} не существует; только stepik и myself')
 
         # TODO: выяснить в каком виде загружается тестовый архив
         # d['stepSource']['block']['source']['test_archive'] = []
         # d['stepSource']['block']['tests_archive'] = "/api/step-sources/{}/tests",  # id шага
 
-        # тесты
-        d['stepSource']['block']['source']['test_cases'] = self.tests
         d['stepSource']['score'] = self.config.get('score', self.DEFAULT_SCORE)
+        d['stepSource']['block']['text'] = markdown_to_html(self.text)
 
         return d
+
 
     def test_examples(self, tests, visible_tests_number: int = -1):
         """Возвращает тесты в html виде для вставки в условие в секции Тестовые данные.
@@ -428,7 +470,9 @@ class StepTaskinline(Step):
 
     def gen_check_solve(self):
         """Возвращает содержимое вкладки Расширенный редактор (generate, check, solve)."""
-        return  stepik_genchecksolve()
+        function = get_checker_function_by_name(self.checker)
+
+        return  stepik_genchecksolve(checker_function=function, additional_parameter=self.additional_parameter)
 
     def templates_data(self):
         """Возвращает содержимое вкладки Языки и Шаблоны, записанное в self.template
@@ -469,18 +513,45 @@ class ParseSchemaStepTaskinline(ParseSchema):
     def step_taskinline(cls) -> pp.ParserElement:
         """
         text
-        A. variant1
-        B. variant2
-        C. variant3
-        ANSWER: A, C
+        TEST
+        input1
+        ----
+        output1
+        ====
+        input2
+        ----
+        output2
+        ====
+        HEADER
+        до кода студента
+        FOOTER
+        после кода студента
+        CODE
+        шаблон в онлайн редакторе для студента
+        GENCHECKSOLVE
+        полное содержимое вкладки расширенного редактора, самое приоритетное
         CONFIG:
-        shuffle: false
+        checker: checker_float_seq
+        additional_parameters: EPS = 0.01
+        mode: stepik
+        open_tests: 3
+        lang: c_valgrind
+
         to dict
         {
             'text': ['Условие задачи.\nМного строк'],
-            'variants': ['variant1', 'variant2', 'variant3'],
-            'answer': ['A', 'C'],
-            'config': [{'shuffle': False}]
+            'tests': [['input1', 'output1'], ['input2', 'output2']],
+            'header': '#include <stdio.h>\ntypedef unsigned long long int llu;\n',
+            'footer': 'int main() {\n    printf("hello"); return 0;\n}\n',
+            'code': 'void sum (int a, int b)\n{\n\n}\n',
+            'genchecksolve': text,
+            'config': [
+                'checker': checker_float_seq,
+                'additional_parameters': 'EPS = 0.01',
+                'mode': 'stepik',
+                'open_tests': '3',
+                'lang': 'c_valgrind'
+            ]
         }
         """
         tests = cls.tests()('tests')
@@ -488,7 +559,7 @@ class ParseSchemaStepTaskinline(ParseSchema):
         header_title = cls.section_name('HEADER')
         footer_title = cls.section_name('FOOTER')
         code_title = cls.section_name('CODE')
-        template_title = cls.section_name('TEMPLATE')
+        template_title = cls.section_name('TEMPLATE')  # для чего она нужна???
         genchecksolve_title = cls.section_name('GENCHECKSOLVE')
         section_bound = header_title | footer_title | code_title | template_title | genchecksolve_title | \
                         tests | config | pp.StringEnd()
