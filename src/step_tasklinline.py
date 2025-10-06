@@ -125,6 +125,7 @@ https://stepik.org/lesson/59057/step/1
 import pyparsing as pp
 from pyparsing import ParseResults
 
+from src.checker import stepik_genchecksolve
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
@@ -174,6 +175,8 @@ class StepTaskinline(Step):
 <pre>{test_output}</pre>
 """
     TEST_CLOSED = '<p>Остальные тесты закрыты авторами курса.</p>\n'
+
+
     # кроме заполнения темплит, нужно еще посчитать количество строк после ключевого слова
 #     DATA_TEMPLATE = {
 #     "stepSource": {
@@ -364,7 +367,7 @@ class StepTaskinline(Step):
         self.generate_check_solve_tab = res.get('gencheksolve', '')
 
         # пока чекер по умолчанию от Степика
-        self.checker = Checker().stepik_checker()
+        self.checker = stepik_genchecksolvestepik_checker()
 
         self.text = res['text']
         markdown_text = '## ' + self.header + '\n' + self.text + \
@@ -425,7 +428,7 @@ class StepTaskinline(Step):
 
     def gen_check_solve(self):
         """Возвращает содержимое вкладки Расширенный редактор (generate, check, solve)."""
-        return  Checker().stepik_checker()
+        return  stepik_genchecksolve()
 
     def templates_data(self):
         """Возвращает содержимое вкладки Языки и Шаблоны, записанное в self.template
@@ -516,23 +519,3 @@ class ParseSchemaStepTaskinline(ParseSchema):
             parse_error(1, text, e.msg)
 
 
-class Checker:
-    """Описываем вкладку Расширенный редактор."""
-
-    def stepik_checker(self) -> str:
-        """Степик по умолчанию вставляет это содержимое при создании задачи на программирование."""
-        return """
-# This is a sample Code Challenge
-# Learn more: https://stepik.org/lesson/9172
-# Ask your questions via help@stepik.org
-
-def generate():
-    return []
-
-def check(reply, clue):
-    return reply.strip() == clue.strip()
-
-# def solve(dataset):
-#     a, b = dataset.split()
-#     return str(int(a) + int(b))        
-        """
