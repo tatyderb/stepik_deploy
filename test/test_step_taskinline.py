@@ -100,29 +100,51 @@ def test_step_inline_simple():
 
 def test_example_section():
     # все тесты (по умолчанию)
-    expected_html = "<details><summary>Тестовые данные</summary>\n\n<h4>Test #1 input</h4>\n<pre>3 2</pre>\n<h4>Test #1 output</h4>\n<pre>-3 2</pre>\n\n\n<h4>Test #2 input</h4>\n<pre>-3 2</pre>\n<h4>Test #2 output</h4>\n<pre>3 2</pre>\n\n\n<h4>Test #3 input</h4>\n<pre>-10 -7</pre>\n<h4>Test #3 output</h4>\n<pre>10 -7</pre>\n\n\n<h4>Test #4 input</h4>\n<pre>10 -7</pre>\n<h4>Test #4 output</h4>\n<pre>-10 -7</pre>\n\n\n<h4>Test #5 input</h4>\n<pre>0 0</pre>\n<h4>Test #5 output</h4>\n<pre>0 0</pre>\n</details>"
+    expected_html = """
+<h4>Test #1 input</h4>
+<pre>3 2</pre>
+<h4>Test #1 output</h4>
+<pre>-3 2</pre>
+<details><summary>Тестовые данные</summary>
+
+<h4>Test #2 input</h4>
+<pre>-3 2</pre>
+<h4>Test #2 output</h4>
+<pre>3 2</pre>
+\n\n<h4>Test #3 input</h4>\n<pre>-10 -7</pre>\n<h4>Test #3 output</h4>\n<pre>10 -7</pre>\n\n\n<h4>Test #4 input</h4>\n<pre>10 -7</pre>\n<h4>Test #4 output</h4>\n<pre>-10 -7</pre>\n\n\n<h4>Test #5 input</h4>\n<pre>0 0</pre>\n<h4>Test #5 output</h4>\n<pre>0 0</pre>\n</details>"""
     tests = [['3 2', '-3 2'], ['-3 2', '3 2'], ['-10 -7', '10 -7'], ['10 -7', '-10 -7'], ['0 0', '0 0']]
     s = StepTaskinline()
     res = s.test_examples(tests, visible_tests_number=-1)
     print(f'\n{res=}')
-    assert res == expected_html
+    assert expected_html == res
 
     # # 3 открытых теста
-    expected_html = "<details><summary>Тестовые данные</summary>\n\n<h4>Test #1 input</h4>\n<pre>3 2</pre>\n<h4>Test #1 output</h4>\n<pre>-3 2</pre>\n\n\n<h4>Test #2 input</h4>\n<pre>-3 2</pre>\n<h4>Test #2 output</h4>\n<pre>3 2</pre>\n\n\n<h4>Test #3 input</h4>\n<pre>-10 -7</pre>\n<h4>Test #3 output</h4>\n<pre>10 -7</pre>\n<p>Остальные тесты закрыты авторами курса.</p>\n</details>"
+    expected_html = """
+<h4>Test #1 input</h4>
+<pre>3 2</pre>
+<h4>Test #1 output</h4>
+<pre>-3 2</pre>
+<details><summary>Тестовые данные</summary>
+
+<h4>Test #2 input</h4>
+<pre>-3 2</pre>
+<h4>Test #2 output</h4>
+<pre>3 2</pre>
+\n\n<h4>Test #3 input</h4>\n<pre>-10 -7</pre>\n<h4>Test #3 output</h4>\n<pre>10 -7</pre>\n<p>Остальные тесты закрыты авторами курса.</p>\n</details>"""
     res = s.test_examples(tests, visible_tests_number=3)
     print(f'\n{res=}')
-    assert res == expected_html
+    assert expected_html == res
 
     # Тестов нет
     expected_html = "<details><summary>Тестовые данные</summary>\nДанные закрыты.</details>"
     res = s.test_examples(tests, visible_tests_number=0)
     print(f'\n{res=}')
-    assert res == expected_html
+    assert expected_html == res
 
     expected_html = ''
     res = s.test_examples(tests, visible_tests_number=-2)
     print(f'\n{res=}')
-    assert res == expected_html
+    assert expected_html == res
 
 
 

@@ -125,7 +125,7 @@ https://stepik.org/lesson/59057/step/1
 import pyparsing as pp
 from pyparsing import ParseResults
 
-from src.checker import stepik_genchecksolve, get_checker_function_by_name, myself_genchecksolve
+from src.checker import stepik_genchecksolve, get_checker_function_by_name, custom_genchecksolve
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
@@ -340,7 +340,7 @@ class StepTaskinline(Step):
         self.code = ''          # код, который показывается студенту в онлайн-редакторе, когда он переходит на задачу
         self.checker = self.DEFAULT_CHECKER_NAME
         self.additional_parameter = ''  # дополнительные параметры для чекера
-        self.mode = self.DEFAULT_MODE   # 'stepik', 'myself' - как показывать тестовые данные и результаты тестирования
+        self.mode = self.DEFAULT_MODE   # 'stepik', 'custom' - как показывать тестовые данные и результаты тестирования
         self.open_tests = -1     # количество открытых тестов, -1 - все тесты открыты
 
         # нужно, чтобы полностью задать содержимое вкладок
@@ -365,6 +365,7 @@ class StepTaskinline(Step):
         self.config = res.get('config', {})
         if self.config.get('lang'):
             self.lang = self.config['lang']
+        self.mode = self.config.get('mode', 'stepik')
         # -1 - все тесты открыты
         self.open_tests = int(self.config.get('open_tests', -1))
         if self.open_tests < 0 or self.open_tests > len(self.tests):
@@ -378,17 +379,15 @@ class StepTaskinline(Step):
         self.generate_check_solve_tab = res.get('gencheksolve', '')
 
         # пока чекер по умолчанию от Степика
-        self.checker = res.get('checker', self.DEFAULT_CHECKER_NAME)
+        self.checker = self.config.get('checker', self.DEFAULT_CHECKER_NAME)
 
         self.text = res['text']
         markdown_text = '## ' + self.header + '\n' + self.text
-
-
         self.text = markdown_text
 
     def to_dict(self) -> dict:
         d = self.DATA_TEMPLATE.copy()
-        # при self.mode == 'myself' добавится раздел с тестовыми данными, см. ниже
+        # при self.mode == 'custom' добавится раздел с тестовыми данными, см. ниже
 
         # лимиты на память и время размазаны по разным местам
         limits = LANG_LIMITS[self.lang]
@@ -403,7 +402,7 @@ class StepTaskinline(Step):
         # self.mode == 'stepik'
         # * все тестовые данные заданы в d['stepSource']['block']['source']['test_cases']
         # * открытые и закрытые тесты регулируются силами Stepik через d['stepSource']['block']['source']['samples_count']
-        # self.mode == 'myself'
+        # self.mode == 'custom'
         # * samples = 0,
         # * показ тестовых данных в условии; первый тест развернут, остальные под <details>
         # * результата прогонов регулируется через generate + check
@@ -414,6 +413,7 @@ class StepTaskinline(Step):
             case 'stepik':
                 # используем функциональность степика
                 # содержимое последней вкладки с generate, check, solve
+                print('Генерируем данные для mode=stepik')
                 d['stepSource']['block']['source']['code'] = \
                     self.generate_check_solve_tab or \
                     stepik_genchecksolve(checker_function=function, additional_parameter=self.additional_parameter)
@@ -421,12 +421,18 @@ class StepTaskinline(Step):
                 d['stepSource']['block']['source']['test_cases'] = self.tests
                 d['stepSource']['block']['source']['samples_count'] = self.open_tests
 
-            case 'myself':
+            case 'custom':
                 # используем функциональность степика
                 # содержимое последней вкладки с generate, check, solve
+                print('Генерируем данные для mode=custom')
                 d['stepSource']['block']['source']['code'] = \
                     self.generate_check_solve_tab or \
-                    myself_genchecksolve(tests=self.tests, checker_function=function, additional_parameter=self.additional_parameter)
+                    custom_genchecksolve(
+                        tests=self.tests,
+                        checker_function=function,
+                        additional_parameter=self.additional_parameter,
+                        open_tests=self.open_tests
+                    )
                 # тесты
                 d['stepSource']['block']['source']['test_cases'] = []
                 d['stepSource']['block']['source']['samples_count'] = 0
@@ -434,7 +440,7 @@ class StepTaskinline(Step):
                 self.text += self.test_examples(self.tests, visible_tests_number=self.open_tests)
 
             case '_':
-                raise ValueError(f'mode {self.mode} не существует; только stepik и myself')
+                raise ValueError(f'mode {self.mode} не существует; только stepik и custom')
 
         # TODO: выяснить в каком виде загружается тестовый архив
         # d['stepSource']['block']['source']['test_archive'] = []
@@ -456,17 +462,22 @@ class StepTaskinline(Step):
         elif visible_tests_number == 0:
             return self.TEST_EXAMPLE_SECTION_TEMPLATE.format('Данные закрыты.')
 
-        # форматируем данные тестов для секции Тестовые данные
-        visible_tests = tests[:visible_tests_number] if visible_tests_number > 0 else tests
+        # форматируем данные тестов для первого теста и секции Тестовые данные
+        # первый тест виден
+        number = 1
+        test = tests[0]
+        first_test = self.TEST_EXAMPLE_TEMPLATE.format(number=number, test_input=test[0], test_output=test[1])
+
+        visible_tests = tests[1:visible_tests_number] if visible_tests_number > 0 else tests[1:]
         tests_text = '\n'.join([
             self.TEST_EXAMPLE_TEMPLATE.format(number=number, test_input=test[0], test_output=test[1])
-            for number, test in enumerate(visible_tests, 1)
+            for number, test in enumerate(visible_tests, 2)
         ])
         # добавляем надпись, что остальные тесты закрыты
         if visible_tests_number != -1 and len(tests) > visible_tests_number:
             tests_text += self.TEST_CLOSED
 
-        return self.TEST_EXAMPLE_SECTION_TEMPLATE.format(tests_text)
+        return first_test + self.TEST_EXAMPLE_SECTION_TEMPLATE.format(tests_text)
 
     def gen_check_solve(self):
         """Возвращает содержимое вкладки Расширенный редактор (generate, check, solve)."""

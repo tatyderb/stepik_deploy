@@ -21,8 +21,8 @@ def test_checker_asis(reply, clue, exp_ok, exp_diff):
 @pytest.mark.parametrize("reply, clue, exp_ok, exp_diff", [
     ('12', '12', True, None),
     ('12 34', '12\n34', True, None),
-    ('12 34', '12 34 56', False, 'Output: 2 numbers\nCorrect output: 3 numbers'),
-    ('12 35 56', '12 34 56', False, 'Output: 35\nCorrect output: 34\n'),
+    ('12 34', '12 34 56', False, 'Output: 2 numbers\nExpected: 3 numbers'),
+    ('12 35 56', '12 34 56', False, 'Output: 35\nExpected: 34\n'),
 ])
 def test_checker_int_seq(reply, clue, exp_ok, exp_diff):
     res = check_int_seq(reply, clue)
@@ -34,8 +34,8 @@ def test_checker_int_seq(reply, clue, exp_ok, exp_diff):
 @pytest.mark.parametrize("reply, clue, eps, exp_ok, exp_diff", [
     ('12', '12', 0, True, None),
     ('12.1 34.01', '12.10001\n34.0100003', 0.0001, True, None),
-    ('12 34.0', '12 34.1 56', 0.0001, False, 'Output: 2 numbers\nCorrect output: 3 numbers\n'),
-    ('12 34.5 56', '12 34.4 56', 0.00001, False, 'Output: 34.5\nCorrect output: 34.4\nAccuracy: 1e-05\n'),
+    ('12 34.0', '12 34.1 56', 0.0001, False, 'Output: 2 numbers\nExpected: 3 numbers\n'),
+    ('12 34.5 56', '12 34.4 56', 0.00001, False, 'Output: 34.5\nExpected: 34.4\nAccuracy: 1e-05\n'),
     ('12 34.5 56', '12 34.4 56', 0.11, True, None),
 ])
 def test_checker_float_seq(reply, clue, eps, exp_ok, exp_diff):
@@ -85,4 +85,24 @@ def check(reply, clue):
 
 '''
     # assert expected_text == text
+
+@pytest.mark.parametrize('tests, open_tests, encoded_tests', [
+    ([['2 3\n', '5\n'], ['-7 3\n', '-4\n']], -1, ['1 1\n2 3\n----\n5\n', '2 1\n-7 3\n----\n-4\n']),
+    ([['2\n3\n', '5\n-1\n'], ['-7\n3\n', '-4\n-10\n']], 1, ['1 1\n2\n3\n----\n5\n-1\n', '2 0\n-7\n3\n----\n-4\n-10\n'])
+])
+def test_encode(tests, open_tests, encoded_tests):
+    encoded_res = checker.encode_tests(tests, open_tests)
+    print(encoded_res)
+    assert encoded_tests == encoded_res
+
+@pytest.mark.parametrize('tests, encoded_tests', [
+    ([('2 3\n', '5\n', 1, 1), ('-7 3\n', '-4\n', 2, 1)], ['1 1\n2 3\n----\n5\n', '2 1\n-7 3\n----\n-4\n']),
+    ([('2\n3\n', '5\n-1\n', 1, 1), ('-7\n3\n', '-4\n-10\n', 2, 0)], ['1 1\n2\n3\n----\n5\n-1\n', '2 0\n-7\n3\n----\n-4\n-10\n'])
+])
+def test_decode(tests, encoded_tests):
+    decoded_tests = checker.decode_tests(encoded_tests)
+    print(decoded_tests)
+    assert tests == decoded_tests
+
+
 
