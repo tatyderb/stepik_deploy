@@ -72,12 +72,7 @@ class StepEssay(Step):
                 d['stepSource']['cost'] = self.config['score']
             else:
                 option = self.config[key]
-                if option.lower() in ['1', 'yes', 'true']:
-                    d['stepSource']['block']['source'][key] = True
-                elif option.lower() in ['0', 'no', 'false']:
-                    d['stepSource']['block']['source'][key] = False
-                else:
-                    raise ValueError(f'Недопустимое значение {key}')
+                d['stepSource']['block']['source'][key] = ParseSchema.to_boolean(option)
         return d
 
 
@@ -87,12 +82,21 @@ class ParseSchemaStepEssay(ParseSchema):
     def step_essay(cls) -> pp.ParserElement:
         """
         text
+        Условие задачи.
+        CONFIG
+        score: 5
         to dict
-        {'text': ['Условие задачи.\nМного строк'], 'config': {'score': '5'}}
+        {
+            'text': 'Условие задачи.',
+            'config': 
+            {
+                'score': '5'
+            }
+        }
         """
 
         config = cls.config()('config')
-        text_part = pp.SkipTo(cls.quoted() | config | pp.StringEnd())('text')
+        text_part = pp.SkipTo(config | pp.StringEnd())('text')
         
         text_part.setParseAction(lambda t: [t[0].strip()])
         schema = text_part + pp.Optional(config)
@@ -101,6 +105,6 @@ class ParseSchemaStepEssay(ParseSchema):
     @classmethod
     def parse_step_essay(cls, text: str) -> ParseResults:
         try:
-            return cls.step_essay().parseString(text).as_dict()
+            return cls.step_essay().parseString(text, parse_all=True).as_dict()
         except pp.ParseException as e:
             parse_error(1, text, e.msg)
