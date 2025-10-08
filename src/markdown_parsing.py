@@ -38,6 +38,23 @@ class ParseSchema:
     def to_number(cls, text: str) -> int | float:
         """Преобразует строку в int или float. Убедитесь сначала, что это число."""
         return float(text) if '.' in text else int(text)
+    
+    @classmethod
+    def to_boolean(cls, word: str) -> bool:
+        """Преобразует слово в bool. Доступны несколько вариантов"""
+        true_values = ["true", "1", "yes", "on", "y", "enable", "да", "вкл", "+"]
+        false_values = ["false", "0", "no", "off", "n", "disable", "нет", "выкл", "-"]
+
+        true_parser = pp.oneOf(true_values, caseless=True).setParseAction(lambda: True)
+        false_parser = pp.oneOf(false_values, caseless=True).setParseAction(lambda: False)
+
+        bool_parser = true_parser | false_parser
+    
+        try:
+            result = bool_parser.parseString(word.strip())
+            return result[0]
+        except pp.ParseException:
+            raise ValueError(f"Невозможно преобразовать '{word}' в булево значение")
 
     @classmethod
     def variables(cls) -> pp.ParserElement:
