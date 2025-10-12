@@ -3,3 +3,4 @@ markdown
 pyparsing
 requests
 pytest
+click
