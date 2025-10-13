@@ -26,37 +26,38 @@ def get_lesson_file(filename, toc, step):
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+HELP_EPILOG = '''\b
+Примеры:
+  python deploy.py lesson.md                Загрузить весь урок, лежащий в step3_number.md.
+  python deploy.py -s 1 lesson.md           Загрузить только первый шаг из этого урока.
+  python deploy.py -s -1 lesson.md          Загрузить только последний шаг из этого урока.
 
-@click.command(context_settings=CONTEXT_SETTINGS)
+\b
+Об ошибках сообщайте по адресу: <https://github.com/tatyderb/stepik_deploy/issues>
+Репозиторий проекта: <https://github.com/tatyderb/stepik_deploy>
+Онлайн курс, демонстрирующий работу с этой утилитой: <https://stepik.org/course/253149>
+'''
+
+@click.command(context_settings=CONTEXT_SETTINGS, epilog=HELP_EPILOG)
 @click.argument('filename', type=click.Path(exists=True))
-#  Справки на английском (исходные)
+@click.help_option('-h', '--help', help='показать эту справку и выйти')
 @click.option('-s', '--step', type=int, default=0, metavar='STEP',
-              help='Update only the step N, start N from 1, numbers <0 as step number are allowed too')
-@click.option('-t', '--toc', type=str, default='', metavar='TOC',
-              help='Module.lesson[.step] format, e.g 3.8 for whole lesson, or 3.8.2 for step only')
-@click.option('--id', 'lesson_id', type=int, default=0, metavar='ID', help='Lesson ID, with markdown file only')
-@click.option('-g', '--gift', is_flag=True, default=False, help='Lesson file in GIFT format')
-@click.option('--toc-update', is_flag=True, default=False,
-              help='Update TOC part in yaml config up to first error.')
-# # двуязычные справки
-# @click.option('-s', '--step', type=int, default=0, metavar='STEP',
-#               help='Update only specific step / Обновить только конкретный шаг\n'
-#                    'Start from 1, negative numbers supported / Нумерация с 1, поддерживаются отрицательные номера')
+              help='обновить только конкретный шаг,\n'
+                   'нумерация с 1, поддерживаются отрицательные номера (тогда нумерация с последнего шага)')
 # @click.option('-t', '--toc', type=str, default='', metavar='TOC',
-#               help='Position in module.lesson[.step] format / Позиция в формате модуль.урок[.шаг]\n'
-#                    'Examples / Примеры: 3.8 (whole lesson / весь урок), 3.8.2 (single step / один шаг)')
+#               help='обновить урок по его TOC, формат module.lesson[.step],\n'
+#                    'примеры: 3.8 (весь урок), 3.8.2 (один шаг)')
 # @click.option('--id', 'lesson_id', type=int, default=0, metavar='ID', 
-#               help='Lesson ID (for markdown files only) / ID урока (только для markdown файлов)')
+#               help='ID урока (только для markdown файлов)')
 # @click.option('-g', '--gift', is_flag=True, default=False, 
-#               help='Lesson file in GIFT format / Файл урока в формате GIFT')
+#               help='файл урока в формате GIFT')
 # @click.option('--toc-update', is_flag=True, default=False,
-#               help='Update TOC in yaml config up to first error / '
-#                    'Обновить TOC в yaml конфиге до первой ошибки')
+#               help='обновить TOC в yaml конфиге до первой ошибки')
 def main(filename, step, toc, lesson_id, gift, toc_update):
-    """Deploy markdown or GIFT file into site and other Stepik tools."""
+    """Загрузка markdown или GIFT файла на сайт Stepik (или другие инструменты для работы со Stepik)."""
 
     if step != 0 and toc:
-        raise click.UsageError("Options --step and --toc are mutually exclusive")
+        raise click.UsageError("Опции --step и --toc взаимоисключающие")
     
     logged_requests.setup_logger()
     read_or_create_auth_data()
