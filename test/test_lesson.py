@@ -129,12 +129,15 @@ print('hello')
         'variables': {'lesson': '123'},
         'steps': [
             {'h2': 'Шаг1 без кавычек', 'text': '\n\nТекст без кавычек.\n'},
-            {'h2': 'Шаг2 с кавычками', 'text': "\n\nДо кавычек```\nprint('hello')\n```\nПосле кавычек\n"},
-            {'h2': 'Шаг3 с ## внутри кавычек', 'text': "\nДо кавычек```\n## Ложный заголовок\nprint('hello')\n```\nПосле кавычек"}
+            {'h2': 'Шаг2 с кавычками', 'text': "\n\nДо кавычек\n```\nprint('hello')\n```\n\nПосле кавычек\n"},
+            {'h2': 'Шаг3 с ## внутри кавычек', 'text': "\nДо кавычек\n```\n## Ложный заголовок\nprint('hello')\n```\n\nПосле кавычек"}
         ]}
     res = ParseSchema.parse_document(input)
+    # print('\n=================')
     # print(res)
-    assert res == expected_dict
+    # print('\n-----------------')
+    # print(expected_dict)
+    assert expected_dict == res
 
 @pytest.mark.parametrize('position, expected_position', [
     (1, 1),
