@@ -21,8 +21,8 @@ def test_checker_asis(reply, clue, exp_ok, exp_diff):
 @pytest.mark.parametrize("reply, clue, exp_ok, exp_diff", [
     ('12', '12', True, None),
     ('12 34', '12\n34', True, None),
-    ('12 34', '12 34 56', False, 'Output: 2 numbers\nExpected: 3 numbers'),
-    ('12 35 56', '12 34 56', False, 'Output: 35\nExpected: 34\n'),
+    ('12 34', '12 34 56', False, 'Output  : 2 numbers\nExpected: 3 numbers'),
+    ('12 35 56', '12 34 56', False, 'Output  : 35\nExpected: 34\n'),
 ])
 def test_checker_int_seq(reply, clue, exp_ok, exp_diff):
     res = check_int_seq(reply, clue)
@@ -34,8 +34,8 @@ def test_checker_int_seq(reply, clue, exp_ok, exp_diff):
 @pytest.mark.parametrize("reply, clue, eps, exp_ok, exp_diff", [
     ('12', '12', 0, True, None),
     ('12.1 34.01', '12.10001\n34.0100003', 0.0001, True, None),
-    ('12 34.0', '12 34.1 56', 0.0001, False, 'Output: 2 numbers\nExpected: 3 numbers\n'),
-    ('12 34.5 56', '12 34.4 56', 0.00001, False, 'Output: 34.5\nExpected: 34.4\nAccuracy: 1e-05\n'),
+    ('12 34.0', '12 34.1 56', 0.0001, False, 'Output  : 2 numbers\nExpected: 3 numbers\n'),
+    ('12 34.5 56', '12 34.4 56', 0.00001, False, 'Output  : 34.5\nExpected: 34.4\nAccuracy: 1e-05\n'),
     ('12 34.5 56', '12 34.4 56', 0.11, True, None),
 ])
 def test_checker_float_seq(reply, clue, eps, exp_ok, exp_diff):
@@ -61,11 +61,11 @@ def check_float_seq(replay, clue):
     clue_numbers = list(map(float, clue.split()))
 
     if len(replay_numbers) != len(clue_numbers):
-        return False, f'Output: {len(replay_numbers)} numbers\nCorrect output: {len(clue_numbers)} numbers\n'
+        return False, f'Output  : {len(replay_numbers)} numbers\nCorrect Output  : {len(clue_numbers)} numbers\n'
 
     for replay_x, clue_x in zip(replay_numbers, clue_numbers):
         if not math.isclose(replay_x, clue_x, abs_tol=EPS):
-            return False, f'Output: {replay_x}\nCorrect output: {clue_x}\nAccuracy: {EPS}\n'
+            return False, f'Output  : {replay_x}\nCorrect Output  : {clue_x}\nAccuracy: {EPS}\n'
     return True
         
         
