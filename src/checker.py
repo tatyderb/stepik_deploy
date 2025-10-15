@@ -24,7 +24,11 @@ def check_int_seq(reply, clue):
 # EPS - additional_parameter для check_float_seq
 EPS: float = 0.001
 def check_float_seq(reply, clue):
-    """Сравнение последовательности нецелых чисел с точностью EPS"""
+    """Сравнение последовательности нецелых чисел с точностью EPS, по умолчанию 0.001.
+    EPS для чекера можно задать в секции CONFIG через additional_params
+    additional_params: "EPS=0.01"
+    """
+
     import math
 
     reply_numbers = list(map(float, reply.split()))
