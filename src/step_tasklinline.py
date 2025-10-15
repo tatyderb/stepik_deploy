@@ -437,7 +437,7 @@ class StepTaskinline(Step):
                 d['stepSource']['block']['source']['test_cases'] = []
                 d['stepSource']['block']['source']['samples_count'] = 0
 
-                self.text += self.test_examples(self.tests, visible_tests_number=self.open_tests)
+                self.text += self.test_examples(self.tests, open_tests_number=self.open_tests)
 
             case '_':
                 raise ValueError(f'mode {self.mode} не существует; только stepik и custom')
@@ -452,14 +452,14 @@ class StepTaskinline(Step):
         return d
 
 
-    def test_examples(self, tests, visible_tests_number: int = -1):
+    def test_examples(self, tests, open_tests_number: int = -1):
         """Возвращает тесты в html виде для вставки в условие в секции Тестовые данные.
-        Видимые тесты можно указать сколько или все (-1) в опции visible_tests_number.
+        Видимые тесты можно указать сколько или все (-1) в опции open_tests_number.
         -2 - раздел Тестовые данные вообще отсутствует.
         """
-        if visible_tests_number == -2:
+        if open_tests_number == -2:
             return ''
-        elif visible_tests_number == 0:
+        elif open_tests_number == 0:
             return self.TEST_EXAMPLE_SECTION_TEMPLATE.format('Данные закрыты.')
 
         # форматируем данные тестов для первого теста и секции Тестовые данные
@@ -468,13 +468,13 @@ class StepTaskinline(Step):
         test = tests[0]
         first_test = self.TEST_EXAMPLE_TEMPLATE.format(number=number, test_input=test[0], test_output=test[1])
 
-        visible_tests = tests[1:visible_tests_number] if visible_tests_number > 0 else tests[1:]
+        open_tests = tests[1:open_tests_number] if open_tests_number > 0 else tests[1:]
         tests_text = '\n'.join([
             self.TEST_EXAMPLE_TEMPLATE.format(number=number, test_input=test[0], test_output=test[1])
-            for number, test in enumerate(visible_tests, 2)
+            for number, test in enumerate(open_tests, 2)
         ])
         # добавляем надпись, что остальные тесты закрыты
-        if visible_tests_number != -1 and len(tests) > visible_tests_number:
+        if open_tests_number != -1 and len(tests) > open_tests_number:
             tests_text += self.TEST_CLOSED
 
         return first_test + self.TEST_EXAMPLE_SECTION_TEMPLATE.format(tests_text)
