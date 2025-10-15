@@ -114,7 +114,7 @@ def test_example_section():
 \n\n<h4>Test #3 input</h4>\n<pre>-10 -7</pre>\n<h4>Test #3 output</h4>\n<pre>10 -7</pre>\n\n\n<h4>Test #4 input</h4>\n<pre>10 -7</pre>\n<h4>Test #4 output</h4>\n<pre>-10 -7</pre>\n\n\n<h4>Test #5 input</h4>\n<pre>0 0</pre>\n<h4>Test #5 output</h4>\n<pre>0 0</pre>\n</details>"""
     tests = [['3 2', '-3 2'], ['-3 2', '3 2'], ['-10 -7', '10 -7'], ['10 -7', '-10 -7'], ['0 0', '0 0']]
     s = StepTaskinline()
-    res = s.test_examples(tests, visible_tests_number=-1)
+    res = s.test_examples(tests, open_tests_number=-1)
     print(f'\n{res=}')
     assert expected_html == res
 
@@ -131,18 +131,18 @@ def test_example_section():
 <h4>Test #2 output</h4>
 <pre>3 2</pre>
 \n\n<h4>Test #3 input</h4>\n<pre>-10 -7</pre>\n<h4>Test #3 output</h4>\n<pre>10 -7</pre>\n<p>Остальные тесты закрыты авторами курса.</p>\n</details>"""
-    res = s.test_examples(tests, visible_tests_number=3)
+    res = s.test_examples(tests, open_tests_number=3)
     print(f'\n{res=}')
     assert expected_html == res
 
     # Тестов нет
     expected_html = "<details><summary>Тестовые данные</summary>\nДанные закрыты.</details>"
-    res = s.test_examples(tests, visible_tests_number=0)
+    res = s.test_examples(tests, open_tests_number=0)
     print(f'\n{res=}')
     assert expected_html == res
 
     expected_html = ''
-    res = s.test_examples(tests, visible_tests_number=-2)
+    res = s.test_examples(tests, open_tests_number=-2)
     print(f'\n{res=}')
     assert expected_html == res
 
