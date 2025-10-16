@@ -8,7 +8,7 @@ from src.stepik_api import StepikSession
 from src.toc import get_file_from_toc
 
 
-def get_lesson_file(filename, toc, step): 
+def get_lesson_file(filename, step, toc: str = ''):
     """По разобранным аргументам возвращает имя файла и позицию в уроке (порядковый номер шага).
     Варианты
     deploy.py lesson.md --step 4    # шаг 4 урока
@@ -45,38 +45,33 @@ HELP_EPILOG = '''\b
               help='обновить только конкретный шаг,\n'
                    'нумерация с 1, поддерживаются отрицательные номера (тогда нумерация с последнего шага)')
 # @click.option('-t', '--toc', type=str, default='', metavar='TOC',
-#               help='обновить урок по его TOC, формат module.lesson[.step],\n'
+#               help='Пока не реализовано! Обновить урок по его TOC, формат module.lesson[.step],\n'
 #                    'примеры: 3.8 (весь урок), 3.8.2 (один шаг)')
-# @click.option('--id', 'lesson_id', type=int, default=0, metavar='ID', 
-#               help='ID урока (только для markdown файлов)')
-# @click.option('-g', '--gift', is_flag=True, default=False, 
-#               help='файл урока в формате GIFT')
+# @click.option('--id', 'lesson_id', type=int, default=0, metavar='ID',
+#               help='Пока не реализовано! ID урока (только для markdown файлов)')
+# @click.option('-g', '--gift', is_flag=True, default=False,
+#               help='Пока не реализовано! файл урока в формате GIFT')
 # @click.option('--toc-update', is_flag=True, default=False,
-#               help='обновить TOC в yaml конфиге до первой ошибки')
-def main(filename, step, toc, lesson_id, gift, toc_update):
+#               help='Пока не реализовано! обновить TOC в yaml конфиге до первой ошибки')
+# def main(filename, step, toc, lesson_id, gift, toc_update):
+def main(filename, step):
     """Загрузка markdown или GIFT файла на сайт Stepik (или другие инструменты для работы со Stepik)."""
 
-    if step != 0 and toc:
-        raise click.UsageError("Опции --step и --toc взаимоисключающие")
+    # if step != 0 and toc:
+    #     raise click.UsageError("Опции --step и --toc взаимоисключающие")
     
     logged_requests.setup_logger()
     read_or_create_auth_data()
 
-    print(f'Args: filename={filename}, step={step}, toc={toc}, lesson_id={lesson_id}, gift={gift}, toc_update={toc_update}')
+    print(f'Args: filename={filename}, step={step}')
 
-    if toc_update:
-        print('TOC update not implemented yet!')
-        return
-    
-    lesson_file, position = get_lesson_file(filename, toc, step)
-    lesson = Lesson(position=position, lesson_id=lesson_id)
-    if gift:
-        raise NotImplemented
-    else:
-        # lesson in markdown format
-        with open(lesson_file, 'r', encoding='utf8') as fin:
-            text = fin.read()
-            lesson.parse_markdown(text, step_position=step)
+    lesson_file, position = get_lesson_file(filename, step)
+    lesson = Lesson(position=position)
+
+    # lesson in markdown format
+    with open(lesson_file, 'r', encoding='utf8') as fin:
+        text = fin.read()
+        lesson.parse_markdown(text, step_position=step)
 
     session = StepikSession()
     lesson.deploy(session, step_position=step)
