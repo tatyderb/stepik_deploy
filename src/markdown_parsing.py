@@ -124,7 +124,7 @@ class ParseSchema:
         section_title = cls.section_name('CONFIG')
         schema = pp.Suppress(section_title) + cls.variables()('config')
         # тест test_markdown.py::test_config получает не список, а значение, setParseAction не нужно тогда
-        schema.setParseAction(lambda t: t.as_dict()['config'] )
+        schema.setParseAction(lambda t: t.as_dict()['config'][0] )
         return schema
 
 

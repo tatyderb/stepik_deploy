@@ -86,17 +86,17 @@ expected_res3 = {'text': 'Даны два целых числа на одной 
 def test_step_inline_simple():
     res = ParseSchemaStepTaskinline.step_taskinline().parseString(text1).as_dict()
     print(f'\nParseSchemaStepTaskinline.step_taskinline: \n{res=}')
-    assert res == expected_res1
+    assert expected_res1 == res
 
     res = ParseSchemaStepTaskinline.step_taskinline().parseString(text1 + text2).as_dict()
     print(f'\nParseSchemaStepTaskinline.step_taskinline: \n{res=}')
 
-    assert res == expected_res2
+    assert expected_res2 == res
 
     res = ParseSchemaStepTaskinline.step_taskinline().parseString(text1 + text3).as_dict()
     print(f'\nParseSchemaStepTaskinline.step_taskinline: \n{res=}')
 
-    assert res == expected_res3
+    assert expected_res3 == res
 
 def test_example_section():
     # все тесты (по умолчанию)
