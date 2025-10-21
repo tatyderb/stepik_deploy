@@ -58,8 +58,8 @@ def test_parse_step_essay():
     assert res == expected_dict
     res = ParseSchemaStepEssay.parse_step_essay(text4)
     print(f'\nparse_step_number: {res=}')
-    expected_dict = {'text': 'Условие задачи.\n```\nмногострочный комментарий\nиз\nнесколький\nстрок\n```', 'config': {'score': '5'}}
-    assert res == expected_dict
+    expected_dict = {'text': 'Условие задачи.\n```\nмногострочный комментарий\nиз\nнесколький\nстрок\n```\nпостусловие', 'config': {'score': '5'}}
+    assert expected_dict == res
 
 
 if __name__ == "__main__":
