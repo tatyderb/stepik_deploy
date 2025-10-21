@@ -45,6 +45,9 @@ class Step(ABC):
             case 'ESSAY':
                 from src.step_essay import StepEssay
                 return StepEssay(header=header, skip=skip)
+            case 'STRING':
+                from src.step_string import StepString
+                return StepString(header=header, skip=skip)
             case '_':
                 raise NotImplemented(f'Step type {step_type}')
 
