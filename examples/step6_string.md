@@ -19,12 +19,16 @@ case_sensitive: false
 is_text_disabled: false
 is_file_disabled: true
 ```
-- use_re Записано ли регулярное выражение
-- match_substring 
-- case_sensitive Чувствительность к регистру 
-- is_text_disabled
+- match_substring   Сверка по фрагменту
+- use_re            Проверка по регулярному выражению
+- case_sensitive    Учитывать регистр и различать заглавные и строчные буквы
+- is_text_disabled  
 - is_file_disabled
 
+Stepik использует следующие комбинации is_text_disabled и is_file_disabled:
+- По умолчанию (для бесплатных курсов) только текст: is_text_disabled = false, is_file_disabled = true
+- Только файл: is_text_disabled = true, is_file_disabled = false
+- Текст или файл: is_text_disabled = true, is_file_disabled = true
 
 ## STRING Простой случай
 Как называется шахматная фигура, которая ходит по вертикали и горизонтали?
@@ -38,16 +42,29 @@ CONFIG
 case_sensitive: true
 
 ## STRING Многострочные ответы
-Вставьте следующие три строки стихотворения:
+Напишите три строки стиховорения, которые следуют после этих строк:
 
 Мороз и солнце; день чудесный!
-
 Еще ты дремлешь, друг прелестный —
-
 Пора, красавица, проснись:
+[ваши 3 строки]
 ANSWER: 
 Открой сомкнуты негой взоры
 Навстречу северной Авроры,
 Звездою севера явись!
 CONFIG
 score: 5
+
+## STRING Регулярные выражения
+Можно создать сверку по регулярному выражению, например:
+Напишите север или юг
+ANSWER: север|юг
+CONFIG
+use_re: true
+
+
+
+## STRING Множественные ответы
+Как называется величина det(A)?
+ANSWER: детерминант
+ANSWER: определитель

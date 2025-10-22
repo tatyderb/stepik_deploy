@@ -56,7 +56,8 @@ from pyparsing import ParseResults
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
-import re
+from copy import deepcopy
+
 
 class StepString(Step):
     DEFAULT_SCORE = 1
@@ -104,7 +105,7 @@ class StepString(Step):
             self.config = res['config']
 
     def to_dict(self) -> dict:
-        d = self.DEFAULT_BODY.copy()
+        d = deepcopy(self.DEFAULT_BODY)
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
         d['stepSource']['block']['source']['pattern'] = self.answer
         for key in self.config:
@@ -122,7 +123,7 @@ class ParseSchemaStepString(ParseSchema):
         """Schema 'ANSWER: регулярное выражение'
          Пробелы или переносы строк перед текстом удаляются """
         keyword = pp.Keyword('ANSWER', caseless=True)
-        answer = pp.SkipTo(pp.CaselessKeyword('CONFIG') | pp.StringEnd())
+        answer = pp.SkipTo(pp.CaselessKeyword('ANSWER') | pp.CaselessKeyword('CONFIG') | pp.StringEnd())
         
         schema = pp.Suppress(pp.Combine(pp.LineStart() + keyword) + pp.oneOf([":", "="])) + \
             pp.Optional(pp.White(' ')) + pp.Optional(pp.LineEnd()) + answer()('answer') 
@@ -151,10 +152,11 @@ class ParseSchemaStepString(ParseSchema):
         }
         """
 
-        answer = cls.answer()('answer')
+        answer = cls.answer()
+        answers = pp.OneOrMore(answer)('answer')
         config = cls.config()('config')
 
-        sections = answer & pp.Opt(config)
+        sections = answers & pp.Opt(config)
 
         text_bound = cls.quoted() | sections
         text_part = pp.SkipTo(text_bound)
@@ -169,6 +171,14 @@ class ParseSchemaStepString(ParseSchema):
     @classmethod
     def parse_step_string(cls, text: str) -> ParseResults:
         try:
-            return cls.step_string().parseString(text, parse_all=True).as_dict()
+            res = cls.step_string().parseString(text, parse_all=True).as_dict()
+            if len(res['answer']) == 1:
+                res['answer'] = res['answer'][0]
+            else: # если было несколько ANSWER, создаем регулярное выражение
+                if 'config' not in res:
+                    res['config'] = {}
+                res['config']['use_re'] = 'true'
+                res['answer'] = '|'.join(res['answer'])
+            return res
         except pp.ParseException as e:
             parse_error(1, text, e.msg)
