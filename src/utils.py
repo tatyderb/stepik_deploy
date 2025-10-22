@@ -10,7 +10,7 @@ def markdown_to_html(text_md):
         text_md = '\n'.join(text_md)
     return markdown.markdown(
         text_md,
-        extensions=['extra'],
+        extensions=['extra', 'nl2br'],
     #    output_format="html5"
     )
 
