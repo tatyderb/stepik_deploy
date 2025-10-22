@@ -19,16 +19,16 @@ case_sensitive: false
 is_text_disabled: false
 is_file_disabled: true
 ```
-- match_substring   Сверка по фрагменту
-- use_re            Проверка по регулярному выражению
-- case_sensitive    Учитывать регистр и различать заглавные и строчные буквы
-- is_text_disabled  
-- is_file_disabled
+- match_substring - Сверка по фрагменту
+- use_re - Проверка по регулярному выражению
+- case_sensitive - Учитывать регистр и различать заглавные и строчные буквы
+- is_text_disabled - Запретить ввод ответа в текстовое поле
+- is_file_disabled - Запретить посылку файла с ответом
 
 Stepik использует следующие комбинации is_text_disabled и is_file_disabled:
 - По умолчанию (для бесплатных курсов) только текст: is_text_disabled = false, is_file_disabled = true
 - Только файл: is_text_disabled = true, is_file_disabled = false
-- Текст или файл: is_text_disabled = true, is_file_disabled = true
+- Текст или файл: is_text_disabled = false, is_file_disabled = false
 
 ## STRING Простой случай
 Как называется шахматная фигура, которая ходит по вертикали и горизонтали?
