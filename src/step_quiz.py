@@ -110,7 +110,8 @@ class StepQuiz(Step):
         self.text = markdown_text
 
     def to_dict(self) -> dict:
-        d = self.DATA_TEMPLATE.copy()
+        from copy import deepcopy
+        d = deepcopy(self.DATA_TEMPLATE)
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
         # один ответ
         d['stepSource']['block']['source']['options'] = self.options

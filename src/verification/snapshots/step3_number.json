@@ -1,0 +1,107 @@
+{
+  "metadata": {
+    "source_md": "examples/step3_number.md",
+    "total_steps": 4,
+    "lesson_id": 1950069,
+    "title": "Шаг NUMBER - численная задача"
+  },
+  "steps": [
+    {
+      "position": 1,
+      "type": "StepText",
+      "header": "Шаблон",
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Шаблон</h2>\n<p><a href=\"https://stepik.org/lesson/385340/step/1\">Численная задача</a></p>\n<pre><code>## NUMBER Заголовок\n\nТекст условия\n\nANSWER: число +- точность\n</code></pre>\n<p>Допускается один или более ответов, пишем один ответ на одной строке. Часть <code>+- точность</code> не обязательна.</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 2,
+      "type": "StepNumber",
+      "header": "Целое число",
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "number",
+            "text": "<h2>Целое число</h2>\n<p>Чему равно 2 + 2 ?</p>",
+            "source": {
+              "options": [
+                {
+                  "answer": "4.0",
+                  "max_error": "0.0"
+                }
+              ],
+              "sample_size": 1,
+              "is_options_feedback": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2
+        }
+      }
+    },
+    {
+      "position": 3,
+      "type": "StepNumber",
+      "header": "Указываем точность",
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "number",
+            "text": "<h2>Указываем точность</h2>\n<p>Чему равно 1/3 с точностью до 0.01?</p>",
+            "source": {
+              "options": [
+                {
+                  "answer": "0.333",
+                  "max_error": "0.01"
+                }
+              ],
+              "sample_size": 1,
+              "is_options_feedback": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2
+        }
+      }
+    },
+    {
+      "position": 4,
+      "type": "StepNumber",
+      "header": "Два ответа",
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "number",
+            "text": "<h2>Два ответа</h2>\n<p>Напишите значение любого корня уравнения $sin(x) = x^2$ с точностью до 0.1</p>\n<p><img alt=\"Графики функций sin(x) и x*x\" src=\"https://stepik.org/media/attachments/lesson/1950069/sinx_x2.png\" /></p>",
+            "source": {
+              "options": [
+                {
+                  "answer": "0.0",
+                  "max_error": "0.0"
+                },
+                {
+                  "answer": "0.87",
+                  "max_error": "0.1"
+                }
+              ],
+              "sample_size": 2,
+              "is_options_feedback": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": "3"
+        }
+      }
+    }
+  ]
+}

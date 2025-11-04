@@ -65,7 +65,8 @@ class StepEssay(Step):
             self.config = res['config']
 
     def to_dict(self) -> dict:
-        d = self.DEFAULT_BODY.copy()
+        from copy import deepcopy
+        d = deepcopy(self.DEFAULT_BODY)
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
         for key in self.config:
             if key == 'score':

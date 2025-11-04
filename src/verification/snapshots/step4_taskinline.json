@@ -1,0 +1,368 @@
+{
+  "metadata": {
+    "source_md": "examples/step4_taskinline.md",
+    "total_steps": 7,
+    "lesson_id": 1950070,
+    "title": "Шаг TASKLINLINE - задача на программирования (встроенная)"
+  },
+  "steps": [
+    {
+      "position": 0,
+      "type": "StepText",
+      "header": "Шаблон",
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Шаблон</h2>\n<p><a href=\"https://stepik.org/lesson/59057/step/1\">Задача на программирование</a></p>\n<pre><code>## TASKINLINE Заголовок\n\nТекст условия\n\nTEST\ninput1\n----\noutput1\n====\ninput2\n----\noutput2\n====\n\nHEADER\nкод до кода ученика\nFOOTER\nкод после кода ученика\nCODE\nшаблон для ученика\n\nCONFIG\nlang: python\nmode: custom\nopen_tests: 3\nchecker: std_float_seq\nadditional_params: &quot;EPS=0.01&quot;\n</code></pre>\n<ul>\n<li>Секции идут в произвольном порядке<ul>\n<li>ключевые слова пишутся с начала строки</li>\n</ul>\n</li>\n<li>Секции (без <code>:</code> в конце названия секции!!!)<ul>\n<li><code>HEADER</code> - код, который пристыковывается до кода ученика</li>\n<li><code>FOOTER</code> - код, который пристыковывается после кода ученика</li>\n<li><code>CODE</code> - шаблон, появляется в онлайн-редакторе для ученика</li>\n<li><code>TEMPLATE</code> - вместо разделов <code>HEADER</code>, <code>FOOTER</code>, <code>CODE</code> вы можете написать весь код вкладки \"Языки и Шаблоны\" в одном месте. Пригодится, если у вас задача для нескольких языков программирования и каждому из них нужны свои разделы.</li>\n<li><code>GENCHECKSOLVE</code> - содержимое вкладки \"Расширенный редактор\" (приоритетней выбора чекера).</li>\n</ul>\n</li>\n<li><code>TEST</code> - тесты, входные данные и ожидаемые выходные данные<ul>\n<li>линия из 4+ <code>-</code> отделяет входные данные от эталонных выходных    </li>\n<li>линия из 4+ <code>=</code> заканчивает эталонные выходные данные</li>\n<li>входные и выходные данные могут быть на нескольких строках, могут не быть вообще.</li>\n</ul>\n</li>\n<li><code>CONFIG</code> - опции задачи<ul>\n<li><code>lang</code> - язык программирования, перечислены через запятую, смотри <a href=\"https://stepik.org/lesson/59057/step/11\">поддерживаемые языки</a><ul>\n<li><code>all</code> - нет ограничения на языки программирования</li>\n</ul>\n</li>\n<li><code>open_tests</code> - количество открытых входных и выходных данных, только по указанным тестам показываются данные в <br />\nразделе \"Тестовые данные\" и в диагностике об ошибочном решении (в разработке).</li>\n<li><code>mode</code> - как реализованы и показаны тестовые данные открытых тестов и результаты их прогона:<ul>\n<li><code>stepik</code> - средствами Stepik, в поле <code>samples</code> записывается значение <code>open_tests</code> и функция <code>check</code> просто вызывает чекер. Тут будет ссылка на пример далее в шагах.</li>\n<li><code>custom</code> - <code>samples</code>= 0, тестовые данные пишутся в тексте условия задачи, в функции <code>check</code> осуществляется разбор открытый тест или нет, и для открытого теста выводятся input, output, correct output, diff. Тут будет ссылка на пример далее в шагах.</li>\n</ul>\n</li>\n<li><code>checker</code> - название стандартных проверяющих программ<ul>\n<li><code>check_asis</code> - текст без пробельных символов в начале и в конце</li>\n<li><code>check_int_seq</code> - последовательность целых чисел</li>\n<li><code>check_float_seq</code> - последовательность нецелых чисел, с точностью до <code>EPS</code>, по умолчанию <code>EPS=0.001</code></li>\n</ul>\n</li>\n<li><code>additional_params</code> - дополнительные параметры для чекеров и тп.</li>\n</ul>\n</li>\n</ul>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 1,
+      "type": "StepTaskinline",
+      "header": "Сумма - простая задача",
+      "data": {
+        "stepSource": {
+          "reason_of_failure": null,
+          "instruction_id": null,
+          "has_instruction": false,
+          "cost": 10,
+          "is_solutions_unlocked": true,
+          "solutions_unlocked_attempts": 4,
+          "max_submissions_count": 3,
+          "has_submissions_restrictions": false,
+          "create_date": null,
+          "block": {
+            "text": "<h2>Сумма - простая задача</h2>\n<p>Даны два целых числа, напечатайте их сумму.</p>",
+            "name": "code",
+            "video": null,
+            "options": null,
+            "source": {
+              "code": "\n\ndef check_asis(reply, clue):\n    \"\"\"Сравнение текста, без пробельных символов в конце текста.\"\"\"\n    return reply.strip() == clue.strip()\n        \n        \n# This is a sample Code Challenge\n# Learn more: https://stepik.org/lesson/9172\n# Ask your questions via help@stepik.org\n\ndef generate():\n    return []\n\ndef check(reply, clue):\n    return check_asis(reply, clue)\n\n# def solve(dataset):\n#     a, b = dataset.split()\n#     return str(int(a) + int(b))        \n    ",
+              "execution_time_limit": 5,
+              "execution_memory_limit": 256,
+              "samples_count": 2,
+              "templates_data": "",
+              "is_time_limit_scaled": true,
+              "is_memory_limit_scaled": true,
+              "is_run_user_code_allowed": true,
+              "manual_time_limits": [],
+              "manual_memory_limits": [],
+              "test_archive": [],
+              "test_cases": [
+                [
+                  "2 3",
+                  "5"
+                ],
+                [
+                  "-7 -14",
+                  "-21"
+                ]
+              ]
+            },
+            "feedback_correct": "",
+            "feedback_wrong": ""
+          },
+          "instruction_type": null,
+          "lesson_id": null,
+          "position": 2,
+          "status": "ready",
+          "is_enabled": true,
+          "needs_plan": null,
+          "instruction": null,
+          "lesson": "1950070",
+          "score": 10
+        }
+      }
+    },
+    {
+      "position": 2,
+      "type": "StepTaskinline",
+      "header": "Напишите функцию (HEADER, FOOTER, CODE)",
+      "data": {
+        "stepSource": {
+          "reason_of_failure": null,
+          "instruction_id": null,
+          "has_instruction": false,
+          "cost": 10,
+          "is_solutions_unlocked": true,
+          "solutions_unlocked_attempts": 4,
+          "max_submissions_count": 3,
+          "has_submissions_restrictions": false,
+          "create_date": null,
+          "block": {
+            "text": "<h2>Напишите функцию (HEADER, FOOTER, CODE)</h2>\n<p>Напишите функцию, которая вычисляет модуль числа.</p>\n<p>Функцию нужно написать на языке C.</p>\n<pre><code class=\"language-cpp\">int module(int x); \n</code></pre>",
+            "name": "code",
+            "video": null,
+            "options": null,
+            "source": {
+              "code": "\n\ndef check_asis(reply, clue):\n    \"\"\"Сравнение текста, без пробельных символов в конце текста.\"\"\"\n    return reply.strip() == clue.strip()\n        \n        \n# This is a sample Code Challenge\n# Learn more: https://stepik.org/lesson/9172\n# Ask your questions via help@stepik.org\n\ndef generate():\n    return []\n\ndef check(reply, clue):\n    return check_asis(reply, clue)\n\n# def solve(dataset):\n#     a, b = dataset.split()\n#     return str(int(a) + int(b))        \n    ",
+              "execution_time_limit": 5,
+              "execution_memory_limit": 256,
+              "samples_count": 2,
+              "templates_data": "::c\n::code\nint module(int x) {\n    // здесь нужно написать код\n}\n::header\n#include <stdio.h>\nint module(int x);\n::footer\nint main()\n{\n    int x;\n    scanf(\"%d\", &x);\n    printf(\"%d\\n\", module(x));\n    return 0;\n}",
+              "is_time_limit_scaled": true,
+              "is_memory_limit_scaled": true,
+              "is_run_user_code_allowed": true,
+              "manual_time_limits": [],
+              "manual_memory_limits": [],
+              "test_archive": [],
+              "test_cases": [
+                [
+                  "-5",
+                  "5"
+                ],
+                [
+                  "21",
+                  "21"
+                ]
+              ]
+            },
+            "feedback_correct": "",
+            "feedback_wrong": ""
+          },
+          "instruction_type": null,
+          "lesson_id": null,
+          "position": 2,
+          "status": "ready",
+          "is_enabled": true,
+          "needs_plan": null,
+          "instruction": null,
+          "lesson": "1950070",
+          "score": 10
+        }
+      }
+    },
+    {
+      "position": 3,
+      "type": "StepTaskinline",
+      "header": "Напишите функцию (TEMPLATE)",
+      "data": {
+        "stepSource": {
+          "reason_of_failure": null,
+          "instruction_id": null,
+          "has_instruction": false,
+          "cost": 10,
+          "is_solutions_unlocked": true,
+          "solutions_unlocked_attempts": 4,
+          "max_submissions_count": 3,
+          "has_submissions_restrictions": false,
+          "create_date": null,
+          "block": {
+            "text": "<h2>Напишите функцию (TEMPLATE)</h2>\n<p>Напишите функцию, которая вычисляет модуль числа.</p>\n<p>Функцию нужно написать на языке С или С++.</p>\n<pre><code class=\"language-cpp\">int module(int x); \n</code></pre>",
+            "name": "code",
+            "video": null,
+            "options": null,
+            "source": {
+              "code": "\n\ndef check_asis(reply, clue):\n    \"\"\"Сравнение текста, без пробельных символов в конце текста.\"\"\"\n    return reply.strip() == clue.strip()\n        \n        \n# This is a sample Code Challenge\n# Learn more: https://stepik.org/lesson/9172\n# Ask your questions via help@stepik.org\n\ndef generate():\n    return []\n\ndef check(reply, clue):\n    return check_asis(reply, clue)\n\n# def solve(dataset):\n#     a, b = dataset.split()\n#     return str(int(a) + int(b))        \n    ",
+              "execution_time_limit": 5,
+              "execution_memory_limit": 256,
+              "samples_count": 2,
+              "templates_data": "::c\n::header\n#include <stdio.h>\nint module(int x);\n::footer\nint main()\n{\n  int x;\n  scanf(\"%d\", &x);\n  printf(\"%d\\n\", module(x));\n  return 0;\n}\n::code\nint module(int x) {\n  // здесь нужно написать код\n}\n\n::c++\n::header\n#include <iostream>\nint module(int x);\n::footer\nint main()\n{\n  int x;\n  std::cin >> x;\n  std::cout << module(x) << std::endl;\n  return 0;\n}\n::code\nint module(int x) {\n  // здесь нужно написать код\n}",
+              "is_time_limit_scaled": true,
+              "is_memory_limit_scaled": true,
+              "is_run_user_code_allowed": true,
+              "manual_time_limits": [],
+              "manual_memory_limits": [],
+              "test_archive": [],
+              "test_cases": [
+                [
+                  "-5",
+                  "5"
+                ],
+                [
+                  "21",
+                  "21"
+                ]
+              ]
+            },
+            "feedback_correct": "",
+            "feedback_wrong": ""
+          },
+          "instruction_type": null,
+          "lesson_id": null,
+          "position": 2,
+          "status": "ready",
+          "is_enabled": true,
+          "needs_plan": null,
+          "instruction": null,
+          "lesson": "1950070",
+          "score": 10
+        }
+      }
+    },
+    {
+      "position": 4,
+      "type": "StepTaskinline",
+      "header": "Нет входных данных",
+      "data": {
+        "stepSource": {
+          "reason_of_failure": null,
+          "instruction_id": null,
+          "has_instruction": false,
+          "cost": 10,
+          "is_solutions_unlocked": true,
+          "solutions_unlocked_attempts": 4,
+          "max_submissions_count": 3,
+          "has_submissions_restrictions": false,
+          "create_date": null,
+          "block": {
+            "text": "<h2>Нет входных данных</h2>\n<p>Напечатайте <code>Hello</code></p>",
+            "name": "code",
+            "video": null,
+            "options": null,
+            "source": {
+              "code": "\n\ndef check_asis(reply, clue):\n    \"\"\"Сравнение текста, без пробельных символов в конце текста.\"\"\"\n    return reply.strip() == clue.strip()\n        \n        \n# This is a sample Code Challenge\n# Learn more: https://stepik.org/lesson/9172\n# Ask your questions via help@stepik.org\n\ndef generate():\n    return []\n\ndef check(reply, clue):\n    return check_asis(reply, clue)\n\n# def solve(dataset):\n#     a, b = dataset.split()\n#     return str(int(a) + int(b))        \n    ",
+              "execution_time_limit": 5,
+              "execution_memory_limit": 256,
+              "samples_count": 1,
+              "templates_data": "",
+              "is_time_limit_scaled": true,
+              "is_memory_limit_scaled": true,
+              "is_run_user_code_allowed": true,
+              "manual_time_limits": [],
+              "manual_memory_limits": [],
+              "test_archive": [],
+              "test_cases": [
+                [
+                  "",
+                  "Hello"
+                ]
+              ]
+            },
+            "feedback_correct": "",
+            "feedback_wrong": ""
+          },
+          "instruction_type": null,
+          "lesson_id": null,
+          "position": 2,
+          "status": "ready",
+          "is_enabled": true,
+          "needs_plan": null,
+          "instruction": null,
+          "lesson": "1950070",
+          "score": 10
+        }
+      }
+    },
+    {
+      "position": 5,
+      "type": "StepTaskinline",
+      "header": "mode = stepik",
+      "data": {
+        "stepSource": {
+          "reason_of_failure": null,
+          "instruction_id": null,
+          "has_instruction": false,
+          "cost": 10,
+          "is_solutions_unlocked": true,
+          "solutions_unlocked_attempts": 4,
+          "max_submissions_count": 3,
+          "has_submissions_restrictions": false,
+          "create_date": null,
+          "block": {
+            "text": "<h2>mode = stepik</h2>\n<p>Оставляем на усмотрение степика как показывать тестовые данные и открытые / закрытые тесты.</p>\n<p>Даны два целых числа, напечатайте их сумму.</p>\n<p>В закрытых тестах сумма будет отрицательной.</p>",
+            "name": "code",
+            "video": null,
+            "options": null,
+            "source": {
+              "code": "\n\ndef check_asis(reply, clue):\n    \"\"\"Сравнение текста, без пробельных символов в конце текста.\"\"\"\n    return reply.strip() == clue.strip()\n        \n        \n# This is a sample Code Challenge\n# Learn more: https://stepik.org/lesson/9172\n# Ask your questions via help@stepik.org\n\ndef generate():\n    return []\n\ndef check(reply, clue):\n    return check_asis(reply, clue)\n\n# def solve(dataset):\n#     a, b = dataset.split()\n#     return str(int(a) + int(b))        \n    ",
+              "execution_time_limit": 5,
+              "execution_memory_limit": 256,
+              "samples_count": 2,
+              "templates_data": "",
+              "is_time_limit_scaled": true,
+              "is_memory_limit_scaled": true,
+              "is_run_user_code_allowed": true,
+              "manual_time_limits": [],
+              "manual_memory_limits": [],
+              "test_archive": [],
+              "test_cases": [
+                [
+                  "2 3",
+                  "5"
+                ],
+                [
+                  "-7 10",
+                  "3"
+                ],
+                [
+                  "-2 -3",
+                  "-5"
+                ],
+                [
+                  "7 -10",
+                  "-3"
+                ]
+              ]
+            },
+            "feedback_correct": "",
+            "feedback_wrong": ""
+          },
+          "instruction_type": null,
+          "lesson_id": null,
+          "position": 2,
+          "status": "ready",
+          "is_enabled": true,
+          "needs_plan": null,
+          "instruction": null,
+          "lesson": "1950070",
+          "score": 10
+        }
+      }
+    },
+    {
+      "position": 6,
+      "type": "StepTaskinline",
+      "header": "mode = custom",
+      "data": {
+        "stepSource": {
+          "reason_of_failure": null,
+          "instruction_id": null,
+          "has_instruction": false,
+          "cost": 10,
+          "is_solutions_unlocked": true,
+          "solutions_unlocked_attempts": 4,
+          "max_submissions_count": 3,
+          "has_submissions_restrictions": false,
+          "create_date": null,
+          "block": {
+            "text": "<h2>mode = custom</h2>\n<p>Сами определяем как показывать тестовые данные и открытые / закрытые тесты.</p>\n<p>Даны два целых числа, напечатайте их сумму.</p>\n<p>В закрытых тестах сумма будет отрицательной.</p>\n<h4>Test #1 input</h4>\n<pre>2 3</pre>\n<h4>Test #1 output</h4>\n<pre>5</pre>\n<details><summary>Тестовые данные</summary>\n\n<h4>Test #2 input</h4>\n<pre>-7 10</pre>\n<h4>Test #2 output</h4>\n<pre>3</pre>\n<p>Остальные тесты закрыты авторами курса.</p>\n</details>",
+            "name": "code",
+            "video": null,
+            "options": null,
+            "source": {
+              "code": "\n\ndef check_int_seq(reply, clue):\n    \"\"\"Сравнение последовательности целых чисел.\"\"\"\n    reply_numbers = list(map(int, reply.split()))\n    clue_numbers = list(map(int, clue.split()))\n\n    if len(reply_numbers) != len(clue_numbers):\n        return False, f'Output  : {len(reply_numbers)} numbers\\nExpected: {len(clue_numbers)} numbers'\n\n    for reply_x, clue_x in zip(reply_numbers, clue_numbers):\n        if reply_x != clue_x:\n            return False, f'Output  : {reply_x}\\nExpected: {clue_x}\\n'\n    return True\n        \n\n# Learn more: https://stepik.org/lesson/9172\n# Ask your questions via help@stepik.org\n# Образец кода от Александра Шибаева https://stepik.org/users/387384976/profile\n\nmy_tests = [('2 3', '5'), ('-7 10', '3'), ('-2 -3', '-5'), ('7 -10', '-3')]\nmy_encoded_tests = ['1 1\\n2 3----\\n5', '2 1\\n-7 10----\\n3', '3 0\\n-2 -3----\\n-5', '4 0\\n7 -10----\\n-3']\n\ndef generate():\n    return [(t[0], ent) for t, ent in zip(my_tests, my_encoded_tests)]\n\ndef check(reply, clue):\n    # раскодируем закодированные данные теста clue = (input, output, test_number, is_open_test)\n    coded_test = clue\n    first_line, _, text = coded_test.partition('\\n')\n    test_number, _, is_open = first_line.partition(' ')\n    test_input, _, test_output = text.partition('----\\n')\n    \n    res_check = check_int_seq(reply, test_output)\n    # некоторые чекеры возвращают ok/fail + разницу в виде строки\n    if isinstance(res_check, bool):\n        ok, diff = res_check, ''\n    else:\n        ok, diff = res_check\n        \n    if ok:\n        return True\n    \n    # формируем сообщение об ошибке\n    if is_open:\n        optional = f\"\"\"\nВходные данные: \n{test_input}\n\nВаш ответ:\n{reply}\n\nВерный ответ:\n{test_output}\n\n\"\"\"\n        if diff:\n            optional += 'Разница:\\n' + diff\n    else:\n        optional = \"\"\n    return False, optional\n\n# def solve(dataset):\n#     a, b = dataset.split()\n#     return str(int(a) + int(b))        \n    ",
+              "execution_time_limit": 5,
+              "execution_memory_limit": 256,
+              "samples_count": 0,
+              "templates_data": "",
+              "is_time_limit_scaled": true,
+              "is_memory_limit_scaled": true,
+              "is_run_user_code_allowed": true,
+              "manual_time_limits": [],
+              "manual_memory_limits": [],
+              "test_archive": [],
+              "test_cases": []
+            },
+            "feedback_correct": "",
+            "feedback_wrong": ""
+          },
+          "instruction_type": null,
+          "lesson_id": null,
+          "position": 2,
+          "status": "ready",
+          "is_enabled": true,
+          "needs_plan": null,
+          "instruction": null,
+          "lesson": "1950070",
+          "score": 10
+        }
+      }
+    }
+  ]
+}

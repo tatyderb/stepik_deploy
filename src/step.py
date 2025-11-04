@@ -117,6 +117,7 @@ class StepText(Step):
         self.text = markdown_text
 
     def to_dict(self) -> dict:
-        d = self.BODY.copy()
+        from copy import deepcopy
+        d = deepcopy(self.BODY)
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
         return d

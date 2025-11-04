@@ -1,0 +1,229 @@
+{
+  "metadata": {
+    "source_md": "examples/step2_quiz.md",
+    "total_steps": 6,
+    "lesson_id": 1950068,
+    "title": "Шаг QUIZ - тест"
+  },
+  "steps": [
+    {
+      "position": 0,
+      "type": "StepText",
+      "header": "Шаблон",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Шаблон</h2>\n<p><a href=\"https://stepik.org/lesson/385334/step/1\">Тест</a></p>\n<pre><code>## QUIZ Заголовок\n\nТекст условия\n\nA. вариант 1\nB. вариант 2\nC. вариант 3\n\nANSWER: A, C\n\nCONFIG\nshuffle: false\n</code></pre>\n<ul>\n<li>Варианты<ul>\n<li>начинаются с латинской буквы и точки, далее пробельный символ</li>\n<li>латинские буквы должны быть разными</li>\n<li>вариант может быть на нескольких строках</li>\n<li>может содержать математические формулы, код и картинки</li>\n</ul>\n</li>\n<li>Ответ может быть один или несколько через запятую<ul>\n<li>одиночный ответ - radio button</li>\n<li>множество вариантов ответа - checkbox</li>\n</ul>\n</li>\n<li><code>CONFIG</code> без <code>:</code> в конце названия секции!!!<ul>\n<li><code>shuffle</code> - перемешивать варианты или нет</li>\n</ul>\n</li>\n</ul>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 1,
+      "type": "StepQuiz",
+      "header": "Выбор одного",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "choice",
+            "text": "<h2>Выбор одного</h2>\n<p>Выберите один правильный ответ.</p>\n<p>2 + 3 = ?</p>",
+            "source": {
+              "options": [
+                {
+                  "is_correct": true,
+                  "text": "<p>5</p>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": false,
+                  "text": "<p>-5</p>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": false,
+                  "text": "<p>0</p>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": false,
+                  "text": "<p>55</p>",
+                  "feedback": ""
+                }
+              ],
+              "is_always_correct": false,
+              "is_html_enabled": true,
+              "sample_size": 4,
+              "is_multiple_choice": false,
+              "preserve_order": false,
+              "is_options_feedback": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2,
+          "score": "1"
+        }
+      }
+    },
+    {
+      "position": 2,
+      "type": "StepQuiz",
+      "header": "Выбор нескольких ответов",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "choice",
+            "text": "<h2>Выбор нескольких ответов</h2>\n<p>Выберите все правильные ответы.</p>\n<p>? = 12</p>",
+            "source": {
+              "options": [
+                {
+                  "is_correct": true,
+                  "text": "<p>6 * 2</p>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": false,
+                  "text": "<p>7 - 18</p>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": false,
+                  "text": "<p>1 + 2</p>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": true,
+                  "text": "<p>9 + 3</p>",
+                  "feedback": ""
+                }
+              ],
+              "is_always_correct": false,
+              "is_html_enabled": true,
+              "sample_size": 4,
+              "is_multiple_choice": true,
+              "preserve_order": false,
+              "is_options_feedback": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2,
+          "score": 2
+        }
+      }
+    },
+    {
+      "position": 3,
+      "type": "StepQuiz",
+      "header": "Знаки неравенства и матформулы в вариантах",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "choice",
+            "text": "<h2>Знаки неравенства и матформулы в вариантах</h2>\n<p>Какие функции изображены на графике?</p>\n<p><img alt=\"Графики функций\" src=\"https://stepik.org/media/attachments/lesson/1950069/sinx_x2.png\" /></p>",
+            "source": {
+              "options": [
+                {
+                  "is_correct": true,
+                  "text": "<p>$sin(x)$</p>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": true,
+                  "text": "<p>$x^2$</p>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": false,
+                  "text": "<p>x &lt; 0</p>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": false,
+                  "text": "<p>x &gt; 0</p>",
+                  "feedback": ""
+                }
+              ],
+              "is_always_correct": false,
+              "is_html_enabled": true,
+              "sample_size": 4,
+              "is_multiple_choice": true,
+              "preserve_order": true,
+              "is_options_feedback": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2,
+          "score": 2
+        }
+      }
+    },
+    {
+      "position": 4,
+      "type": "StepQuiz",
+      "header": "Код",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "choice",
+            "text": "<h2>Код</h2>\n<p>Варианты с кодом.<br/><br />\nИспользуйте только <code>&lt;pre&gt;</code> для обрамления кода или вставку ```. <br/><br />\nОстальное показывается некорректно.</p>\n<p>Какой код написан на языке С?</p>",
+            "source": {
+              "options": [
+                {
+                  "is_correct": true,
+                  "text": "<p>with &lt;code&gt; tag<br />\n<code><br />\nint main(void) {<br />\n    printf(\"Hello\\n\");<br />\n    return 0;<br />\n}<br />\n</code></p>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": false,
+                  "text": "<p>with &lt;pre&gt; tag</p>\n<pre>\n\nint main(void) {\n    cout << \"Hello\";\n    return 0;\n}\n</pre>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": false,
+                  "text": "<p>```python</p>\n<h1>текст как markdown code</h1>\n<p>print(\"Hello\")<br />\nprint(\"Goodbye\")</p>",
+                  "feedback": ""
+                }
+              ],
+              "is_always_correct": false,
+              "is_html_enabled": true,
+              "sample_size": 3,
+              "is_multiple_choice": false,
+              "preserve_order": false,
+              "is_options_feedback": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2,
+          "score": 2
+        }
+      }
+    },
+    {
+      "position": 5,
+      "type": "StepText",
+      "header": "Картинки",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Картинки</h2>\n<p>Варианты с картинками</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    }
+  ]
+}

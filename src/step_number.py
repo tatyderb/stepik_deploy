@@ -84,7 +84,8 @@ class StepNumber(Step):
             self.config = res['config']
 
     def to_dict(self) -> dict:
-        d = self.DEFAULT_BODY.copy()
+        from copy import deepcopy
+        d = deepcopy(self.DEFAULT_BODY)
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
         # реализовано для множественного ответа
         d['stepSource']['block']['source']['options'] = self.answer

@@ -1,0 +1,122 @@
+{
+  "metadata": {
+    "source_md": "examples/step1_markdown.md",
+    "total_steps": 7,
+    "lesson_id": 1945910,
+    "title": "Примеры типов шагов: текст, задача"
+  },
+  "steps": [
+    {
+      "position": 0,
+      "type": "StepText",
+      "header": "Форматы текста.",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Форматы текста.</h2>\n<p>Это одна строка текста.</p>\n<p>Это блок из первой строки.<br />\nИ второй строки. Их нужно сделать в одном параграфе.</p>\n<p>Текст бывает <em>italic</em>, <strong>bold</strong> и <strong><em>bold italic</em></strong>, потом идет обычный текст.</p>\n<p>Вставка текста <code>monospace</code> и вставка $e = mc^2$ формулы LaTeX.</p>\n<p>Это блок из первой строки. Перевод строки <br/><br />\nИ второй строки. Их нужно сделать в одном параграфе, но после первой строки поставить br.</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 1,
+      "type": "StepText",
+      "header": "Списки",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Списки</h2>\n<p>Уровни вложений отбиваем табуляциями или 4 пробелами.</p>\n<ul>\n<li>Верхний уровень 1<ul>\n<li>вложение 2<br />\n            - вложение 3</li>\n</ul>\n</li>\n<li>верхний уровень 2</li>\n<li>верхний уровень 3</li>\n</ul>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 2,
+      "type": "StepText",
+      "header": "Заголовки",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Заголовки</h2>\n<p>Текст до заголовка 3.</p>\n<h3>Заголовок уровня 3</h3>\n<h4>Заголовок уровня 4</h4>\n<h5>Заголовок уровня 5</h5>\n<h6>Заголовок уровня 6</h6>\n<p>Дальше текст.</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 3,
+      "type": "StepText",
+      "header": "Таблицы",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Таблицы</h2>\n<p>Две таблицы склеятся в одну. Напишите между ними текст, чтобы избежать склейки.</p>\n<table>\n<thead>\n<tr>\n<th>Заголовок 1</th>\n<th>Заголовок такой же ширины</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Термин 1</td>\n<td>Определение 1</td>\n</tr>\n<tr>\n<td>Термин 2</td>\n<td>Определение 2, которое будет длинным и содержать <em>italic</em>, <strong>bold</strong> и потом формулу</td>\n</tr>\n<tr>\n<td>Термин 3 с пояснениями</td>\n<td>Определение 3</td>\n</tr>\n</tbody>\n</table>\n<table>\n<thead>\n<tr>\n<th>одна часть</th>\n<th>три части</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Термин 1</td>\n<td>Определение 1</td>\n</tr>\n<tr>\n<td>Термин 2</td>\n<td>Определение 2, которое будет длинным и содержать <em>italic</em>, <strong>bold</strong> и потом формулу</td>\n</tr>\n<tr>\n<td>Термин 3 с пояснениями</td>\n<td>Определение 3 <br/> Продолжение на другой строке</td>\n</tr>\n<tr>\n<td>Термин 4 <br/> Термин 5</td>\n<td>Определение 4 и 5</td>\n</tr>\n</tbody>\n</table>\n<p>Таблица в HTML</p>\n<ul>\n<li>stepik:</li>\n<li>th заменили на td</li>\n<li><code>border = 1</code> сохранился</li>\n<li>`width=\"25%\" удалили, ширины делаются автоматически</li>\n<li>colspan, rowspan - удалили</li>\n</ul>\n<table border=1>\n<tr>\n        <th width=\"25%\"> Заголовок\n        </th>\n        <th width=\"50%\"> Двойной столбец\n        </th>\n        <th width=\"25%\"> Еще заголовок\n        </th>\n</tr>\n<tr>\n        <td width=\"25%\"> 25%\n        </td>\n        <td width=\"50%\"> 50%\n        </td>\n        <td width=\"25%\"> 25%\n        </td>\n</tr>\n<tr>\n        <td width=\"25%\"> небольшие данные\n        </td>\n        <td width=\"50%\"> большое объяснение с примерами<br/>и неразрывным&nbsp;пробелом\n        </td>\n        <td width=\"25%\"> большое объяснение с примерами<br/>и \n        неразрывным&nbsp;пробелом\n        </td>\n</tr>\n<tr>\n        <td width=\"25%\">`ls`\n        </td>\n        <td width=\"50%\">\nПереименование файла myprog.c в файл yourprog.c и просмотр <br/>\nПеремещение файла из myWorkFolder в текущий каталог. В текущем каталоге появится файл с таким же именем, в каталоге myWorkFolder будет удален.<br/>\nПеремещение файла otherfile в каталог myWorkFolder. В каталоге myWorkFolder появится файл с таким же именем, в текущем будет удален.    \n        </td>\n        <td width=\"25%\"> <pre><code lang=\"bash\">ls\n>ls\nmyprog.c\n>mv myprog.c yourprog.c\n>ls\nyourprog.c\n>cp myWorkFolder/myprog.c .\n>cp otherfile myWorkFolder/\n</code></pre>   \n        </td>\n</tr>\n\n</table>\n\n<h3>Еще таблица с colspan и rowspan</h3>\n<table border=1>\n<tr>\n        <td rowspan=\"2\"> rowspan 2\n        </td>\n        <td > a 12\n        </td>\n        <td > a 13\n        </td>\n</tr>\n<tr>\n        <td> a 22\n        </td>\n        <td> a 23\n        </td>\n</tr>\n<tr>\n        <td> a 31\n        </td>\n        <td colspan=\"2\"> a 32\n        </td>\n</tr>\n\n</table>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 4,
+      "type": "StepText",
+      "header": "Ссылки и рисунки",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Ссылки и рисунки</h2>\n<ul>\n<li><a href=\"http://stepik.org\">Stepik</a></li>\n</ul>\n<p>И внутри текста расположим ссылку на текст.</p>\n<p><img alt=\"Логотип Stepik\" src=\"https://stepik.org/static/frontend/topbar_logo.svg\" /></p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 5,
+      "type": "StepText",
+      "header": "Codeblock",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Codeblock</h2>\n<p>Нужно уметь писать куски кода на языке С внутри строки, например <code>int * px = &amp;x;</code> и все будет хорошо.</p>\n<p>Не надо надеяться, что *px и &amp;x будут правильно сформатированы.</p>\n<p>Как и **argc, например.</p>\n<p>Программа на python:</p>\n<pre><code class=\"language-python\">print('Hello, world!')\n</code></pre>\n<p>Программа на С:</p>\n<pre><code class=\"language-cpp\">#include &lt;stdio.h&gt;\n\nint main(int argc, char * argv[]) {\n        printf(&quot;Hello, world!\\n&quot;);\n        return 0;\n}\n</code></pre>\n<p>Командная строка:</p>\n<pre><code class=\"language-bash\">&gt; pwd\n/home/student\n&gt; dir\nworkspace\n</code></pre>\n<p>Просто блок без указания языка:</p>\n<pre><code>ааа\n   ббб\n      ссс\n</code></pre>\n<p>4 пробела или табуляция - НЕ РАБОТАЕТ!<br />\n    #include <stdio.h></p>\n<pre><code>int main(int argc, char * argv[]) {\n        printf(\"Hello, world!\\n\");\n        return 0;\n}\n</code></pre>\n<p>Нумерация строк (не работает, пробовала разные варианты, снесла, оставив чистый cpp):</p>\n<pre><code class=\"language-cpp\">#include &lt;stdio.h&gt;\n\nint main(int argc, char * argv[]) {\n        printf(&quot;Hello, world!\\n&quot;);\n        return 0;\n}\n</code></pre>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 6,
+      "type": "StepText",
+      "header": "LaTeX",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>LaTeX</h2>\n<p>Вставка отдельной формулы $e = mc^2$ в тексте. В него подставим отдельно стоящую формулу $$y = \\sin{x}^2 $$ и напишем дальше текст.</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    }
+  ]
+}
