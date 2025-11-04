@@ -7,10 +7,9 @@
   },
   "steps": [
     {
-      "position": 0,
+      "position": 1,
       "type": "StepText",
       "header": "Шаблон",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -23,10 +22,9 @@
       }
     },
     {
-      "position": 1,
+      "position": 2,
       "type": "StepQuiz",
       "header": "Выбор одного",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -71,10 +69,9 @@
       }
     },
     {
-      "position": 2,
+      "position": 3,
       "type": "StepQuiz",
       "header": "Выбор нескольких ответов",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -119,10 +116,9 @@
       }
     },
     {
-      "position": 3,
+      "position": 4,
       "type": "StepQuiz",
       "header": "Знаки неравенства и матформулы в вариантах",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -167,10 +163,9 @@
       }
     },
     {
-      "position": 4,
+      "position": 5,
       "type": "StepQuiz",
       "header": "Код",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -210,10 +205,9 @@
       }
     },
     {
-      "position": 5,
+      "position": 6,
       "type": "StepText",
       "header": "Картинки",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {

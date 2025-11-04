@@ -217,7 +217,6 @@ class SnapshotManager:
         
         snapshot_step = snapshot["steps"][step_position - 1]
         current_step = current_steps[step_position - 1]
-        print(f"ВОТ {snapshot_step} и ВОТ {current_step}")
         
         return self._compare_steps(step_position, snapshot_step, current_step)
     
@@ -379,4 +378,3 @@ def main(filename: str, step: int, update: bool):
 
 if __name__ == "__main__":
     main()
-    

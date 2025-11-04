@@ -1,0 +1,25 @@
+{
+  "metadata": {
+    "source_md": "examples/step_first.md",
+    "total_steps": 1,
+    "lesson_id": 1945916,
+    "title": "Первый шаг"
+  },
+  "steps": [
+    {
+      "position": 1,
+      "type": "StepText",
+      "header": "Простой текст",
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Простой текст</h2>\n<p>Первый абзац.</p>\n<p>Второй абзац.<br />\nИз двух строк.</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    }
+  ]
+}

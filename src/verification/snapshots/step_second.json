@@ -7,10 +7,9 @@
   },
   "steps": [
     {
-      "position": 0,
+      "position": 1,
       "type": "StepText",
       "header": "Первый",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -23,10 +22,9 @@
       }
     },
     {
-      "position": 1,
+      "position": 2,
       "type": "StepText",
       "header": "Второй",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
