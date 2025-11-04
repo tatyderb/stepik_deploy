@@ -7,10 +7,9 @@
   },
   "steps": [
     {
-      "position": 0,
+      "position": 1,
       "type": "StepText",
       "header": "Форматы текста.",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -23,10 +22,9 @@
       }
     },
     {
-      "position": 1,
+      "position": 2,
       "type": "StepText",
       "header": "Списки",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -39,10 +37,9 @@
       }
     },
     {
-      "position": 2,
+      "position": 3,
       "type": "StepText",
       "header": "Заголовки",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -55,10 +52,9 @@
       }
     },
     {
-      "position": 3,
+      "position": 4,
       "type": "StepText",
       "header": "Таблицы",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -71,10 +67,9 @@
       }
     },
     {
-      "position": 4,
+      "position": 5,
       "type": "StepText",
       "header": "Ссылки и рисунки",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -87,10 +82,9 @@
       }
     },
     {
-      "position": 5,
+      "position": 6,
       "type": "StepText",
       "header": "Codeblock",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -103,10 +97,9 @@
       }
     },
     {
-      "position": 6,
+      "position": 7,
       "type": "StepText",
       "header": "LaTeX",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {

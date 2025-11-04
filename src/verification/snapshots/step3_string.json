@@ -7,10 +7,9 @@
   },
   "steps": [
     {
-      "position": 0,
+      "position": 1,
       "type": "StepText",
       "header": "Шаблон",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -23,10 +22,9 @@
       }
     },
     {
-      "position": 1,
+      "position": 2,
       "type": "StepString",
       "header": "Простой случай",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -55,10 +53,9 @@
       }
     },
     {
-      "position": 2,
+      "position": 3,
       "type": "StepString",
       "header": "Демонстрация опции CONFIG",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -87,10 +84,9 @@
       }
     },
     {
-      "position": 3,
+      "position": 4,
       "type": "StepString",
       "header": "Многострочные ответы",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -119,10 +115,9 @@
       }
     },
     {
-      "position": 4,
+      "position": 5,
       "type": "StepString",
       "header": "Регулярные выражения",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -151,10 +146,9 @@
       }
     },
     {
-      "position": 5,
+      "position": 6,
       "type": "StepString",
       "header": "Множественные ответы",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {

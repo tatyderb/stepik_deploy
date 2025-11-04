@@ -7,10 +7,9 @@
   },
   "steps": [
     {
-      "position": 0,
+      "position": 1,
       "type": "StepText",
       "header": "Шаблон",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -23,10 +22,9 @@
       }
     },
     {
-      "position": 1,
+      "position": 2,
       "type": "StepEssay",
       "header": "Пример задания",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -47,10 +45,9 @@
       }
     },
     {
-      "position": 2,
+      "position": 3,
       "type": "StepEssay",
       "header": "Задача",
-      "skip": false,
       "data": {
         "stepSource": {
           "block": {

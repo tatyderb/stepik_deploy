@@ -7,7 +7,7 @@
   },
   "steps": [
     {
-      "position": 0,
+      "position": 1,
       "type": "StepText",
       "header": "Шаблон",
       "data": {
@@ -22,7 +22,7 @@
       }
     },
     {
-      "position": 1,
+      "position": 2,
       "type": "StepTaskinline",
       "header": "Сумма - простая задача",
       "data": {
@@ -80,7 +80,7 @@
       }
     },
     {
-      "position": 2,
+      "position": 3,
       "type": "StepTaskinline",
       "header": "Напишите функцию (HEADER, FOOTER, CODE)",
       "data": {
@@ -138,7 +138,7 @@
       }
     },
     {
-      "position": 3,
+      "position": 4,
       "type": "StepTaskinline",
       "header": "Напишите функцию (TEMPLATE)",
       "data": {
@@ -196,7 +196,7 @@
       }
     },
     {
-      "position": 4,
+      "position": 5,
       "type": "StepTaskinline",
       "header": "Нет входных данных",
       "data": {
@@ -250,7 +250,7 @@
       }
     },
     {
-      "position": 5,
+      "position": 6,
       "type": "StepTaskinline",
       "header": "mode = stepik",
       "data": {
@@ -316,7 +316,7 @@
       }
     },
     {
-      "position": 6,
+      "position": 7,
       "type": "StepTaskinline",
       "header": "mode = custom",
       "data": {
