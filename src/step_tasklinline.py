@@ -386,7 +386,8 @@ class StepTaskinline(Step):
         self.text = markdown_text
 
     def to_dict(self) -> dict:
-        d = self.DATA_TEMPLATE.copy()
+        from copy import deepcopy
+        d = deepcopy(self.DATA_TEMPLATE)
         # при self.mode == 'custom' добавится раздел с тестовыми данными, см. ниже
 
         # лимиты на память и время размазаны по разным местам
@@ -437,7 +438,7 @@ class StepTaskinline(Step):
                 d['stepSource']['block']['source']['test_cases'] = []
                 d['stepSource']['block']['source']['samples_count'] = 0
 
-                self.text += self.test_examples(self.tests, open_tests_number=self.open_tests)
+                self.text += self.test_examples(self.tests, open_tests_number=self.open_tests)  # при новых вызовах добавляет новый текст, меняя результат
 
             case '_':
                 raise ValueError(f'mode {self.mode} не существует; только stepik и custom')

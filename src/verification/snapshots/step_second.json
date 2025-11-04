@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "source_md": "examples/step_second.md",
+    "total_steps": 2,
+    "lesson_id": 1945989,
+    "title": "Второй шаг"
+  },
+  "steps": [
+    {
+      "position": 0,
+      "type": "StepText",
+      "header": "Первый",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Первый</h2>\n<p>Это текст первого шага.</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 1,
+      "type": "StepText",
+      "header": "Второй",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Второй</h2>\n<p>Это текст второго шага.</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    }
+  ]
+}

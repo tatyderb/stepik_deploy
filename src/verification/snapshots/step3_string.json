@@ -1,0 +1,186 @@
+{
+  "metadata": {
+    "source_md": "examples/step3_string.md",
+    "total_steps": 6,
+    "lesson_id": 1977210,
+    "title": "Шаг STRING - численная задача"
+  },
+  "steps": [
+    {
+      "position": 0,
+      "type": "StepText",
+      "header": "Шаблон",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Шаблон</h2>\n<p><a href=\"https://stepik.org/lesson/385342/step/1\">Текстовая задача</a></p>\n<pre><code>## STRING Заголовок\n\nТекст условия\n\nANSWER: строка, несколько строк или регулярное выражение \nCONFIG\nuse_re: false \nmatch_substring: false\ncase_sensitive: false\nis_text_disabled: false\nis_file_disabled: true\n</code></pre>\n<ul>\n<li>match_substring - Сверка по фрагменту</li>\n<li>use_re - Проверка по регулярному выражению</li>\n<li>case_sensitive - Учитывать регистр и различать заглавные и строчные буквы</li>\n<li>is_text_disabled - Запретить ввод ответа в текстовое поле</li>\n<li>is_file_disabled - Запретить посылку файла с ответом</li>\n</ul>\n<p>Stepik использует следующие комбинации is_text_disabled и is_file_disabled:<br />\n- По умолчанию (для бесплатных курсов) только текст: is_text_disabled = false, is_file_disabled = true<br />\n- Только файл: is_text_disabled = true, is_file_disabled = false<br />\n- Текст или файл: is_text_disabled = false, is_file_disabled = false</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 1,
+      "type": "StepString",
+      "header": "Простой случай",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "string",
+            "text": "<h2>Простой случай</h2>\n<p>Как называется шахматная фигура, которая ходит по вертикали и горизонтали?</p>",
+            "video": null,
+            "options": {},
+            "source": {
+              "pattern": "ладья",
+              "use_re": false,
+              "match_substring": false,
+              "case_sensitive": false,
+              "code": "# def check(reply):\n#     \"\"\"Evaluate the learner's reply.\n#\n#     It should return 1 or True for the correct reply and 0 or False\n#     for the incorrect one.\n#\n#     A partial solution may be scored using a float number from the\n#     interval (0, 1). In such a case the learner total score for the\n#     problem will be 'step cost' * 'score'.\n#\n#     :param reply: a string that is the learner's reply to the problem\n#     :return: a score number (int or float) in range [0, 1]\n#\n#     \"\"\"\n#     return reply == \"Hello\"\n\n# def solve():\n#     \"\"\"Return a correct reply. This function is *optional*.\n#\n#     It is used to test the correctness of the 'check' function.\n#\n#     :return: a string that is a correct reply to the problem\n#\n#     \"\"\"\n#     return \"Hello\"",
+              "is_text_disabled": false,
+              "is_file_disabled": true
+            },
+            "subtitles": {},
+            "tests_archive": null,
+            "feedback_correct": "",
+            "feedback_wrong": ""
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
+        }
+      }
+    },
+    {
+      "position": 2,
+      "type": "StepString",
+      "header": "Демонстрация опции CONFIG",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "string",
+            "text": "<h2>Демонстрация опции CONFIG</h2>\n<p>Назовите столицу России</p>",
+            "video": null,
+            "options": {},
+            "source": {
+              "pattern": "Москва",
+              "use_re": false,
+              "match_substring": false,
+              "case_sensitive": true,
+              "code": "# def check(reply):\n#     \"\"\"Evaluate the learner's reply.\n#\n#     It should return 1 or True for the correct reply and 0 or False\n#     for the incorrect one.\n#\n#     A partial solution may be scored using a float number from the\n#     interval (0, 1). In such a case the learner total score for the\n#     problem will be 'step cost' * 'score'.\n#\n#     :param reply: a string that is the learner's reply to the problem\n#     :return: a score number (int or float) in range [0, 1]\n#\n#     \"\"\"\n#     return reply == \"Hello\"\n\n# def solve():\n#     \"\"\"Return a correct reply. This function is *optional*.\n#\n#     It is used to test the correctness of the 'check' function.\n#\n#     :return: a string that is a correct reply to the problem\n#\n#     \"\"\"\n#     return \"Hello\"",
+              "is_text_disabled": false,
+              "is_file_disabled": true
+            },
+            "subtitles": {},
+            "tests_archive": null,
+            "feedback_correct": "",
+            "feedback_wrong": ""
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
+        }
+      }
+    },
+    {
+      "position": 3,
+      "type": "StepString",
+      "header": "Многострочные ответы",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "string",
+            "text": "<h2>Многострочные ответы</h2>\n<p>Напишите три строки стиховорения, которые следуют после этих строк:</p>\n<p>Мороз и солнце; день чудесный!<br />\nЕще ты дремлешь, друг прелестный —<br />\nПора, красавица, проснись:<br />\n[ваши 3 строки]</p>",
+            "video": null,
+            "options": {},
+            "source": {
+              "pattern": "Открой сомкнуты негой взоры\nНавстречу северной Авроры,\nЗвездою севера явись!",
+              "use_re": false,
+              "match_substring": false,
+              "case_sensitive": false,
+              "code": "# def check(reply):\n#     \"\"\"Evaluate the learner's reply.\n#\n#     It should return 1 or True for the correct reply and 0 or False\n#     for the incorrect one.\n#\n#     A partial solution may be scored using a float number from the\n#     interval (0, 1). In such a case the learner total score for the\n#     problem will be 'step cost' * 'score'.\n#\n#     :param reply: a string that is the learner's reply to the problem\n#     :return: a score number (int or float) in range [0, 1]\n#\n#     \"\"\"\n#     return reply == \"Hello\"\n\n# def solve():\n#     \"\"\"Return a correct reply. This function is *optional*.\n#\n#     It is used to test the correctness of the 'check' function.\n#\n#     :return: a string that is a correct reply to the problem\n#\n#     \"\"\"\n#     return \"Hello\"",
+              "is_text_disabled": false,
+              "is_file_disabled": true
+            },
+            "subtitles": {},
+            "tests_archive": null,
+            "feedback_correct": "",
+            "feedback_wrong": ""
+          },
+          "lesson": null,
+          "position": null,
+          "cost": "5"
+        }
+      }
+    },
+    {
+      "position": 4,
+      "type": "StepString",
+      "header": "Регулярные выражения",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "string",
+            "text": "<h2>Регулярные выражения</h2>\n<p>Можно создать сверку по регулярному выражению, например:<br />\nНапишите север или юг</p>",
+            "video": null,
+            "options": {},
+            "source": {
+              "pattern": "север|юг",
+              "use_re": true,
+              "match_substring": false,
+              "case_sensitive": false,
+              "code": "# def check(reply):\n#     \"\"\"Evaluate the learner's reply.\n#\n#     It should return 1 or True for the correct reply and 0 or False\n#     for the incorrect one.\n#\n#     A partial solution may be scored using a float number from the\n#     interval (0, 1). In such a case the learner total score for the\n#     problem will be 'step cost' * 'score'.\n#\n#     :param reply: a string that is the learner's reply to the problem\n#     :return: a score number (int or float) in range [0, 1]\n#\n#     \"\"\"\n#     return reply == \"Hello\"\n\n# def solve():\n#     \"\"\"Return a correct reply. This function is *optional*.\n#\n#     It is used to test the correctness of the 'check' function.\n#\n#     :return: a string that is a correct reply to the problem\n#\n#     \"\"\"\n#     return \"Hello\"",
+              "is_text_disabled": false,
+              "is_file_disabled": true
+            },
+            "subtitles": {},
+            "tests_archive": null,
+            "feedback_correct": "",
+            "feedback_wrong": ""
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
+        }
+      }
+    },
+    {
+      "position": 5,
+      "type": "StepString",
+      "header": "Множественные ответы",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "string",
+            "text": "<h2>Множественные ответы</h2>\n<p>Как называется величина det(A)?</p>",
+            "video": null,
+            "options": {},
+            "source": {
+              "pattern": "детерминант|определитель",
+              "use_re": true,
+              "match_substring": false,
+              "case_sensitive": false,
+              "code": "# def check(reply):\n#     \"\"\"Evaluate the learner's reply.\n#\n#     It should return 1 or True for the correct reply and 0 or False\n#     for the incorrect one.\n#\n#     A partial solution may be scored using a float number from the\n#     interval (0, 1). In such a case the learner total score for the\n#     problem will be 'step cost' * 'score'.\n#\n#     :param reply: a string that is the learner's reply to the problem\n#     :return: a score number (int or float) in range [0, 1]\n#\n#     \"\"\"\n#     return reply == \"Hello\"\n\n# def solve():\n#     \"\"\"Return a correct reply. This function is *optional*.\n#\n#     It is used to test the correctness of the 'check' function.\n#\n#     :return: a string that is a correct reply to the problem\n#\n#     \"\"\"\n#     return \"Hello\"",
+              "is_text_disabled": false,
+              "is_file_disabled": true
+            },
+            "subtitles": {},
+            "tests_archive": null,
+            "feedback_correct": "",
+            "feedback_wrong": ""
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
+        }
+      }
+    }
+  ]
+}

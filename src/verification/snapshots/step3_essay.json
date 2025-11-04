@@ -1,0 +1,74 @@
+{
+  "metadata": {
+    "source_md": "examples/step3_essay.md",
+    "total_steps": 3,
+    "lesson_id": 1978058,
+    "title": "Шаг ESSAY - задача на свободный ответ"
+  },
+  "steps": [
+    {
+      "position": 0,
+      "type": "StepText",
+      "header": "Шаблон",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Шаблон</h2>\n<p><a href=\"https://stepik.org/lesson/385344/step/1\">Задача на свободный ответ</a></p>\n<pre><code>## ESSAY Заголовок\n\nТекст условия\n</code></pre>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 1,
+      "type": "StepEssay",
+      "header": "Пример задания",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Пример задания</h2>\n<p>Какой курс на Stepik запомнился вам больше всего? Расскажите о нём в поле ниже.</p>",
+            "name": "free-answer",
+            "video": null,
+            "options": null,
+            "source": {
+              "is_attachments_enabled": false,
+              "is_html_enabled": true,
+              "manual_scoring": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
+        }
+      }
+    },
+    {
+      "position": 2,
+      "type": "StepEssay",
+      "header": "Задача",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Задача</h2>\n<p>Дана трапеция ABCD с основаниями AD и BC.  Диагональ BD разбивает её на два равнобедренных треугольника с основаниями AD и CD.</p>\n<p>а) Докажите, что луч AC — биссектриса угла BAD.</p>\n<p>б) Найдите CD, если известны диагонали трапеции: AC=12 и BD=6,5.</p>",
+            "name": "free-answer",
+            "video": null,
+            "options": null,
+            "source": {
+              "is_attachments_enabled": false,
+              "is_html_enabled": true,
+              "manual_scoring": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": "10"
+        }
+      }
+    }
+  ]
+}
