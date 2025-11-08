@@ -22,6 +22,17 @@ python deploy.py first_lesson.md -s -1
 
 * `-s N` или `--step N` - номер шага N, начинается с 1, допускаются отрицательные числа (-1 - последний шаг).
 
+## Проверка корректности работы
+
+Можно проверить работу программы, запустив скрипт snapshops_manager для уроков в examples:
+```bash
+python src/verification/snapshops_manager.py examples/step_first.md 
+```
+Для подробной информации вызовите
+```bash
+python src/verification/snapshops_manager.py -h
+```
+
 ## Формат данных
 
 ### Файл с уроком
@@ -60,7 +71,7 @@ python deploy.py first_lesson.md -s -1
 
 В формате markdown. [Пример](https://github.com/tatyderb/stepik_deploy/blob/main/examples/step1_markdown.md)
 
-## Тип QUIZ - шаг Тест
+### Тип QUIZ - шаг Тест
 
 * Описание типа шага [Тест](https://stepik.org/lesson/385334/step/1). 
 * [Примеры](https://github.com/tatyderb/stepik_deploy/blob/main/examples/step2_quiz.md)
