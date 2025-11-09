@@ -1,7 +1,7 @@
 {
   "metadata": {
     "source_md": "examples/step4_taskinline.md",
-    "total_steps": 7,
+    "total_steps": 9,
     "lesson_id": 1950070,
     "title": "Шаг TASKLINLINE - задача на программирования (встроенная)"
   },
@@ -10,6 +10,7 @@
       "position": 1,
       "type": "StepText",
       "header": "Шаблон",
+      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -24,7 +25,15 @@
     {
       "position": 2,
       "type": "StepTaskinline",
+      "header": "Сумма - на этой задаче исследуем REST API",
+      "skip": true,
+      "data": ""
+    },
+    {
+      "position": 3,
+      "type": "StepTaskinline",
       "header": "Сумма - простая задача",
+      "skip": false,
       "data": {
         "stepSource": {
           "reason_of_failure": null,
@@ -80,9 +89,10 @@
       }
     },
     {
-      "position": 3,
+      "position": 4,
       "type": "StepTaskinline",
       "header": "Напишите функцию (HEADER, FOOTER, CODE)",
+      "skip": false,
       "data": {
         "stepSource": {
           "reason_of_failure": null,
@@ -138,9 +148,10 @@
       }
     },
     {
-      "position": 4,
+      "position": 5,
       "type": "StepTaskinline",
       "header": "Напишите функцию (TEMPLATE)",
+      "skip": false,
       "data": {
         "stepSource": {
           "reason_of_failure": null,
@@ -196,9 +207,10 @@
       }
     },
     {
-      "position": 5,
+      "position": 6,
       "type": "StepTaskinline",
       "header": "Нет входных данных",
+      "skip": false,
       "data": {
         "stepSource": {
           "reason_of_failure": null,
@@ -250,9 +262,10 @@
       }
     },
     {
-      "position": 6,
+      "position": 7,
       "type": "StepTaskinline",
       "header": "mode = stepik",
+      "skip": false,
       "data": {
         "stepSource": {
           "reason_of_failure": null,
@@ -316,9 +329,10 @@
       }
     },
     {
-      "position": 7,
+      "position": 8,
       "type": "StepTaskinline",
       "header": "mode = custom",
+      "skip": false,
       "data": {
         "stepSource": {
           "reason_of_failure": null,
@@ -363,6 +377,13 @@
           "score": 10
         }
       }
+    },
+    {
+      "position": 9,
+      "type": "StepTaskinline",
+      "header": "тут должно падать при создании",
+      "skip": true,
+      "data": ""
     }
   ]
 }

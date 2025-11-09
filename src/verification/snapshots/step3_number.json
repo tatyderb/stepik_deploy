@@ -10,6 +10,7 @@
       "position": 1,
       "type": "StepText",
       "header": "Шаблон",
+      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -25,6 +26,7 @@
       "position": 2,
       "type": "StepNumber",
       "header": "Целое число",
+      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -51,6 +53,7 @@
       "position": 3,
       "type": "StepNumber",
       "header": "Указываем точность",
+      "skip": false,
       "data": {
         "stepSource": {
           "block": {
@@ -77,6 +80,7 @@
       "position": 4,
       "type": "StepNumber",
       "header": "Два ответа",
+      "skip": false,
       "data": {
         "stepSource": {
           "block": {
