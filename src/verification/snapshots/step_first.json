@@ -10,6 +10,7 @@
       "position": 1,
       "type": "StepText",
       "header": "Простой текст",
+      "skip": false,
       "data": {
         "stepSource": {
           "block": {

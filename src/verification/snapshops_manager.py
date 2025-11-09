@@ -21,6 +21,7 @@ PASSED = "passed"
 FAILED = "failed"
 EXTRA_IN_SNAPSHOT = "extra_in_snapshot"
 NEW_IN_CURRENT = "new_in_current"
+SKIPPED_IN_CURRENT = "skipped_in_current"
 
 
 class SnapshotManager:
@@ -42,26 +43,24 @@ class SnapshotManager:
         with open(md_filename, 'r', encoding='utf-8') as f:
             lesson.parse_markdown(f.read())
 
-        # Фильтруем шаги, исключая пропущенные
-        non_skipped_steps = [step for step in lesson.steps if not step.skip]
-
         snapshot_data = {
             "metadata": {
                 "source_md": md_filename,
-                "total_steps": len(non_skipped_steps),
+                "total_steps": len(lesson.steps),
                 "lesson_id": lesson.lesson_id,
                 "title": lesson.title
             },
             "steps": []
         }
 
-        for i, step in enumerate(non_skipped_steps):
-            step_data = step.to_dict()
+        for i, step in enumerate(lesson.steps):
+            step_data = "" if step.skip else step.to_dict()
 
             snapshot_step = {
                 "position": i + 1,
                 "type": step.__class__.__name__,
                 "header": step.header.strip(),
+                "skip": step.skip,
                 "data": step_data
             }
             snapshot_data["steps"].append(snapshot_step)
@@ -98,10 +97,11 @@ class SnapshotManager:
             "steps_verified": 0,
             "steps_passed": 0,
             "steps_failed": 0,
+            "steps_skipped": 0,
             "step_results": []
         }
 
-        current_steps = [step for step in lesson.steps if not step.skip]
+        current_steps = lesson.steps
         print(
             f"Проверка снапшота ({len(snapshot['steps'])} шагов)",
             f"vs текущего урока ({len(current_steps)} шагов)")
@@ -115,10 +115,10 @@ class SnapshotManager:
             print(f"  Позиция {position}:")
             if position <= len(snapshot["steps"]):
                 snapshot_step = snapshot["steps"][position - 1]
-                print(f"    Снапшот: {snapshot_step['header']}")
+                print(f"    Снапшот: {snapshot_step['header']} (skip: {snapshot_step.get('skip', False)})")
             if position <= len(current_steps):
                 current_step = current_steps[position - 1]
-                print(f"    Текущий: {current_step.header}")
+                print(f"    Текущий: {current_step.header} (skip: {current_step.skip})")
 
             step_result = self._compare_steps(
                 position, snapshot_step, current_step)
@@ -127,6 +127,8 @@ class SnapshotManager:
 
             if step_result["status"] == PASSED:
                 results["steps_passed"] += 1
+            elif step_result["status"] == SKIPPED_IN_CURRENT:
+                results["steps_skipped"] += 1
             elif step_result["status"] in [FAILED, EXTRA_IN_SNAPSHOT, NEW_IN_CURRENT]:
                 results["steps_failed"] += 1
 
@@ -151,7 +153,24 @@ class SnapshotManager:
                 "status": NEW_IN_CURRENT,
                 "message": "Новый шаг в текущем уроке, отсутствует в снапшоте"
             }
-
+        
+        if current_step.skip:
+            return {
+                "position": position,
+                "header": current_step.header,
+                "status": SKIPPED_IN_CURRENT,
+                "message": "Шаг пропущен в текущем уроке - проверка не выполняется"
+            }
+        
+        # Если в снапшоте шаг пропущен, а в текущем - нет, это ошибка
+        if snapshot_step.get("skip", False) and not current_step.skip:
+            return {
+                "position": position,
+                "header": current_step.header,
+                "status": FAILED,
+                "message": "Шаг пропущен в снапшоте, но активен в текущем уроке"
+            }
+        
         # Оба шага существуют - сравниваем их
         # Проверяем тип шага
         if snapshot_step["type"] != current_step.__class__.__name__:
@@ -213,8 +232,7 @@ class SnapshotManager:
                 "action": SNAPSHOT_ACTION
             }
 
-        # Фильтруем шаги, исключая пропущенные
-        current_steps = [step for step in lesson.steps if not step.skip]
+        current_steps = lesson.steps
 
         # Нормализуем позицию (поддержка отрицательных номеров)
         total_steps = len(snapshot["steps"])
