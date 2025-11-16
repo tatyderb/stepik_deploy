@@ -1,6 +1,6 @@
 import json
 import sys
-from enum import Enum, StrEnum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 import click
@@ -16,6 +16,8 @@ MAX_TEXT_LINES_PREVIEW = 3
 SNAPSHOT_ACTION = "Используйте опцию -u для создания снапшота"
 
 # Статусы
+
+
 class Status(StrEnum):
     ERROR = "error"
     SUCCESS = "success"
@@ -75,14 +77,20 @@ class SnapshotManager:
 
     def load_snapshot(self, md_filename: str) -> dict[str, Any]:
         """Загружает снапшот из файла"""
-        snapshot_path = self.get_snapshot_path(md_filename)
-        if not snapshot_path.exists():
-            raise FileNotFoundError(f"Снапшот не найден: {snapshot_path}")
+        try:
+            snapshot_path = self.get_snapshot_path(md_filename)
+            with open(snapshot_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except OSError as e:
+            raise OSError(f"Ошибка доступа к файлу {snapshot_path}: {e}")
+        except Exception as e:
+            raise RuntimeError(
+                f"Ошибка загрузки снапшота {snapshot_path}: {e}")
 
-        with open(snapshot_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-
-    def verify_lesson(self, lesson: Lesson, md_filename: str) -> dict[str, Any]:
+    def verify_lesson(
+            self,
+            lesson: Lesson,
+            md_filename: str) -> dict[str, Any]:
         """Проверяет весь урок: текущий lesson со снапшотом в md_filename"""
         try:
             snapshot = self.load_snapshot(md_filename)
@@ -117,22 +125,27 @@ class SnapshotManager:
             print(f"  Позиция {position}:")
             if position <= len(snapshot["steps"]):
                 snapshot_step = snapshot["steps"][position - 1]
-                print(f"    Снапшот: {snapshot_step['header']} (skip: {snapshot_step.get('skip', False)})")
+                print(
+                    f"    Снапшот: {snapshot_step['header']} (skip: {snapshot_step.get('skip', False)})")
             if position <= len(current_steps):
                 current_step = current_steps[position - 1]
-                print(f"    Текущий: {current_step.header} (skip: {current_step.skip})")
+                print(
+                    f"    Текущий: {current_step.header} (skip: {current_step.skip})")
 
             step_result = self._compare_steps(
                 position, snapshot_step, current_step)
             results["step_results"].append(step_result)
             results["steps_verified"] += 1
 
-            if step_result["status"] == Status.PASSED:
-                results["steps_passed"] += 1
-            elif step_result["status"] == Status.SKIPPED_IN_CURRENT:
-                results["steps_skipped"] += 1
-            elif step_result["status"] in [Status.FAILED, Status.EXTRA_IN_SNAPSHOT, Status.NEW_IN_CURRENT]:
-                results["steps_failed"] += 1
+            match step_result["status"]:
+                case Status.PASSED:
+                    results["steps_passed"] += 1
+                case Status.SKIPPED_IN_CURRENT:
+                    results["steps_skipped"] += 1
+                case [Status.FAILED,
+                      Status.EXTRA_IN_SNAPSHOT,
+                      Status.NEW_IN_CURRENT]:
+                    results["steps_failed"] += 1
 
         return results
 
@@ -155,7 +168,7 @@ class SnapshotManager:
                 "status": Status.NEW_IN_CURRENT,
                 "message": "Новый шаг в текущем уроке, отсутствует в снапшоте"
             }
-        
+
         if current_step.skip:
             return {
                 "position": position,
@@ -163,7 +176,7 @@ class SnapshotManager:
                 "status": Status.SKIPPED_IN_CURRENT,
                 "message": "Шаг пропущен в текущем уроке - проверка не выполняется"
             }
-        
+
         # Если в снапшоте шаг пропущен, а в текущем - нет, это ошибка
         if snapshot_step.get("skip", False) and not current_step.skip:
             return {
@@ -172,7 +185,7 @@ class SnapshotManager:
                 "status": Status.FAILED,
                 "message": "Шаг пропущен в снапшоте, но активен в текущем уроке"
             }
-        
+
         # Оба шага существуют - сравниваем их
         # Проверяем тип шага
         if snapshot_step["type"] != current_step.__class__.__name__:
@@ -183,9 +196,8 @@ class SnapshotManager:
                 "message": f"Тип шага изменился: {snapshot_step['type']} → {current_step.__class__.__name__}"
             }
 
-        # Проверяем заголовок (дополнительная проверка)
-        header_match = snapshot_step["header"] == current_step.header.strip()
-        if not header_match:
+        # Проверяем заголовок
+        if snapshot_step["header"] != current_step.header.strip():
             return {
                 "position": position,
                 "header": f"{snapshot_step['header']} → {current_step.header}",
@@ -199,15 +211,7 @@ class SnapshotManager:
 
         differences = self._compare_dicts(snapshot_data, current_data)
 
-        if not differences:
-            return {
-                "position": position,
-                "header": snapshot_step["header"],
-                "type": snapshot_step["type"],
-                "status": Status.PASSED,
-                "message": "Шаг соответствует снапшоту"
-            }
-        else:
+        if differences:
             return {
                 "position": position,
                 "header": snapshot_step["header"],
@@ -215,6 +219,14 @@ class SnapshotManager:
                 "status": Status.FAILED,
                 "message": "Обнаружены различия",
                 "differences": differences
+            }
+        else:
+            return {
+                "position": position,
+                "header": snapshot_step["header"],
+                "type": snapshot_step["type"],
+                "status": Status.PASSED,
+                "message": "Шаг соответствует снапшоту"
             }
 
     def verify_single_step(self, md_filename: str, step_position: int) -> dict[str, Any]:
@@ -241,7 +253,7 @@ class SnapshotManager:
         if step_position < 0:
             step_position = total_steps + step_position + 1
 
-        if step_position < 1 or step_position > total_steps:
+        if step_position > total_steps:
             return {
                 "status": Status.ERROR,
                 "message": f"Шаг {step_position} не существует. Всего шагов: {total_steps}"
@@ -272,7 +284,11 @@ class SnapshotManager:
                 normalized.append(case)
         return normalized
 
-    def _compare_dicts(self, dict1: dict, dict2: dict, path: str = "") -> list[str]:
+    def _compare_dicts(
+            self,
+            dict1: dict,
+            dict2: dict,
+            path: str = "") -> list[str]:
         """Рекурсивно сравнивает два словаря и возвращает список различий"""
         differences = []
 
@@ -345,36 +361,49 @@ class SnapshotManager:
 
 def _print_step_result(result: dict):
     """Выводит результат проверки одного шага"""
+
+    if result["status"] == Status.ERROR:
+        click.echo(f"❌ Ошибка: {result['message']}")
+        if "action" in result:
+            click.echo(f"{result['action']}")
+        return
+
     position = result["position"]
     header = result["header"]
 
-    if result["status"] == Status.PASSED:
-        click.echo(f"✅ Шаг {position}: {header} - СООТВЕТСТВУЕТ")
+    match result["status"]:
+        case Status.PASSED:
+            click.echo(f"✅ Шаг {position}: {header} - СООТВЕТСТВУЕТ")
 
-    elif result["status"] == Status.EXTRA_IN_SNAPSHOT:
-        click.echo(f"Шаг {position}: {header} - ЕСТЬ В СНАПШОТЕ, НЕТ В УРОКЕ")
+        case Status.EXTRA_IN_SNAPSHOT:
+            click.echo(
+                f"Шаг {position}: {header} - ЕСТЬ В СНАПШОТЕ, НЕТ В УРОКЕ")
 
-    elif result["status"] == Status.NEW_IN_CURRENT:
-        click.echo(f"Шаг {position}: {header} - НОВЫЙ ШАГ, НЕТ В СНАПШОТЕ")
+        case Status.NEW_IN_CURRENT:
+            click.echo(f"Шаг {position}: {header} - НОВЫЙ ШАГ, НЕТ В СНАПШОТЕ")
 
-    elif result["status"] == Status.FAILED:
-        click.echo(f"❌ Шаг {position}: {header} - ОШИБКИ")
-        if "type" in result:
-            click.echo(f"   Тип: {result['type']}")
-        click.echo(f"   Причина: {result['message']}")
+        case Status.FAILED:
+            click.echo(f"❌ Шаг {position}: {header} - ОШИБКИ")
+            if "type" in result:
+                click.echo(f"   Тип: {result['type']}")
+            click.echo(f"   Причина: {result['message']}")
 
-        if "differences" in result:
-            for diff in result["differences"]:
-                formatted_diff = diff.replace('\n', '\n      ')
-                click.echo(f"   {formatted_diff}")
+            if "differences" in result:
+                for diff in result["differences"]:
+                    formatted_diff = diff.replace('\n', '\n      ')
+                    click.echo(f"   {formatted_diff}")
 
 
 def _print_lesson_result(result: dict):
     """Выводит результат проверки всего урока"""
-    click.echo(f"Урок: {result['lesson']}")
 
-    if result.get("status") == "warning" and "message" in result:
-        click.echo(f"⚠️  {result['message']}")
+    if result.get("status") == Status.ERROR:
+        click.echo(f"❌ Ошибка: {result['message']}")
+        if "action" in result:
+            click.echo(f"{result['action']}")
+        return
+
+    click.echo(f"Урок: {result['lesson']}")
 
     click.echo(f"Проверено шагов: {result['steps_verified']}")
     click.echo(f"✅ Пройдено: {result['steps_passed']}")
@@ -391,7 +420,7 @@ def _print_lesson_result(result: dict):
 
 
 @click.command(context_settings=CONTEXT_SETTINGS)
-@click.argument('filename', type=click.Path(exists=True), required=False)
+@click.argument('filename', type=click.Path(exists=True), required=True)
 @click.option('-s', '--step', type=int, default=0, metavar='STEP',
               help='Сверить только конкретный шаг '
               '(нумерация с 1, отрицательные - с конца)')
@@ -402,10 +431,6 @@ def main(filename: str, step: int, update: bool):
 
     manager = SnapshotManager()
 
-    if (filename is None):
-        print("Необходимо указать файл", file=sys.stderr)
-        sys.exit(1)
-
     try:
         if update:
             # Создаем/обновляем снапшот
@@ -415,13 +440,7 @@ def main(filename: str, step: int, update: bool):
         elif step != 0:
             # Проверяем один шаг
             result = manager.verify_single_step(filename, step)
-
-            if result["status"] == Status.ERROR:
-                click.echo(f"❌ Ошибка: {result['message']}")
-                if "action" in result:
-                    click.echo(f"{result['action']}")
-            else:
-                _print_step_result(result)
+            _print_step_result(result)
 
         else:
             # Парсим урок из MD файла
@@ -432,13 +451,7 @@ def main(filename: str, step: int, update: bool):
 
             # Проверяем весь урок
             result = manager.verify_lesson(lesson, filename)
-
-            if result["status"] == Status.ERROR:
-                click.echo(f"❌ Ошибка: {result['message']}")
-                if "action" in result:
-                    click.echo(f"{result['action']}")
-            else:
-                _print_lesson_result(result)
+            _print_lesson_result(result)
 
     except Exception as e:
         click.echo(f"Ошибка: {e}")
