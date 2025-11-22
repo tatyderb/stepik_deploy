@@ -103,6 +103,27 @@ shuffle: false
 * `CONFIG` без `:` в конце названия секции!!!
     * `shuffle` - перемешивать варианты или нет
 
+## Тип SORT - шаг Задача на сортировку
+* [Задача на сортировку](https://stepik.org/lesson/385335/step/1)
+* [Примеры](https://github.com/tatyderb/stepik_deploy/blob/main/examples/step2_sort.md)
+
+```
+## SORT Заголовок
+
+Текст условия
+
+SORT
+Первый вариант
+====
+Второй вариант
+====
+И следующие варианты аналогично
+====
+
+CONFIG
+html: true
+```
+
 ### Тип NUMBER - шаг Численная задача
 
 * [Численная задача](https://stepik.org/lesson/385340/step/1)
