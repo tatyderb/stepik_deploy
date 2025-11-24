@@ -22,21 +22,17 @@ class CompareError(Exception):
 class StatusLesson(StrEnum):
     PASSED = "✅ "
     FAILED = "❌ "
+    IN_PROGRESS = "In progress "
 
 class StatusStep(StrEnum):
     PASSED = "✅ "
     FAILED = "❌ "
     SKIP = "➖ "
-    # REMOVE = SKIP
-
 
 class Status(StrEnum):
     UNEXPECTED_SKIP = "skip только в снапшоте"
     PASSED = "passed"
     FAILED = "failed"
-    # EXTRA_IN_SNAPSHOT = "extra_in_snapshot"
-    # NEW_IN_CURRENT = "new_in_current"
-    # SKIPPED_IN_CURRENT = "skipped_in_current"
     SKIP = "skip"
     OUT_OF_RANGE = "разное количество шагов в markdown и снапшоте."
     IN_PROGRESS = "in_progress"  # не должен выходить результат наружу из SnapshotManager с этим статусом
@@ -133,7 +129,7 @@ class SnapshotManager:
         except (json.JSONDecodeError, UnicodeDecodeError) as e:
             raise CompareError(f"Ошибка загрузки снапшота {snapshot_path}: {e}")
 
-    def check_lesson(self, markdown_filename: str | Path, step_position: int = 0):
+    def check_lesson(self, markdown_filename: str | Path, step_position: int = 0) -> StatusLesson:
         """Проверяет урок из файла markdown_filename, сравнивая его с существующим снапшотом.
         Если задан step_position, то сравнивается только указанный шаг (нумерация с 1, может быть отрицательным).
         """
@@ -147,11 +143,8 @@ class SnapshotManager:
             snapshot = self.load_snapshot(markdown_filename)
         except CompareError as e:
             self.trace(Verbose.ERROR, str(e))
-            return {
-                "status": Status.FAILED,
-                "message": str(e),
-                "action": SNAPSHOT_ACTION
-            }
+            self.trace(Verbose.ERROR, SNAPSHOT_ACTION)
+            return StatusLesson.FAILED
 
         markdown_steps = lesson.steps
         markdown_length = len(markdown_steps)
@@ -174,10 +167,7 @@ class SnapshotManager:
             if step_position and position != step_position:
                 msg = f"\t{StatusStep.SKIP} шаг {position}: пропускаем."
                 self.trace(Verbose.STEP, msg)
-                step_results.append({
-                    "status": Status.SKIP,
-                    "message": msg
-                })
+                step_results.append(StatusStep.SKIP)
                 # на всякий случай, если кто-то нарушит цепочку if..elif..else
                 continue
 
@@ -185,38 +175,26 @@ class SnapshotManager:
             elif position > markdown_length:
                 msg = f"\t{StatusStep.FAILED} Шаг {position} не существует. Всего шагов: {markdown_length}"
                 self.trace(Verbose.STEP, msg)
-                step_results.append({
-                    "status": Status.OUT_OF_RANGE,
-                    "message": msg
-                })
+                step_results.append(StatusStep.FAILED)
 
             # в снапшоте шага нет, ошибка
             elif position > snapshot_length:
                 msg = f"\t{StatusStep.FAILED} Шаг снапшота {position} не существует. Всего шагов: {snapshot_length}"
                 self.trace(Verbose.STEP, msg)
-                step_results.append({
-                    "status": Status.OUT_OF_RANGE,
-                    "message": msg
-                })
+                step_results.append(StatusStep.FAILED)
 
             # пропускаем шаг в markdown (полезно, если он временно не работает и мы пометили его SKIP)
             elif markdown_steps[position - 1].skip:
                 msg = f"\t{StatusStep.SKIP} шаг {position}: SKIP - пропускаем"
                 self.trace(Verbose.STEP, msg)
-                step_results.append({
-                    "status": Status.SKIP,
-                    "message": msg
-                })
+                step_results.append(StatusStep.SKIP)
 
             # если шаг пропущен в снапшоте, но есть в markdown - ошибка
             # местами elif с предыдущим не менять!!!
             elif snapshot_steps[position - 1]['skip']:
                 msg = f"\t{StatusStep.FAILED} Шаг {position} пропущен в снапшоте, но активен в текущем уроке"
                 self.trace(Verbose.STEP, msg)
-                step_results.append({
-                    "status": Status.UNEXPECTED_SKIP,
-                    "message": msg
-                })
+                step_results.append(StatusStep.FAILED)
 
             # сравниваем содержимое шага в markdown и снапшоте
             else:
@@ -230,20 +208,13 @@ class SnapshotManager:
 
         # по статусам сравнения шагов вычисляем статус сравнения урока
         result = self.total_results(step_results)
-        result['filename'] = str(markdown_filename)
-        self.print_lesson_summary(result)
-        return result
+        self.print_lesson_summary(result, markdown_filename)
+        return result['status']
 
-    def compare_step(self, position: int, markdown_step: Step, snapshot_step: dict) -> dict:
+    def compare_step(self, position: int, markdown_step: Step, snapshot_step: dict) -> StatusStep:
         """Сравнивает содержимое markdown_step.to_dict() и snapshot_step.
         Тип шага, заголовок, содержимое.
-        Возвращает {
-                "header": snapshot_step["header"],
-                "type": snapshot_step["type"],
-                "status": Status.FAILED | Status.PASS,
-                "message": "Обнаружены различия",
-                "differences": differences
-            }
+        Возвращает статус сравненного шага.
         """
         # не совпадает тип шага
         snapshot_step_type = snapshot_step["type"]
@@ -251,12 +222,7 @@ class SnapshotManager:
         if snapshot_step_type != markdown_step_type:
             msg = f"\t{StatusStep.FAILED} Шаг {position}: изменился тип шага {snapshot_step_type} → {markdown_step_type}"
             self.trace(Verbose.STEP, msg)
-            return {
-                "position": position,
-                "header": snapshot_step["header"],
-                "status": Status.FAILED,
-                "message": msg
-            }
+            return StatusStep.FAILED
 
         # не совпадает заголовок шага
         snapshot_step_header = snapshot_step["header"]
@@ -264,12 +230,7 @@ class SnapshotManager:
         if snapshot_step_header != markdown_step_header:
             msg = f"\t{StatusStep.FAILED} Шаг {position}: изменился заголовок шага {snapshot_step_header} → {markdown_step_header}"
             self.trace(Verbose.STEP, msg)
-            return {
-                "position": position,
-                "header": f"{snapshot_step_header} → {markdown_step_header}",
-                "status": Status.FAILED,
-                "message": msg
-            }
+            return StatusStep.FAILED
 
         # сравниваем данные
         snapshot_data = snapshot_step["data"]
@@ -279,23 +240,11 @@ class SnapshotManager:
         if self.compare_dict_as_json(snapshot_data, markdown_data):
             msg = f"\t{StatusStep.PASSED} Шаг {position}: ok"
             self.trace(Verbose.STEP, msg)
-            return {
-                "position": position,
-                "header": snapshot_step["header"],
-                "type": snapshot_step["type"],
-                "status": Status.PASSED,
-                "message": "Шаг соответствует снапшоту"
-            }
+            return StatusStep.PASSED
 
         msg = f"\t{StatusStep.FAILED} Шаг {position}: обнаружены различия"
         self.trace(Verbose.STEP, msg)
-        return {
-            "position": position,
-            "header": snapshot_step["header"],
-            "type": snapshot_step["type"],
-            "status": Status.FAILED,
-            "message": msg,
-        }
+        return StatusStep.FAILED
 
 
     def compare_dict_as_json(self, markdown_dict: dict, snapshot_dict: dict) -> bool:
@@ -317,11 +266,12 @@ class SnapshotManager:
 
         return True
 
-    def total_results(self, step_results: list[dict]) -> dict:
+    @staticmethod
+    def total_results(step_results: list[StatusStep]) -> dict:
         """По статусам сравнения шагов вычисляем статус сравнения урока.
         Возвращаем статус сравнения урока вместе со статусами шагов."""
         totals = {
-            "status": Status.IN_PROGRESS,
+            "status": StatusLesson.IN_PROGRESS,
             "steps_verified": 0,
             "steps_passed": 0,
             "steps_failed": 0,
@@ -330,26 +280,26 @@ class SnapshotManager:
         }
         for step in step_results:
             totals['steps_verified'] += 1
-            match step['status']:
-                case Status.PASSED:
+            match step:
+                case StatusStep.PASSED:
                     totals['steps_passed'] += 1
-                case Status.SKIP:
+                case StatusStep.SKIP:
                     totals['steps_skipped'] += 1
-                case Status.FAILED:
+                case StatusStep.FAILED:
                     totals['steps_failed'] += 1
                 case '_':
-                    raise ValueError(f'Unknown step status {step['status']}')
+                    raise ValueError(f'Unknown step status {step}')
 
         totals['status'] = StatusLesson.FAILED if totals['steps_failed'] > 0 else StatusLesson.PASSED
 
         return totals
 
-    def print_lesson_summary(self, result):
+    def print_lesson_summary(self, result: dict, filename: str | Path):
         """Трассировка итогов сравнения всех шагов урока."""
 
         self.trace(Verbose.SUMMARY,
                    self.LINE_STEP_SEPARATOR,
-                   f"{result['status']}  Урок: {result['filename']}",
+                   f"{result['status']}  Урок: {filename}",
                     f"\tПроверено шагов: {result['steps_verified']}",
                     f"\tPASS: {result['steps_passed']}",
                     f"\tFAIL: {result['steps_failed']}",
