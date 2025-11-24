@@ -1,4 +1,15 @@
-"""Проверка функций-оберток над Stepik API в классах Step и Lesson."""
+"""Проверка функций-оберток над Stepik API в классах Step и Lesson.
+ВНИМАНИЕ: ID уроков и шагов в репозитории настроены на конкретный урок, который вы не можете модифицировать.
+Если прав на изменение урока у вас нет, то тесты будут падать.
+Рекомендую
+1) сделать свой урок из 4 шагов любых типов.
+2) записать ID урока в переменную LESSON_ID
+3) записать ID ваших шагов в STEP_IDS. Для этого можно запустить тест test_lesson_info и получите информацию о шагах.
+4) далее можно запускать все тесты. При обновлении или создании шага в него пишется
+информация о позиции и времени по формату:
+ПОЗИЦИЯ mmdd_HHMMSS
+"""
+
 import pytest
 
 from src.lesson import Lesson
@@ -22,9 +33,8 @@ def generate_lesson_text_steps(step_number: int = 1) -> list[StepText]:
         s.text = f'{i} {time_str}'
     return steps
 
-
 def test_lesson_info(auth):
-    """В уроке два шага."""
+    """В уроке шаги, записанные в STEP_IDS."""
     session = StepikSession()
     lesson = Lesson(lesson_id=LESSON_ID)
     lesson_info, step_ids = lesson.info(session)

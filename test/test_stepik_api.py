@@ -1,12 +1,25 @@
-import logging
+"""Проверка Stepik API.
+ВНИМАНИЕ: ID урока и шагов в репозитории настроены на конкретный урок, который вы не можете модифицировать.
+Если прав на изменение урока у вас нет, то тесты будут падать.
+Рекомендую
+1) сделать свой урок из 4 шагов любых типов.
+2) записать ID урока в переменную LESSON_ID
+3) далее можно запускать все тесты.
+В последний шаг пишется выбор одного, чему равно 2+2?
+При обновлении или создании шага в него пишется
+информация о позиции и времени по формату:
+ПОЗИЦИЯ mmdd_HHMMSS
+"""
 
+import logging
 import pytest
 
 from src.logged_requests import LOGGER_NAME
 from src.stepik_api import StepikSession
 from src.utils import generate_timestring
 
-
+# https://stepik.org/lesson/374339/step/1
+LESSON_ID = 374339
 logger = logging.getLogger(LOGGER_NAME)
 
 
@@ -61,8 +74,7 @@ def test_get_token(auth):
 
 def test_get_lesson_and_step(auth):
     """Получаем инфу об уроке (проверяем id и количество шагов) и о шаге (проверяем его id)"""
-    # https://stepik.org/lesson/374339/step/1
-    lesson_id = 374339
+    lesson_id = LESSON_ID
 
     session = StepikSession()
     lesson_info = session.fetch_object('lesson', lesson_id)
@@ -81,8 +93,7 @@ def test_update_step(auth, choice_body):
     """ В уроке изменяем текст последнего шага, ставим временную метку.
     Проверяем, что в уроке не изменилось количество шагов и текст этого шага содержит метку.
     """
-    # https://stepik.org/lesson/374339/step/1
-    lesson_id = 374339
+    lesson_id = LESSON_ID
 
     date_str = f'Date: {generate_timestring()}'
 
@@ -108,8 +119,7 @@ def test_update_step(auth, choice_body):
 
 def test_create_delete_step(auth, choice_body):
     """ В урок добавляем шаг, проверяем, что в шаге наша метка времени, удаляем шаг."""
-    # https://stepik.org/lesson/374339/step/1
-    lesson_id = 374339
+    lesson_id = LESSON_ID
 
     date_str = f'Date: {generate_timestring()}'
 
