@@ -66,7 +66,7 @@ class StepNumber(Step):
     def parse(self, text: str):
         """Обрабатываем содержимое шага, разбирая его на составные части согласно типу."""
         res = ParseSchemaStepNumber.parse_step_number(text)
-        print(f'StepNumber.parse: {res=}')
+        # print(f'StepNumber.parse: {res=}')
 
         self.answer = [
             {

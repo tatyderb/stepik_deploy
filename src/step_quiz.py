@@ -95,7 +95,7 @@ class StepQuiz(Step):
         # 'variants': [{'letter': 'A', 'text': ' variant1'}, {'letter': 'B', 'text': ' variant2'}, {'letter': 'C', 'text': ' variant 3'}],
         # 'answer': ['A', 'C'],
         #  'config': [{'shuffle': 'false'}]}
-        print(f'StepQuiz.parse: {res=}')
+        # print(f'StepQuiz.parse: {res=}')
 
         self.options = [
             {'is_correct': d['letter'] in res['answer'], 'text': markdown_to_html(d['text']), 'feedback': ''}
