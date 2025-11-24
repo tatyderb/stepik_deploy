@@ -356,7 +356,7 @@ class StepTaskinline(Step):
         # 'footer': 'int main()\n{\n    int x;\n    scanf("%d", &x);\n    printf("%d\n", module(x));\n    return 0;\n}',
         # 'code': 'int module(int x) {\n    // здесь нужно написать код\n}',
         # 'config': [{'lang': 'c'}]}
-        print(f'\nStepTaskinline.parse: {res=}')
+        # print(f'\nStepTaskinline.parse: {res=}')
 
         input_data = res['tests'][::2]
         output_data = res['tests'][1::2]
@@ -370,7 +370,7 @@ class StepTaskinline(Step):
         self.open_tests = int(self.config.get('open_tests', -1))
         if self.open_tests < 0 or self.open_tests > len(self.tests):
             self.open_tests = len(self.tests)
-        print(f'{self.open_tests=}')
+        # print(f'{self.open_tests=}')
 
         self.part_before = res.get('header', '')
         self.part_after = res.get('footer', '')
@@ -414,7 +414,7 @@ class StepTaskinline(Step):
             case 'stepik':
                 # используем функциональность степика
                 # содержимое последней вкладки с generate, check, solve
-                print('Генерируем данные для mode=stepik')
+                # print('Генерируем данные для mode=stepik')
                 d['stepSource']['block']['source']['code'] = \
                     self.generate_check_solve_tab or \
                     stepik_genchecksolve(checker_function=function, additional_parameter=self.additional_parameter)
@@ -425,7 +425,7 @@ class StepTaskinline(Step):
             case 'custom':
                 # используем функциональность степика
                 # содержимое последней вкладки с generate, check, solve
-                print('Генерируем данные для mode=custom')
+                # print('Генерируем данные для mode=custom')
                 d['stepSource']['block']['source']['code'] = \
                     self.generate_check_solve_tab or \
                     custom_genchecksolve(

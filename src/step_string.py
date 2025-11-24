@@ -94,7 +94,7 @@ class StepString(Step):
     def parse(self, text: str):
         """Обрабатываем содержимое шага, разбирая его на составные части согласно типу."""
         res = ParseSchemaStepString.parse_step_string(text)
-        print(f'StepString.parse: {res=}')
+        # print(f'StepString.parse: {res=}')
 
         self.text = res['text']
         markdown_text = '## ' + self.header + '\n' + self.text
