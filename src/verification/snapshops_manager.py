@@ -1,37 +1,83 @@
 import json
 import sys
-from enum import StrEnum
+from enum import StrEnum, IntEnum, auto
 from pathlib import Path
 from typing import Any
 import click
 
 from src.lesson import Lesson
 from src.step import Step
+from src.utils import truncate
 
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 DEFAULT_MAX_LEN = 100
 SNAPSHOTS_DIR = "snapshots"
 SNAPSHOT_EXTENSION = ".json"
 MAX_TEXT_LINES_PREVIEW = 3
 SNAPSHOT_ACTION = "Используйте опцию -u для создания снапшота"
 
+class CompareError(Exception):
+    pass
+
 # Статусы
+class StatusLesson(StrEnum):
+    PASSED = "✅ "
+    FAILED = "❌ "
+
+class StatusStep(StrEnum):
+    PASSED = "✅ "
+    FAILED = "❌ "
+    SKIP = "➖ "
+    # REMOVE = SKIP
 
 
 class Status(StrEnum):
-    ERROR = "error"
-    SUCCESS = "success"
+    UNEXPECTED_SKIP = "skip только в снапшоте"
     PASSED = "passed"
     FAILED = "failed"
-    EXTRA_IN_SNAPSHOT = "extra_in_snapshot"
-    NEW_IN_CURRENT = "new_in_current"
-    SKIPPED_IN_CURRENT = "skipped_in_current"
+    # EXTRA_IN_SNAPSHOT = "extra_in_snapshot"
+    # NEW_IN_CURRENT = "new_in_current"
+    # SKIPPED_IN_CURRENT = "skipped_in_current"
+    SKIP = "skip"
+    OUT_OF_RANGE = "разное количество шагов в markdown и снапшоте."
+    IN_PROGRESS = "in_progress"  # не должен выходить результат наружу из SnapshotManager с этим статусом
 
+class Verbose(IntEnum):
+    ERROR = auto()          # только сообщения об ошибках (в норме ничего)
+    SUMMARY = auto()        # только информация pass/fail об уроке
+    LESSON = auto()         # урок - количество шагов, из них .. pass, .. fail, .. skip.
+    STEP = auto()           # по каждому шагу - pass, fail, skip, расхождение количества шагов, неожиданный skip
+    DEBUG = auto()          # разница в полях dict шагов
 
 class SnapshotManager:
-    def __init__(self):
+    LINE_LESSON_SEPARATOR = "=" * 40
+    LINE_STEP_SEPARATOR = "-" * 40
+    LINE_DEBUG_SEPARATOR = "." * 40
+
+    def __init__(self, verbose: Verbose = Verbose.ERROR):
         self.snapshots_dir = Path(__file__).parent / SNAPSHOTS_DIR
         self.snapshots_dir.mkdir(exist_ok=True)
+        self.__verbose: Verbose = verbose    # нужна ли подробная трассировка сравнения
+
+    @property
+    def verbose(self):
+        return self.__verbose
+
+    @verbose.setter
+    def verbose(self, value: Verbose | str | int):
+        """Чтобы следить кто и где меняет уровень логирования."""
+        if isinstance(value, Verbose):
+            self.__verbose = value
+        elif isinstance(value, str):
+            for level in Verbose:
+                if value.upper() == level.name.upper():
+                    self.__verbose = level
+        elif isinstance(value, int):
+            self.__verbose = Verbose(value)
+
+    def trace(self, verbose_level: Verbose = Verbose.DEBUG, msg: str = "", *args, **kwargs):
+        """Печатаем, только если verbose_level передан меньше или равен установленному."""
+        if verbose_level <= self.verbose:
+            print(msg, *args, **kwargs)
 
     def get_snapshot_path(self, md_filename: str) -> Path:
         """Получает путь к файлу снапшота на основе MD файла"""
@@ -70,157 +116,169 @@ class SnapshotManager:
             snapshot_data["steps"].append(snapshot_step)
 
         snapshot_path = self.get_snapshot_path(md_filename)
-        with open(snapshot_path, 'w', encoding='utf-8') as f:
-            json.dump(snapshot_data, f, indent=2, ensure_ascii=False)
+        with open(snapshot_path, 'w', encoding='utf-8') as fout:
+            json.dump(snapshot_data, fout, indent=2, ensure_ascii=False)
 
         return f"Снапшот создан: {snapshot_path}"
 
     def load_snapshot(self, md_filename: str) -> dict[str, Any]:
         """Загружает снапшот из файла"""
+        snapshot_path = None
         try:
             snapshot_path = self.get_snapshot_path(md_filename)
             with open(snapshot_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except OSError as e:
-            raise OSError(f"Ошибка доступа к файлу {snapshot_path}: {e}")
-        except Exception as e:
-            raise RuntimeError(
-                f"Ошибка загрузки снапшота {snapshot_path}: {e}")
+            raise CompareError(f"Ошибка доступа к файлу {snapshot_path}: {e}")
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            raise CompareError(f"Ошибка загрузки снапшота {snapshot_path}: {e}")
 
-    def verify_lesson(
-            self,
-            lesson: Lesson,
-            md_filename: str) -> dict[str, Any]:
-        """Проверяет весь урок: текущий lesson со снапшотом в md_filename"""
+    def check_lesson(self, markdown_filename: str | Path, step_position: int = 0):
+        """Проверяет урок из файла markdown_filename, сравнивая его с существующим снапшотом.
+        Если задан step_position, то сравнивается только указанный шаг (нумерация с 1, может быть отрицательным).
+        """
+
+        # Читаем снапшот из файла
         try:
-            snapshot = self.load_snapshot(md_filename)
-        except FileNotFoundError as e:
+            lesson = Lesson()
+            with open(markdown_filename, 'r', encoding='utf-8') as f:
+                lesson.parse_markdown(f.read(), step_position=step_position)
+
+            snapshot = self.load_snapshot(markdown_filename)
+        except CompareError as e:
+            self.trace(Verbose.ERROR, str(e))
             return {
-                "status": Status.ERROR,
+                "status": Status.FAILED,
                 "message": str(e),
                 "action": SNAPSHOT_ACTION
             }
 
-        results = {
-            "status": Status.SUCCESS,
-            "lesson": md_filename,
-            "steps_verified": 0,
-            "steps_passed": 0,
-            "steps_failed": 0,
-            "steps_skipped": 0,
-            "step_results": []
-        }
+        markdown_steps = lesson.steps
+        markdown_length = len(markdown_steps)
+        snapshot_steps = snapshot["steps"]
+        snapshot_length = len(snapshot_steps)
+        step_position = lesson.make_position_positive(step_position=step_position)
 
-        current_steps = lesson.steps
-        print(
-            f"Проверка снапшота ({len(snapshot['steps'])} шагов)",
-            f"vs текущего урока ({len(current_steps)} шагов)")
+        self.trace(Verbose.LESSON,
+                   self.LINE_LESSON_SEPARATOR + '\n',
+                   f"Урок {markdown_filename}\n",
+                    f"\t{snapshot_length} шагов - снапшот файл\n",
+                    f"\t{markdown_length} шагов - markdown файл\n"
+                   )
 
-        max_steps = max(len(snapshot["steps"]), len(current_steps))
+        step_results = []
 
-        for position in range(1, max_steps + 1):
-            snapshot_step = None
-            current_step = None
+        for position in range(1, 1 + max(markdown_length, snapshot_length)):
+            # нужно разобрать только одну позицию, тогда остальные пропускаем
 
-            print(f"  Позиция {position}:")
-            if position <= len(snapshot["steps"]):
-                snapshot_step = snapshot["steps"][position - 1]
-                print(
-                    f"    Снапшот: {snapshot_step['header']} (skip: {snapshot_step.get('skip', False)})")
-            if position <= len(current_steps):
-                current_step = current_steps[position - 1]
-                print(
-                    f"    Текущий: {current_step.header} (skip: {current_step.skip})")
+            if step_position and position != step_position:
+                msg = f"\t{StatusStep.SKIP} шаг {position}: пропускаем."
+                self.trace(Verbose.STEP, msg)
+                step_results.append({
+                    "status": Status.SKIP,
+                    "message": msg
+                })
+                # на всякий случай, если кто-то нарушит цепочку if..elif..else
+                continue
 
-            step_result = self._compare_steps(
-                position, snapshot_step, current_step)
-            results["step_results"].append(step_result)
-            results["steps_verified"] += 1
+            # в markdown шага нет, ошибка
+            elif position > markdown_length:
+                msg = f"\t{StatusStep.FAILED} Шаг {position} не существует. Всего шагов: {markdown_length}"
+                self.trace(Verbose.STEP, msg)
+                step_results.append({
+                    "status": Status.OUT_OF_RANGE,
+                    "message": msg
+                })
 
-            match step_result["status"]:
-                case Status.PASSED:
-                    results["steps_passed"] += 1
-                case Status.SKIPPED_IN_CURRENT:
-                    results["steps_skipped"] += 1
-                case [Status.FAILED,
-                      Status.EXTRA_IN_SNAPSHOT,
-                      Status.NEW_IN_CURRENT]:
-                    results["steps_failed"] += 1
+            # в снапшоте шага нет, ошибка
+            elif position > snapshot_length:
+                msg = f"\t{StatusStep.FAILED} Шаг снапшота {position} не существует. Всего шагов: {snapshot_length}"
+                self.trace(Verbose.STEP, msg)
+                step_results.append({
+                    "status": Status.OUT_OF_RANGE,
+                    "message": msg
+                })
 
-        return results
+            # пропускаем шаг в markdown (полезно, если он временно не работает и мы пометили его SKIP)
+            elif markdown_steps[position - 1].skip:
+                msg = f"\t{StatusStep.SKIP} шаг {position}: SKIP - пропускаем"
+                self.trace(Verbose.STEP, msg)
+                step_results.append({
+                    "status": Status.SKIP,
+                    "message": msg
+                })
 
-    def _compare_steps(self, position: int, snapshot_step: dict | None, current_step: Step | None) -> dict[str, Any]:
-        """Сравнивает шаги по позиции"""
-        # Шаг есть только в снапшоте
-        if snapshot_step and not current_step:
-            return {
-                "position": position,
-                "header": snapshot_step["header"],
-                "status": Status.EXTRA_IN_SNAPSHOT,
-                "message": "Шаг есть в снапшоте, но отсутствует в текущем уроке"
-            }
+            # если шаг пропущен в снапшоте, но есть в markdown - ошибка
+            # местами elif с предыдущим не менять!!!
+            elif snapshot_steps[position - 1]['skip']:
+                msg = f"\t{StatusStep.FAILED} Шаг {position} пропущен в снапшоте, но активен в текущем уроке"
+                self.trace(Verbose.STEP, msg)
+                step_results.append({
+                    "status": Status.UNEXPECTED_SKIP,
+                    "message": msg
+                })
 
-        # Шаг есть только в текущем уроке
-        if not snapshot_step and current_step:
-            return {
-                "position": position,
-                "header": current_step.header,
-                "status": Status.NEW_IN_CURRENT,
-                "message": "Новый шаг в текущем уроке, отсутствует в снапшоте"
-            }
+            # сравниваем содержимое шага в markdown и снапшоте
+            else:
+                # печать трассировки внутри compare_step
+                result = self.compare_step(
+                    position,
+                    markdown_step=markdown_steps[position - 1],
+                    snapshot_step=snapshot_steps[position - 1]
+                )
+                step_results.append(result)
 
-        if current_step.skip:
-            return {
-                "position": position,
-                "header": current_step.header,
-                "status": Status.SKIPPED_IN_CURRENT,
-                "message": "Шаг пропущен в текущем уроке - проверка не выполняется"
-            }
+        # по статусам сравнения шагов вычисляем статус сравнения урока
+        result = self.total_results(step_results)
+        result['filename'] = str(markdown_filename)
+        self.print_lesson_summary(result)
+        return result
 
-        # Если в снапшоте шаг пропущен, а в текущем - нет, это ошибка
-        if snapshot_step.get("skip", False) and not current_step.skip:
-            return {
-                "position": position,
-                "header": current_step.header,
-                "status": Status.FAILED,
-                "message": "Шаг пропущен в снапшоте, но активен в текущем уроке"
-            }
-
-        # Оба шага существуют - сравниваем их
-        # Проверяем тип шага
-        if snapshot_step["type"] != current_step.__class__.__name__:
-            return {
-                "position": position,
-                "header": snapshot_step["header"],
-                "status": Status.FAILED,
-                "message": f"Тип шага изменился: {snapshot_step['type']} → {current_step.__class__.__name__}"
-            }
-
-        # Проверяем заголовок
-        if snapshot_step["header"] != current_step.header.strip():
-            return {
-                "position": position,
-                "header": f"{snapshot_step['header']} → {current_step.header}",
-                "status": Status.FAILED,
-                "message": f"Заголовок изменился: '{snapshot_step['header']}' → '{current_step.header}'"
-            }
-
-        # Сравниваем данные
-        snapshot_data = snapshot_step["data"]
-        current_data = current_step.to_dict()
-
-        differences = self._compare_dicts(snapshot_data, current_data)
-
-        if differences:
-            return {
-                "position": position,
+    def compare_step(self, position: int, markdown_step: Step, snapshot_step: dict) -> dict:
+        """Сравнивает содержимое markdown_step.to_dict() и snapshot_step.
+        Тип шага, заголовок, содержимое.
+        Возвращает {
                 "header": snapshot_step["header"],
                 "type": snapshot_step["type"],
-                "status": Status.FAILED,
+                "status": Status.FAILED | Status.PASS,
                 "message": "Обнаружены различия",
                 "differences": differences
             }
-        else:
+        """
+        # не совпадает тип шага
+        snapshot_step_type = snapshot_step["type"]
+        markdown_step_type = markdown_step.__class__.__name__
+        if snapshot_step_type != markdown_step_type:
+            msg = f"\t{StatusStep.FAILED} Шаг {position}: изменился тип шага {snapshot_step_type} → {markdown_step_type}"
+            self.trace(Verbose.STEP, msg)
+            return {
+                "position": position,
+                "header": snapshot_step["header"],
+                "status": Status.FAILED,
+                "message": msg
+            }
+
+        # не совпадает заголовок шага
+        snapshot_step_header = snapshot_step["header"]
+        markdown_step_header = markdown_step.header.strip()
+        if snapshot_step_header != markdown_step_header:
+            msg = f"\t{StatusStep.FAILED} Шаг {position}: изменился заголовок шага {snapshot_step_header} → {markdown_step_header}"
+            self.trace(Verbose.STEP, msg)
+            return {
+                "position": position,
+                "header": f"{snapshot_step_header} → {markdown_step_header}",
+                "status": Status.FAILED,
+                "message": msg
+            }
+
+        # сравниваем данные
+        snapshot_data = snapshot_step["data"]
+        markdown_data = markdown_step.to_dict()
+
+        # трассировка внутри сравнения
+        if self.compare_dict_as_json(snapshot_data, markdown_data):
+            msg = f"\t{StatusStep.PASSED} Шаг {position}: ok"
+            self.trace(Verbose.STEP, msg)
             return {
                 "position": position,
                 "header": snapshot_step["header"],
@@ -229,195 +287,87 @@ class SnapshotManager:
                 "message": "Шаг соответствует снапшоту"
             }
 
-    def verify_single_step(self, md_filename: str, step_position: int) -> dict[str, Any]:
-        """Проверяет один конкретный шаг"""
+        msg = f"\t{StatusStep.FAILED} Шаг {position}: обнаружены различия"
+        self.trace(Verbose.STEP, msg)
+        return {
+            "position": position,
+            "header": snapshot_step["header"],
+            "type": snapshot_step["type"],
+            "status": Status.FAILED,
+            "message": msg,
+        }
 
-        lesson = Lesson()
 
-        with open(md_filename, 'r', encoding='utf-8') as f:
-            lesson.parse_markdown(f.read())
+    def compare_dict_as_json(self, markdown_dict: dict, snapshot_dict: dict) -> bool:
+        """Сравниваем словари рекурсивно до первой разницы или до конца, если разницы нет.
+        Возвращает True, если словари одинаковые."""
 
-        try:
-            snapshot = self.load_snapshot(md_filename)
-        except FileNotFoundError as e:
-            return {
-                "status": Status.ERROR,
-                "message": str(e),
-                "action": SNAPSHOT_ACTION
-            }
+        # отступ при печати трассировки
+        indent = '\t\t'
 
-        current_steps = lesson.steps
-
-        # Нормализуем позицию (поддержка отрицательных номеров)
-        total_steps = len(snapshot["steps"])
-        if step_position < 0:
-            step_position = total_steps + step_position + 1
-
-        if step_position > total_steps:
-            return {
-                "status": Status.ERROR,
-                "message": f"Шаг {step_position} не существует. Всего шагов: {total_steps}"
-            }
-
-        if step_position > len(current_steps):
-            return {
-                "status": Status.ERROR,
-                "message": f"Шаг {step_position} отсутствует в текущем уроке"
-            }
-
-        snapshot_step = snapshot["steps"][step_position - 1]
-        current_step = current_steps[step_position - 1]
-
-        return self._compare_steps(step_position, snapshot_step, current_step)
-
-    def _normalize_test_cases(self, test_cases):
-        """Нормализует формат тестовых случаев для сравнения"""
-        if not isinstance(test_cases, list):
-            return test_cases
-
-        normalized = []
-        for case in test_cases:
-            if isinstance(case, (list, tuple)):
-                # Конвертируем в кортеж для единообразия
-                normalized.append(tuple(case))
+        md_json = json.dumps(markdown_dict, indent=2, ensure_ascii=False, sort_keys=True).splitlines()
+        sn_json = json.dumps(snapshot_dict, indent=2, ensure_ascii=False, sort_keys=True).splitlines()
+        for md_line, sn_line in zip(md_json, sn_json):
+            if md_line == sn_line:
+                self.trace(Verbose.DEBUG, truncate(indent + md_line))
             else:
-                normalized.append(case)
-        return normalized
+                self.trace(Verbose.DEBUG, truncate(indent + '+ ' + md_line))
+                self.trace(Verbose.DEBUG, truncate(indent + '- ' + sn_line))
+                return False
 
-    def _compare_dicts(
-            self,
-            dict1: dict,
-            dict2: dict,
-            path: str = "") -> list[str]:
-        """Рекурсивно сравнивает два словаря и возвращает список различий"""
-        differences = []
+        return True
 
-        all_keys = set(dict1.keys()) | set(dict2.keys())
+    def total_results(self, step_results: list[dict]) -> dict:
+        """По статусам сравнения шагов вычисляем статус сравнения урока.
+        Возвращаем статус сравнения урока вместе со статусами шагов."""
+        totals = {
+            "status": Status.IN_PROGRESS,
+            "steps_verified": 0,
+            "steps_passed": 0,
+            "steps_failed": 0,
+            "steps_skipped": 0,
+            "step_results": step_results
+        }
+        for step in step_results:
+            totals['steps_verified'] += 1
+            match step['status']:
+                case Status.PASSED:
+                    totals['steps_passed'] += 1
+                case Status.SKIP:
+                    totals['steps_skipped'] += 1
+                case Status.FAILED:
+                    totals['steps_failed'] += 1
+                case '_':
+                    raise ValueError(f'Unknown step status {step['status']}')
 
-        for key in all_keys:
-            current_path = f"{path}.{key}" if path else key
+        totals['status'] = StatusLesson.FAILED if totals['steps_failed'] > 0 else StatusLesson.PASSED
 
-            if key not in dict1:
-                differences.append(
-                    f"➕ Добавлено поле: {current_path} = {
-                        self._truncate_value(dict2[key])}")
-            elif key not in dict2:
-                differences.append(
-                    f"➖ Удалено поле: {current_path} = {
-                        self._truncate_value(dict1[key])}")
-            elif isinstance(dict1[key], dict) and isinstance(dict2[key], dict):
-                # Рекурсивное сравнение вложенных словарей
-                nested_diffs = self._compare_dicts(
-                    dict1[key], dict2[key], current_path)
-                differences.extend(nested_diffs)
-            else:
-                # Специальная обработка для test_cases
-                if current_path.endswith("test_cases"):
-                    normalized1 = self._normalize_test_cases(dict1[key])
-                    normalized2 = self._normalize_test_cases(dict2[key])
-                    if normalized1 != normalized2:
-                        differences.append(
-                            f"Изменено поле: {current_path}\n"
-                            f"   Было: {self._truncate_value(dict1[key])}\n"
-                            f"   Стало: {self._truncate_value(dict2[key])}")
-                elif dict1[key] != dict2[key]:
-                    # Сравнение для текстовых полей
-                    if key == "text" or "text" in current_path:
-                        old_lines = str(dict1[key]).split('\n')
-                        new_lines = str(dict2[key]).split('\n')
+        return totals
 
-                        if len(old_lines) > MAX_TEXT_LINES_PREVIEW or len(new_lines) > MAX_TEXT_LINES_PREVIEW:
-                            differences.append(
-                                f"Изменен текст: {current_path}\n"
-                                f"  Было ({len(old_lines)} строк):\n      "
-                                + "\n    ".join(old_lines[:MAX_TEXT_LINES_PREVIEW])
-                                + ("\n    ..." if len(old_lines) > MAX_TEXT_LINES_PREVIEW else ""))
+    def print_lesson_summary(self, result):
+        """Трассировка итогов сравнения всех шагов урока."""
 
-                            differences.append(
-                                f"  Стало ({len(new_lines)} строк):\n      "
-                                + "\n    ".join(new_lines[:MAX_TEXT_LINES_PREVIEW])
-                                + ("\n   ..." if len(new_lines) > MAX_TEXT_LINES_PREVIEW else ""))
-                        else:
-                            differences.append(
-                                f"Изменено поле: {current_path}\n"
-                                f"  Было: {self._truncate_value(dict1[key])}\n"
-                                f"  Стало: {self._truncate_value(dict2[key])}")
-                    else:
-                        differences.append(
-                            f"Изменено поле: {current_path}\n"
-                            f"  Было: {self._truncate_value(dict1[key])}\n"
-                            f"  Стало: {self._truncate_value(dict2[key])}")
+        self.trace(Verbose.SUMMARY,
+                   self.LINE_STEP_SEPARATOR,
+                   f"{result['status']}  Урок: {result['filename']}",
+                    f"\tПроверено шагов: {result['steps_verified']}",
+                    f"\tPASS: {result['steps_passed']}",
+                    f"\tFAIL: {result['steps_failed']}",
+                    f"\tSKIP: {result['steps_skipped']}",
+                   sep='\n',
+                   end='\n'
+                )
 
-        return differences
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
-    def _truncate_value(self,
-                        value: Any,
-                        max_length: int = DEFAULT_MAX_LEN) -> str:
-        """Обрезает длинные значения для читаемости"""
-        if isinstance(value, str) and len(value) > max_length:
-            return value[:max_length] + "..."
-        return str(value)
-
-
-def _print_step_result(result: dict):
-    """Выводит результат проверки одного шага"""
-
-    if result["status"] == Status.ERROR:
-        click.echo(f"❌ Ошибка: {result['message']}")
-        if "action" in result:
-            click.echo(f"{result['action']}")
-        return
-
-    position = result["position"]
-    header = result["header"]
-
-    match result["status"]:
-        case Status.PASSED:
-            click.echo(f"✅ Шаг {position}: {header} - СООТВЕТСТВУЕТ")
-
-        case Status.EXTRA_IN_SNAPSHOT:
-            click.echo(
-                f"Шаг {position}: {header} - ЕСТЬ В СНАПШОТЕ, НЕТ В УРОКЕ")
-
-        case Status.NEW_IN_CURRENT:
-            click.echo(f"Шаг {position}: {header} - НОВЫЙ ШАГ, НЕТ В СНАПШОТЕ")
-
-        case Status.FAILED:
-            click.echo(f"❌ Шаг {position}: {header} - ОШИБКИ")
-            if "type" in result:
-                click.echo(f"   Тип: {result['type']}")
-            click.echo(f"   Причина: {result['message']}")
-
-            if "differences" in result:
-                for diff in result["differences"]:
-                    formatted_diff = diff.replace('\n', '\n      ')
-                    click.echo(f"   {formatted_diff}")
-
-
-def _print_lesson_result(result: dict):
-    """Выводит результат проверки всего урока"""
-
-    if result.get("status") == Status.ERROR:
-        click.echo(f"❌ Ошибка: {result['message']}")
-        if "action" in result:
-            click.echo(f"{result['action']}")
-        return
-
-    click.echo(f"Урок: {result['lesson']}")
-
-    click.echo(f"Проверено шагов: {result['steps_verified']}")
-    click.echo(f"✅ Пройдено: {result['steps_passed']}")
-    click.echo(f"❌ Ошибок: {result['steps_failed']}")
-    click.echo("")
-
-    for step_result in result["step_results"]:
-        _print_step_result(step_result)
-
-    if result["steps_failed"] == 0:
-        click.echo("\nВсе шаги соответствуют снапшоту!")
-    else:
-        click.echo(f"\nНайдено {result['steps_failed']} несоответствий")
-
+verbose_help = '''\b
+Выберите уровень детализации печати:
+error - только сообщения об ошибках;
+summary - по шагам количество: всего, pass, fail;
+lesson - статус по каждому шагу урока;
+step - разница в шагах;
+debug - подробная разница содержимого шага, до первого различия.
+'''
 
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('filename', type=click.Path(exists=True), required=True)
@@ -425,11 +375,17 @@ def _print_lesson_result(result: dict):
               help='Сверить только конкретный шаг '
               '(нумерация с 1, отрицательные - с конца)')
 @click.option('-u', '--update', is_flag=True, help='Обновить/создать снапшот')
+@click.option('--verbose',
+              type=click.Choice(list(Verbose.__members__), case_sensitive=False),
+              default='summary',
+              help=verbose_help
+)
 @click.help_option('-h', '--help', help='Показать эту справку и выйти')
-def main(filename: str, step: int, update: bool):
+def main(filename: str, step: int, update: bool, verbose: str):
     """Менеджер снапшотов для верификации уроков Stepik"""
 
     manager = SnapshotManager()
+    manager.verbose = verbose
 
     try:
         if update:
@@ -437,28 +393,14 @@ def main(filename: str, step: int, update: bool):
             result = manager.create_snapshot(filename)
             click.echo(result)
 
-        elif step != 0:
-            # Проверяем один шаг
-            result = manager.verify_single_step(filename, step)
-            _print_step_result(result)
-
         else:
-            # Парсим урок из MD файла
-            lesson = Lesson()
-
-            with open(filename, 'r', encoding='utf-8') as f:
-                lesson.parse_markdown(f.read())
-
-            # Проверяем весь урок
-            result = manager.verify_lesson(lesson, filename)
-            _print_lesson_result(result)
+            manager.check_lesson(markdown_filename=filename, step_position=step)
 
     except Exception as e:
         click.echo(f"Ошибка: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
