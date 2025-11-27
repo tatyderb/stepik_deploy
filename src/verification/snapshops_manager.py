@@ -7,9 +7,8 @@ import click
 
 from src.lesson import Lesson
 from src.step import Step
-from src.utils import truncate
+from src.utils import truncate, DEFAULT_MAX_LEN
 
-DEFAULT_MAX_LEN = 100
 SNAPSHOTS_DIR = "snapshots"
 SNAPSHOT_EXTENSION = ".json"
 MAX_TEXT_LINES_PREVIEW = 3
@@ -28,14 +27,9 @@ class StatusStep(StrEnum):
     PASSED = "✅ "
     FAILED = "❌ "
     SKIP = "➖ "
+    REMOVE = SKIP
+    ADD = "➕ "
 
-class Status(StrEnum):
-    UNEXPECTED_SKIP = "skip только в снапшоте"
-    PASSED = "passed"
-    FAILED = "failed"
-    SKIP = "skip"
-    OUT_OF_RANGE = "разное количество шагов в markdown и снапшоте."
-    IN_PROGRESS = "in_progress"  # не должен выходить результат наружу из SnapshotManager с этим статусом
 
 class Verbose(IntEnum):
     ERROR = auto()          # только сообщения об ошибках (в норме ничего)
@@ -45,9 +39,8 @@ class Verbose(IntEnum):
     DEBUG = auto()          # разница в полях dict шагов
 
 class SnapshotManager:
-    LINE_LESSON_SEPARATOR = "=" * 40
-    LINE_STEP_SEPARATOR = "-" * 40
-    LINE_DEBUG_SEPARATOR = "." * 40
+    LINE_LESSON_SEPARATOR = "=" * (DEFAULT_MAX_LEN // 2)
+    LINE_STEP_SEPARATOR = "-" * (DEFAULT_MAX_LEN // 2)
 
     def __init__(self, verbose: Verbose = Verbose.ERROR):
         self.snapshots_dir = Path(__file__).parent / SNAPSHOTS_DIR
@@ -125,15 +118,15 @@ class SnapshotManager:
             with open(snapshot_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except OSError as e:
-            raise CompareError(f"Ошибка доступа к файлу {snapshot_path}: {e}")
+            raise CompareError(f"Ошибка доступа к файлу {e}")
         except (json.JSONDecodeError, UnicodeDecodeError) as e:
-            raise CompareError(f"Ошибка загрузки снапшота {snapshot_path}: {e}")
+            raise CompareError(f"Ошибка загрузки снапшота {e}")
 
     def check_lesson(self, markdown_filename: str | Path, step_position: int = 0) -> StatusLesson:
         """Проверяет урок из файла markdown_filename, сравнивая его с существующим снапшотом.
         Если задан step_position, то сравнивается только указанный шаг (нумерация с 1, может быть отрицательным).
+        step_position = 0 - проверить весь урок.
         """
-
         # Читаем снапшот из файла
         try:
             lesson = Lesson()
@@ -165,7 +158,7 @@ class SnapshotManager:
             # нужно разобрать только одну позицию, тогда остальные пропускаем
 
             if step_position and position != step_position:
-                msg = f"\t{StatusStep.SKIP} шаг {position}: пропускаем."
+                msg = f"\t{StatusStep.SKIP} Шаг {position}: пропускаем."
                 self.trace(Verbose.STEP, msg)
                 step_results.append(StatusStep.SKIP)
                 # на всякий случай, если кто-то нарушит цепочку if..elif..else
@@ -179,7 +172,7 @@ class SnapshotManager:
 
             # в снапшоте шага нет, ошибка
             elif position > snapshot_length:
-                msg = f"\t{StatusStep.FAILED} Шаг снапшота {position} не существует. Всего шагов: {snapshot_length}"
+                msg = f"\t{StatusStep.FAILED} Шаг {position} отсутствует в снапшоте. Всего шагов: {snapshot_length}"
                 self.trace(Verbose.STEP, msg)
                 step_results.append(StatusStep.FAILED)
 
@@ -260,8 +253,8 @@ class SnapshotManager:
             if md_line == sn_line:
                 self.trace(Verbose.DEBUG, truncate(indent + md_line))
             else:
-                self.trace(Verbose.DEBUG, truncate(indent + '+ ' + md_line))
-                self.trace(Verbose.DEBUG, truncate(indent + '- ' + sn_line))
+                self.trace(Verbose.DEBUG, truncate(indent + StatusStep.ADD + md_line))
+                self.trace(Verbose.DEBUG, truncate(indent + StatusStep.REMOVE + sn_line))
                 return False
 
         return True
@@ -300,7 +293,7 @@ class SnapshotManager:
         self.trace(Verbose.SUMMARY,
                    self.LINE_STEP_SEPARATOR,
                    f"{result['status']}  Урок: {filename}",
-                    f"\tПроверено шагов: {result['steps_verified']}",
+                    f"\tВсего шагов: {result['steps_verified']}, из них",
                     f"\tPASS: {result['steps_passed']}",
                     f"\tFAIL: {result['steps_failed']}",
                     f"\tSKIP: {result['steps_skipped']}",
@@ -323,9 +316,9 @@ debug - подробная разница содержимого шага, до 
 @click.argument('filename', type=click.Path(exists=True), required=True)
 @click.option('-s', '--step', type=int, default=0, metavar='STEP',
               help='Сверить только конкретный шаг '
-              '(нумерация с 1, отрицательные - с конца)')
+              '(нумерация с 1, отрицательные - с конца, 0 - все шаги)')
 @click.option('-u', '--update', is_flag=True, help='Обновить/создать снапшот')
-@click.option('--verbose',
+@click.option('-v', '--verbose',
               type=click.Choice(list(Verbose.__members__), case_sensitive=False),
               default='summary',
               help=verbose_help
