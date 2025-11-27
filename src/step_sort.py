@@ -106,7 +106,7 @@ class ParseSchemaStepSort(ParseSchema):
         keyword = pp.LineStart() + "SORT"
         description = pp.SkipTo(keyword).setParseAction(lambda t: t[0].strip())("text")
 
-        separator = pp.LineStart() + "====" + pp.LineEnd().suppress()
+        separator = pp.AtLineStart(pp.Word('-', min=4)) + pp.LineEnd().suppress()
 
         option_text = pp.SkipTo(separator).setParseAction(lambda t: t[0].strip()) + pp.Optional(pp.LineEnd().suppress())
         option = option_text.setParseAction(lambda t: {"text": t[0]})
