@@ -65,9 +65,7 @@ class StepSort(Step):
         res = ParseSchemaStepSort.parse_step_sort(text)
         print(f'StepSort.parse: {res=}')
 
-        self.text = res['text']
-        markdown_text = '## ' + self.header + '\n' + self.text
-        self.text = markdown_text
+        self.text = self.h2() + res['text']
         self.options = res['options']
         self.config = {}
         if 'config' in res:

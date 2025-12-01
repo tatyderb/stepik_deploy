@@ -28,6 +28,13 @@ class Step(ABC):
         """to body"""
         pass
 
+    def h2(self) -> str:
+        """Преобразует заголовок или в markdown ## текст заголовка,
+        или в пустую строку, чтобы не создавался пустой тег h2."""
+        if self.header.strip():
+            return f"## {self.header} \n"
+        return ""
+
     @classmethod
     def create_by_type(cls, step_type: str = 'TEXT', header: str = '', skip: bool = False, step_body: str=''):
         match step_type:
@@ -116,7 +123,7 @@ class StepText(Step):
 
     def parse(self, text: str):
         """Обрабатываем содержимое шага, разбирая его на составные части согласно типу."""
-        markdown_text = '## ' + self.header + '\n' + text
+        markdown_text = self.h2() + text
         self.text = markdown_text
 
     def to_dict(self) -> dict:

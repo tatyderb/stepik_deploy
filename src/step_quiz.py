@@ -105,9 +105,7 @@ class StepQuiz(Step):
 
         self.config = res.get('config', {})
 
-        self.text = res['text']
-        markdown_text = '## ' + self.header + '\n' + self.text
-        self.text = markdown_text
+        self.text = self.h2() + res['text']
 
     def to_dict(self) -> dict:
         from copy import deepcopy

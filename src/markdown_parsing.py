@@ -218,7 +218,7 @@ class ParseSchema:
         """Разбор заголовка шага.'## [[SKIP] TYPE] header' to (ok, skip, type, header)"""
         try:
             res = cls.step_header().parseString(line).asDict()
-            # print(res)
+            # print(f"parse_step_header: <{line}> {res=}")
             # TEXT type by default
             if 'type' not in res:
                 res['type'] = 'TEXT'

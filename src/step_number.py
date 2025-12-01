@@ -76,9 +76,7 @@ class StepNumber(Step):
             for item in res['answer']
         ]
 
-        self.text = res['text']
-        markdown_text = '## ' + self.header + '\n' + self.text
-        self.text = markdown_text
+        self.text = self.h2() + res['text']
         self.config = {}
         if 'config' in res:
             self.config = res['config']
