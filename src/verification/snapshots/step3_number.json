@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "source_md": "examples/step3_number.md",
-    "total_steps": 4,
+    "source_md": "..\\..\\examples\\step3_number.md",
+    "total_steps": 5,
     "lesson_id": 1950069,
     "title": "Шаг NUMBER - численная задача"
   },
@@ -104,6 +104,33 @@
           "lesson": null,
           "position": null,
           "cost": "3"
+        }
+      }
+    },
+    {
+      "position": 5,
+      "type": "StepNumber",
+      "header": "",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "number",
+            "text": "<p>Шаг без заголовка.</p>\n<p>Чему равно 2 + 3?</p>",
+            "source": {
+              "options": [
+                {
+                  "answer": "5.0",
+                  "max_error": "0.0"
+                }
+              ],
+              "sample_size": 1,
+              "is_options_feedback": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2
         }
       }
     }
