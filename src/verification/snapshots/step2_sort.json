@@ -1,0 +1,132 @@
+{
+  "metadata": {
+    "source_md": "..\\..\\examples\\step2_sort.md",
+    "total_steps": 4,
+    "lesson_id": 2074851,
+    "title": "Шаг SORT - задача на сортировку"
+  },
+  "steps": [
+    {
+      "position": 1,
+      "type": "StepText",
+      "header": "Шаблон",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Шаблон</h2>\n<p><a href=\"https://stepik.org/lesson/385335/step/1\">Задача на сортировку</a></p>\n<pre><code>## SORT Заголовок\n\nТекст условия\n\nSORT\nПервый вариант\n====\nВторой вариант\n====\nИ следующие варианты аналогично\n====\n\nCONFIG\nhtml: true\n</code></pre>\n<p>Допускается использование html</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 2,
+      "type": "StepSort",
+      "header": "Времена года",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Времена года</h2>\n<p>Расставьте времена года по порядку, начиная  с зимы.</p>",
+            "name": "sorting",
+            "source": {
+              "options": [
+                {
+                  "text": "Зима"
+                },
+                {
+                  "text": "Весна"
+                },
+                {
+                  "text": "Лето"
+                },
+                {
+                  "text": "Осень"
+                }
+              ],
+              "is_html_enabled": true
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2
+        }
+      }
+    },
+    {
+      "position": 3,
+      "type": "StepSort",
+      "header": "HTML",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>HTML</h2>\n<p>Можно использовать html для составления задания:</p>\n<p>Расположите группы по среднему размеру от меньшего к большему</p>",
+            "name": "sorting",
+            "source": {
+              "options": [
+                {
+                  "text": "<ul>\n<li>Холм</li>\n<li>Овраг</li>\n<li>Утес</li>\n</ul>"
+                },
+                {
+                  "text": "<ul>\n<li>Горный хребет</li>\n<li>Плато</li>\n<li>Речная долина</li>\n</ul>"
+                },
+                {
+                  "text": "<ul>\n<li>Материк</li>\n<li>Тектоническая плита</li>\n<li>Океан</li>\n</ul>"
+                }
+              ],
+              "is_html_enabled": true,
+              "html": true
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2
+        }
+      }
+    },
+    {
+      "position": 4,
+      "type": "StepSort",
+      "header": "",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<p>Шаг без заголовка.</p>\n<p>Отсортируйте числа по возрастанию.</p>",
+            "name": "sorting",
+            "source": {
+              "options": [
+                {
+                  "text": "-3"
+                },
+                {
+                  "text": "0"
+                },
+                {
+                  "text": "2"
+                },
+                {
+                  "text": "12"
+                },
+                {
+                  "text": "27"
+                },
+                {
+                  "text": "100"
+                }
+              ],
+              "is_html_enabled": true
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2
+        }
+      }
+    }
+  ]
+}

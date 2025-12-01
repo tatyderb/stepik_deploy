@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "source_md": "examples/step3_essay.md",
-    "total_steps": 3,
+    "source_md": "..\\..\\examples\\step3_essay.md",
+    "total_steps": 4,
     "lesson_id": 1978058,
     "title": "Шаг ESSAY - задача на свободный ответ"
   },
@@ -67,6 +67,30 @@
           "lesson": null,
           "position": null,
           "cost": "10"
+        }
+      }
+    },
+    {
+      "position": 4,
+      "type": "StepEssay",
+      "header": "",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<p>Шаг без заголовка.</p>",
+            "name": "free-answer",
+            "video": null,
+            "options": null,
+            "source": {
+              "is_attachments_enabled": false,
+              "is_html_enabled": true,
+              "manual_scoring": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
         }
       }
     }

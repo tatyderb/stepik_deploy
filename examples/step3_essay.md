@@ -30,3 +30,7 @@ score: 10
 is_attachments_enabled: false,
 is_html_enabled: true,
 manual_scoring: false
+
+## ESSAY
+
+Шаг без заголовка.

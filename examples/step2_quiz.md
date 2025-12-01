@@ -92,6 +92,7 @@ int main(void) {
     return 0;
 }
 </code>
+
 B. with &lt;pre&gt; tag
 <pre>
 
@@ -101,15 +102,31 @@ int main(void) {
 }
 </pre>
 
-C. 
+C. markdown
 ```python
-# текст как markdown code 
-print("Hello")
-print("Goodbye")
-
+#include <stdin.h>
+int main(void) {
+    printf("Hello\n");
+    return 0;
+}
+```
 
 ANSWER: A
 
 ## Картинки
 
 Варианты с картинками
+
+## QUIZ
+
+Это шаг без заголовка и без названия типа.
+
+Чему равно 2 + 3 ?
+
+A. 5
+B. 23
+C. 0
+D. -1
+
+ANSWER: A
+

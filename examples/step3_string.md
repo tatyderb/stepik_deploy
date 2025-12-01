@@ -68,3 +68,13 @@ use_re: true
 Как называется величина det(A)?
 ANSWER: детерминант
 ANSWER: определитель
+
+## STRING
+
+Шаг без заголовка.
+
+Первый месяц года?
+
+ANSWER: январь
+CONFIG
+case_sensitive: false

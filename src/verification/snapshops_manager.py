@@ -37,15 +37,18 @@ class Verbose(IntEnum):
     LESSON = auto()         # урок - количество шагов, из них .. pass, .. fail, .. skip.
     STEP = auto()           # по каждому шагу - pass, fail, skip, расхождение количества шагов, неожиданный skip
     DEBUG = auto()          # разница в полях dict шагов
+    DUMP = auto()           # не обрезаем строки, в которых найдено различие, ставит SnapshotManager.truncate = False
 
 class SnapshotManager:
     LINE_LESSON_SEPARATOR = "=" * (DEFAULT_MAX_LEN // 2)
     LINE_STEP_SEPARATOR = "-" * (DEFAULT_MAX_LEN // 2)
+    LINE_INTERSTEP_SEPARATOR = "." * (DEFAULT_MAX_LEN // 2)
 
     def __init__(self, verbose: Verbose = Verbose.ERROR):
         self.snapshots_dir = Path(__file__).parent / SNAPSHOTS_DIR
         self.snapshots_dir.mkdir(exist_ok=True)
         self.__verbose: Verbose = verbose    # нужна ли подробная трассировка сравнения
+        self.truncate: bool = True           # обрезать при выводе строки до ширины экрана
 
     @property
     def verbose(self):
@@ -249,12 +252,13 @@ class SnapshotManager:
 
         md_json = json.dumps(markdown_dict, indent=2, ensure_ascii=False, sort_keys=True).splitlines()
         sn_json = json.dumps(snapshot_dict, indent=2, ensure_ascii=False, sort_keys=True).splitlines()
+        self.trace(Verbose.DEBUG, self.LINE_INTERSTEP_SEPARATOR)
         for md_line, sn_line in zip(md_json, sn_json):
             if md_line == sn_line:
-                self.trace(Verbose.DEBUG, truncate(indent + md_line))
+                self.trace(Verbose.DEBUG, truncate(indent + md_line, ignore=self.truncate))
             else:
-                self.trace(Verbose.DEBUG, truncate(indent + StatusStep.ADD + md_line))
-                self.trace(Verbose.DEBUG, truncate(indent + StatusStep.REMOVE + sn_line))
+                self.trace(Verbose.DEBUG, truncate(indent + StatusStep.ADD +    " markdown: "+ md_line, ignore=self.truncate))
+                self.trace(Verbose.DEBUG, truncate(indent + StatusStep.REMOVE + " snapshot: "+ sn_line, ignore=self.truncate))
                 return False
 
         return True
@@ -329,6 +333,9 @@ def main(filename: str, step: int, update: bool, verbose: str):
 
     manager = SnapshotManager()
     manager.verbose = verbose
+    if verbose == Verbose.DUMP:
+        manager.verbose = Verbose.DEBUG
+        manager.truncate = False
 
     try:
         if update:

@@ -29,7 +29,7 @@ CODE
 шаблон для ученика
 
 CONFIG
-lang: python
+lang: python3
 mode: custom
 open_tests: 3
 checker: std_float_seq
@@ -252,6 +252,38 @@ CONFIG
 checker: check_int_seq
 open_tests: 2
 mode: custom
+
+## TASKINLINE
+
+Шаг без заголовка. Даны два целых числа через пробел. Напечатайте их сумму.
+
+TEST
+2 3
+----
+5
+=====
+-8 2
+----
+-6
+====
+CONFIG
+lang: python3
+
+## TASKINLINE Любой язык
+
+Даны два целых числа через пробел. Напечатайте их сумму.
+
+TEST
+2 3
+----
+5
+=====
+-8 2
+----
+-6
+====
+CONFIG
+lang: all
 
 
 ## TASKINLINE SKIP тут должно падать при создании

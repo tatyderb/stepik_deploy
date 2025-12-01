@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "source_md": "examples/step2_quiz.md",
-    "total_steps": 6,
+    "source_md": "..\\..\\examples\\step2_quiz.md",
+    "total_steps": 7,
     "lesson_id": 1950068,
     "title": "Шаг QUIZ - тест"
   },
@@ -190,7 +190,7 @@
                 },
                 {
                   "is_correct": false,
-                  "text": "<p>```python</p>\n<h1>текст как markdown code</h1>\n<p>print(\"Hello\")<br />\nprint(\"Goodbye\")</p>",
+                  "text": "<p>markdown</p>\n<pre><code class=\"language-python\">#include &lt;stdin.h&gt;\nint main(void) {\n    printf(&quot;Hello\\n&quot;);\n    return 0;\n}\n</code></pre>",
                   "feedback": ""
                 }
               ],
@@ -222,6 +222,54 @@
           },
           "lesson": 0,
           "position": 1
+        }
+      }
+    },
+    {
+      "position": 7,
+      "type": "StepQuiz",
+      "header": "",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "choice",
+            "text": "<p>Это шаг без заголовка и без названия типа.</p>\n<p>Чему равно 2 + 3 ?</p>",
+            "source": {
+              "options": [
+                {
+                  "is_correct": true,
+                  "text": "<p>5</p>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": false,
+                  "text": "<p>23</p>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": false,
+                  "text": "<p>0</p>",
+                  "feedback": ""
+                },
+                {
+                  "is_correct": false,
+                  "text": "<p>-1</p>",
+                  "feedback": ""
+                }
+              ],
+              "is_always_correct": false,
+              "is_html_enabled": true,
+              "sample_size": 4,
+              "is_multiple_choice": false,
+              "preserve_order": false,
+              "is_options_feedback": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2,
+          "score": 2
         }
       }
     }
