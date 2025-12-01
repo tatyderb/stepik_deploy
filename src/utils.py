@@ -20,9 +20,9 @@ def generate_timestring(date_template: str = "%m%d_%H%M%S"):
     """ Время в формате md_HMS """
     return datetime.now().strftime(date_template)
 
-def truncate(line: str, max_len: int = DEFAULT_MAX_LEN) -> str:
+def truncate(line: str, max_len: int = DEFAULT_MAX_LEN, ignore: bool = False) -> str:
     """Строка не более max_len символов, в конце добавляем ..."""
-    if len(line) <= max_len:
+    if ignore or len(line) <= max_len:
         return line
 
     return line[:max_len-3] + "..."

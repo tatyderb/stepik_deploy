@@ -96,9 +96,7 @@ class StepString(Step):
         res = ParseSchemaStepString.parse_step_string(text)
         # print(f'StepString.parse: {res=}')
 
-        self.text = res['text']
-        markdown_text = '## ' + self.header + '\n' + self.text
-        self.text = markdown_text
+        self.text = self.h2() + res['text']
         self.answer = res['answer']
         self.config = {}
         if 'config' in res:

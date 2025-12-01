@@ -381,9 +381,7 @@ class StepTaskinline(Step):
         # пока чекер по умолчанию от Степика
         self.checker = self.config.get('checker', self.DEFAULT_CHECKER_NAME)
 
-        self.text = res['text']
-        markdown_text = '## ' + self.header + '\n' + self.text
-        self.text = markdown_text
+        self.text = self.h2() + res['text']
 
     def to_dict(self) -> dict:
         from copy import deepcopy
@@ -391,7 +389,13 @@ class StepTaskinline(Step):
         # при self.mode == 'custom' добавится раздел с тестовыми данными, см. ниже
 
         # лимиты на память и время размазаны по разным местам
-        limits = LANG_LIMITS[self.lang]
+        # TODO: или выставляем явные лимиты и is_time_limit_scaled=False,
+        # или выставляем лимит как у языка Си и is_time_limit_scaled=True
+        # пока идем строго вторым путем и явного выставления лимитов нет.
+        # по памяти - аналогичное поведение
+        # limits = LANG_LIMITS[self.lang]
+        limits = LANG_LIMITS['all']
+        d['stepSource']['block']['source']['is_time_limit_scaled'] = True
         d['stepSource']['block']['source']['execution_time_limit'] = limits['time']
         d['stepSource']['block']['source']['execution_memory_limit'] = limits['memory']
         d['stepSource']['block']['source']["manual_memory_limits"] = []

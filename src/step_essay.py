@@ -55,11 +55,9 @@ class StepEssay(Step):
     def parse(self, text: str):
         """Обрабатываем содержимое шага, разбирая его на составные части согласно типу."""
         res = ParseSchemaStepEssay.parse_step_essay(text)
-        # print(f'StepEssay.parse: {res=}')
+        print(f'StepEssay.parse: {res=}')
 
-        self.text = res['text']
-        markdown_text = '## ' + self.header + '\n' + self.text
-        self.text = markdown_text
+        self.text = self.h2() + res['text']
         self.config = {}
         if 'config' in res:
             self.config = res['config']
