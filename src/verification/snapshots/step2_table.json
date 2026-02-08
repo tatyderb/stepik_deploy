@@ -1,0 +1,385 @@
+{
+  "metadata": {
+    "source_md": "examples/step2_table.md",
+    "total_steps": 4,
+    "lesson_id": 2220076,
+    "title": "Шаг TABLE - табличная задача"
+  },
+  "steps": [
+    {
+      "position": 1,
+      "type": "StepText",
+      "header": "Шаблон",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Шаблон</h2>\n<p><a href=\"https://stepik.org/lesson/385337/step/1\">Табличная задача</a></p>\n<pre><code>## TABLE Заголовок\n\nТекст условия\nTABLE\n| Ряды:      | Первая колонка | Вторая колонка |\n|------------|----------------|----------------|\n| Первый ряд | 1              | 0              |\n| Второй ряд | 0              | 1              |\nCONFIG\nis_randomize_rows: true\nis_randomize_columns: true\nis_always_correct: false\n</code></pre>\n<p>Разделители текста и пробелы не обязательны, только для оформления<br />\nОтмечать верные и неверные варианты можно несколькими способами</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 2,
+      "type": "StepTable",
+      "header": "Пример табличной задачи с несколькими вариантом ответа в ряду",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Пример табличной задачи с несколькими вариантом ответа в ряду</h2>\n<p>Сопоставьте официальные языки и страны</p>",
+            "name": "table",
+            "source": {
+              "rows": [
+                {
+                  "name": "Ангола",
+                  "columns": [
+                    {
+                      "choice": true
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    }
+                  ]
+                },
+                {
+                  "name": "Австрия",
+                  "columns": [
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": true
+                    },
+                    {
+                      "choice": false
+                    }
+                  ]
+                },
+                {
+                  "name": "Австралия",
+                  "columns": [
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": true
+                    }
+                  ]
+                }
+              ],
+              "options": {
+                "is_checkbox": true,
+                "is_randomize_rows": true,
+                "is_randomize_columns": true,
+                "sample_size": -1
+              },
+              "columns": [
+                {
+                  "name": "португальский"
+                },
+                {
+                  "name": "немецкий"
+                },
+                {
+                  "name": "английский"
+                }
+              ],
+              "description": "Страна:",
+              "is_always_correct": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
+        }
+      }
+    },
+    {
+      "position": 3,
+      "type": "StepTable",
+      "header": "Пример табличной задачи с фиксированным порядком колонок",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Пример табличной задачи с фиксированным порядком колонок</h2>\n<p>Можно убрать перемешивание по колонкам (is_randomize_columns) или рядам (is_randomize_rows )<br />\nСопоставьте типы электромагнитных волн с их характерными длинами</p>",
+            "name": "table",
+            "source": {
+              "rows": [
+                {
+                  "name": "Радиоволны",
+                  "columns": [
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": true
+                    }
+                  ]
+                },
+                {
+                  "name": "Инфракрасное излучение",
+                  "columns": [
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": true
+                    },
+                    {
+                      "choice": false
+                    }
+                  ]
+                },
+                {
+                  "name": "Видимый свет",
+                  "columns": [
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": true
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    }
+                  ]
+                },
+                {
+                  "name": "Ультрафиолетовое излучение",
+                  "columns": [
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": true
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    }
+                  ]
+                },
+                {
+                  "name": "Рентгеновское излучение",
+                  "columns": [
+                    {
+                      "choice": true
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    }
+                  ]
+                }
+              ],
+              "options": {
+                "is_checkbox": false,
+                "is_randomize_rows": true,
+                "is_randomize_columns": false,
+                "sample_size": -1
+              },
+              "columns": [
+                {
+                  "name": "0.01 нм"
+                },
+                {
+                  "name": "100 нм"
+                },
+                {
+                  "name": "500 нм"
+                },
+                {
+                  "name": "0.1 мм"
+                },
+                {
+                  "name": "100 м"
+                }
+              ],
+              "description": "Тип ЭМ волн:",
+              "is_always_correct": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
+        }
+      }
+    },
+    {
+      "position": 4,
+      "type": "StepTable",
+      "header": "Все варианты ответов верные",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Все варианты ответов верные</h2>\n<p>Подходит для создания опросов и сбора обратной связи</p>",
+            "name": "table",
+            "source": {
+              "rows": [
+                {
+                  "name": "Первого пункта",
+                  "columns": [
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    }
+                  ]
+                },
+                {
+                  "name": "Второго пункта",
+                  "columns": [
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    },
+                    {
+                      "choice": false
+                    }
+                  ]
+                }
+              ],
+              "options": {
+                "is_checkbox": false,
+                "is_randomize_rows": false,
+                "is_randomize_columns": false,
+                "sample_size": -1
+              },
+              "columns": [
+                {
+                  "name": "1"
+                },
+                {
+                  "name": "2"
+                },
+                {
+                  "name": "3"
+                },
+                {
+                  "name": "4"
+                },
+                {
+                  "name": "5"
+                },
+                {
+                  "name": "6"
+                },
+                {
+                  "name": "7"
+                },
+                {
+                  "name": "8"
+                },
+                {
+                  "name": "9"
+                },
+                {
+                  "name": "10"
+                }
+              ],
+              "description": "Оценка:",
+              "is_always_correct": true
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
+        }
+      }
+    }
+  ]
+}

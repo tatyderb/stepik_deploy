@@ -103,7 +103,7 @@ shuffle: false
 * `CONFIG` без `:` в конце названия секции!!!
     * `shuffle` - перемешивать варианты или нет
 
-## Тип SORT - шаг Задача на сортировку
+### Тип SORT - шаг Задача на сортировку
 * [Задача на сортировку](https://stepik.org/lesson/385335/step/1)
 * [Примеры](https://github.com/tatyderb/stepik_deploy/blob/main/examples/step2_sort.md)
 
@@ -123,6 +123,27 @@ SORT
 CONFIG
 html: true
 ```
+
+### Шаг TABLE - табличная задача
+
+* [Табличная задача](https://stepik.org/lesson/385337/step/1)
+* [Примеры](https://github.com/tatyderb/stepik_deploy/blob/main/examples/step2_table.md)
+
+```
+## TABLE Заголовок
+
+Текст условия
+TABLE
+| Ряды:      | Первая колонка | Вторая колонка |
+|------------|----------------|----------------|
+| Первый ряд | 1              | 0              |
+| Второй ряд | 0              | 1              |
+CONFIG
+is_randomize_rows: true
+is_randomize_columns: true
+is_always_correct: false
+```
+Разделители текста (строки из '-') и пробелы декоративные
 
 ### Тип NUMBER - шаг Численная задача
 
