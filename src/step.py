@@ -6,7 +6,7 @@ from src.stepik_api import StepikSession
 
 
 class Step(ABC):
-    STEP_TYPES = ['QUIZ', 'SORT', 'CHOICE', 'TEXT', 'STRING', 'NUMBER', 'TASKINLINE', 'ESSAY']
+    STEP_TYPES = ['QUIZ', 'SORT', 'TABLE', 'CHOICE', 'TEXT', 'STRING', 'NUMBER', 'TASKINLINE', 'ESSAY']
 
     def __init__(self, header: str = '', skip: bool = False):
         self.header = header  # текст заголовка шага без ##
@@ -49,6 +49,9 @@ class Step(ABC):
             case 'SORT':
                 from src.step_sort import StepSort
                 return StepSort(header=header, skip=skip)
+            case 'TABLE':
+                from src.step_table import StepTable
+                return StepTable(header=header, skip=skip)
             case 'TASKINLINE':
                 from src.step_tasklinline import StepTaskinline
                 return StepTaskinline(header=header, skip=skip)
