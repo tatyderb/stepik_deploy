@@ -114,6 +114,9 @@ class StepTable(Step):
                 continue
             print(row)
             for i in range(1, len(row)):
+                if row[i] == '':
+                    row[i] = False
+                    continue
                 row[i] = ParseSchema.to_boolean(row[i])
 
             row_dict = {
