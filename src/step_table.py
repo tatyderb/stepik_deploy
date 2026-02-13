@@ -147,28 +147,32 @@ class ParseSchemaStepTable(ParseSchema):
     @classmethod
     def step_table(cls) -> pp.ParserElement:
 
-        config = cls.config()('config')
-
         keyword = pp.LineStart() + "TABLE"
-        description = pp.SkipTo(keyword).setParseAction(
-            lambda t: t[0].strip())("text")
-
+        
         table_row = pp.Group(
             pp.Suppress("|")
-            + pp.DelimitedList(pp.CharsNotIn("|\n").setParseAction(lambda t: t[0].strip()), delim="|")
+            + pp.DelimitedList(pp.CharsNotIn("|\n").set_parse_action(lambda t: t[0].strip()), delim="|")
             + pp.Suppress("|")
         )
+        table_rows = keyword + pp.OneOrMore(table_row)('table_rows')
+        config = cls.config()('config')
 
-        schema = (
-            pp.Optional(description) +
-            keyword +
-            pp.ZeroOrMore(table_row)('table_rows') +
-            pp.Optional(config))
+        sections = table_rows & pp.Opt(config)
+
+        text_bound = cls.quoted() | sections
+        text_part = pp.SkipTo(text_bound)
+
+        statement = (text_part + pp.ZeroOrMore(cls.quoted + text_part)).set_parse_action(
+            lambda toks: ''.join(toks)
+        )("text")
+
+        
+        schema = statement + sections
         return schema
 
     @classmethod
     def parse_step_table(cls, text: str) -> ParseResults:
         try:
-            return cls.step_table().parseString(text).as_dict()
+            return cls.step_table().parse_string(text).as_dict()
         except pp.ParseException as e:
             parse_error(1, text, e.msg)
