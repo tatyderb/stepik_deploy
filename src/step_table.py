@@ -99,11 +99,11 @@ class StepTable(Step):
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
 
         # обработка строк таблицы
-        d['stepSource']['block']['source']['description'] = self.table_rows[0][0]
+        d['stepSource']['block']['source']['description'] = markdown_to_html(self.table_rows[0][0])
         columns_data = []
         for column_name in self.table_rows[0][1:]:
             column_dict = {
-                "name": column_name
+                "name": markdown_to_html(column_name)
             }
             columns_data.append(column_dict)
 
@@ -120,7 +120,7 @@ class StepTable(Step):
                 row[i] = ParseSchema.to_boolean(row[i])
 
             row_dict = {
-                "name": row[0],
+                "name": markdown_to_html(row[0]),
                 "columns": []
             }
 
