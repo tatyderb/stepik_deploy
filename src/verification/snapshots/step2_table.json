@@ -15,7 +15,7 @@
         "stepSource": {
           "block": {
             "name": "text",
-            "text": "<h2>Шаблон</h2>\n<p><a href=\"https://stepik.org/lesson/385337/step/1\">Табличная задача</a></p>\n<pre><code>## TABLE Заголовок\n\nТекст условия\nTABLE\n| Ряды:      | Первая колонка | Вторая колонка |\n|------------|----------------|----------------|\n| Первый ряд | 1              | 0              |\n| Второй ряд | 0              | 1              |\nCONFIG\nis_randomize_rows: true\nis_randomize_columns: true\nis_always_correct: false\n</code></pre>\n<p>Разделители текста и пробелы не обязательны, только для оформления<br />\nОтмечать верные и неверные варианты можно несколькими способами</p>"
+            "text": "<h2>Шаблон</h2>\n<p><a href=\"https://stepik.org/lesson/385337/step/1\">Табличная задача</a></p>\n<pre><code>## TABLE Заголовок\n\nТекст условия\n\nTABLE\n| Ряды:      | Первая колонка | Вторая колонка |\n|------------|----------------|----------------|\n| Первый ряд | +              |                |\n| Второй ряд |                | +              |\n\nCONFIG\nis_randomize_rows: true\nis_randomize_columns: true\nis_always_correct: false\nis_checkbox: false\n</code></pre>\n<p>is_randomize_rows - перемешиваются ли ряды, по умолчанию да<br />\nis_randomize_columns - перемешиваются ли колонки, по умолчанию да<br />\nis_always_correct - считается ли любой ответ верным, по умолчанию нет<br />\nis_checkbox - допустим ли только один ответ в ряду, по умолчанию нет</p>\n<p>Ячейки можно несколькими способами:<br />\n    верный ответ: +, 1, да, true, yes, y<br />\n    неверный ответ: либо пустая ячейка, либо -, 0, нет, false, no, n<br />\n(Регистр любой)</p>\n<p>Между строками таблицы можно использовать декоративные разделители </p>"
           },
           "lesson": 0,
           "position": 1
@@ -35,7 +35,7 @@
             "source": {
               "rows": [
                 {
-                  "name": "3",
+                  "name": "<p>3</p>",
                   "columns": [
                     {
                       "choice": false
@@ -46,7 +46,7 @@
                   ]
                 },
                 {
-                  "name": "6",
+                  "name": "<p>6</p>",
                   "columns": [
                     {
                       "choice": true
@@ -57,7 +57,7 @@
                   ]
                 },
                 {
-                  "name": "2",
+                  "name": "<p>2</p>",
                   "columns": [
                     {
                       "choice": true
@@ -68,7 +68,7 @@
                   ]
                 },
                 {
-                  "name": "5",
+                  "name": "<p>5</p>",
                   "columns": [
                     {
                       "choice": false
@@ -87,13 +87,13 @@
               },
               "columns": [
                 {
-                  "name": "четное"
+                  "name": "<p>четное</p>"
                 },
                 {
-                  "name": "делится на 3"
+                  "name": "<p>делится на 3</p>"
                 }
               ],
-              "description": "Число:",
+              "description": "<p>Число:</p>",
               "is_always_correct": false
             }
           },
@@ -116,7 +116,7 @@
             "source": {
               "rows": [
                 {
-                  "name": "Радиоволны",
+                  "name": "<p>Радиоволны</p>",
                   "columns": [
                     {
                       "choice": false
@@ -136,7 +136,7 @@
                   ]
                 },
                 {
-                  "name": "Инфракрасное излучение",
+                  "name": "<p>Инфракрасное излучение</p>",
                   "columns": [
                     {
                       "choice": false
@@ -156,7 +156,7 @@
                   ]
                 },
                 {
-                  "name": "Видимый свет",
+                  "name": "<p>Видимый свет</p>",
                   "columns": [
                     {
                       "choice": false
@@ -176,7 +176,7 @@
                   ]
                 },
                 {
-                  "name": "Ультрафиолетовое излучение",
+                  "name": "<p>Ультрафиолетовое излучение</p>",
                   "columns": [
                     {
                       "choice": false
@@ -196,7 +196,7 @@
                   ]
                 },
                 {
-                  "name": "Рентгеновское излучение",
+                  "name": "<p>Рентгеновское излучение</p>",
                   "columns": [
                     {
                       "choice": true
@@ -224,22 +224,22 @@
               },
               "columns": [
                 {
-                  "name": "0.01 нм"
+                  "name": "<p>0.01 нм</p>"
                 },
                 {
-                  "name": "100 нм"
+                  "name": "<p>100 нм</p>"
                 },
                 {
-                  "name": "500 нм"
+                  "name": "<p>500 нм</p>"
                 },
                 {
-                  "name": "0.1 мм"
+                  "name": "<p>0.1 мм</p>"
                 },
                 {
-                  "name": "100 м"
+                  "name": "<p>100 м</p>"
                 }
               ],
-              "description": "Тип ЭМ волн:",
+              "description": "<p>Тип ЭМ волн:</p>",
               "is_always_correct": false
             }
           },
@@ -262,7 +262,7 @@
             "source": {
               "rows": [
                 {
-                  "name": "Первого пункта",
+                  "name": "<p>Первого пункта</p>",
                   "columns": [
                     {
                       "choice": false
@@ -297,7 +297,7 @@
                   ]
                 },
                 {
-                  "name": "Второго пункта",
+                  "name": "<p>Второго пункта</p>",
                   "columns": [
                     {
                       "choice": false
@@ -340,37 +340,37 @@
               },
               "columns": [
                 {
-                  "name": "1"
+                  "name": "<p>1</p>"
                 },
                 {
-                  "name": "2"
+                  "name": "<p>2</p>"
                 },
                 {
-                  "name": "3"
+                  "name": "<p>3</p>"
                 },
                 {
-                  "name": "4"
+                  "name": "<p>4</p>"
                 },
                 {
-                  "name": "5"
+                  "name": "<p>5</p>"
                 },
                 {
-                  "name": "6"
+                  "name": "<p>6</p>"
                 },
                 {
-                  "name": "7"
+                  "name": "<p>7</p>"
                 },
                 {
-                  "name": "8"
+                  "name": "<p>8</p>"
                 },
                 {
-                  "name": "9"
+                  "name": "<p>9</p>"
                 },
                 {
-                  "name": "10"
+                  "name": "<p>10</p>"
                 }
               ],
-              "description": "Оценка:",
+              "description": "<p>Оценка:</p>",
               "is_always_correct": true
             }
           },
