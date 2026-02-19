@@ -124,7 +124,38 @@ CONFIG
 html: true
 ```
 
-### Шаг TABLE - табличная задача
+## Тип MATCH - шаг Задача на сопоставление
+* [Задача на сопоставление](https://stepik.org/lesson/385336/step/1)
+* [Примеры](https://github.com/tatyderb/stepik_deploy/blob/main/examples/step2_match.md)
+
+```
+## MATCH Заголовок
+
+Текст условия
+
+MATCH
+Пункт 1
+----
+Значение, соответствующее пункту 1
+====
+Пункт 2
+----
+Значение, соответствующее пункту 2
+====
+Пункт 3
+----
+Значение, соответствующее пункту 3
+====
+
+CONFIG
+is_randomize: false
+html: true
+```
+
+is_randomize - перемешиваются ли варианты в первом столбце (во втором всегда перемешиваются)
+html - допускается ли html, по умолчанию да
+
+### Тип TABLE - шаг Табличная задача
 
 * [Табличная задача](https://stepik.org/lesson/385337/step/1)
 * [Примеры](https://github.com/tatyderb/stepik_deploy/blob/main/examples/step2_table.md)

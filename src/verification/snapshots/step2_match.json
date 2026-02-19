@@ -1,0 +1,100 @@
+{
+  "metadata": {
+    "source_md": "examples/step2_match.md",
+    "total_steps": 3,
+    "lesson_id": 2237157,
+    "title": "Шаг MATCH - задача на сопоставление"
+  },
+  "steps": [
+    {
+      "position": 1,
+      "type": "StepText",
+      "header": "Шаблон",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Шаблон</h2>\n<p><a href=\"https://stepik.org/lesson/385336/step/1\">Задача на сопоставление</a></p>\n<pre><code>## MATCH Заголовок\n\nТекст условия\n\nMATCH\nПункт 1\n----\nЗначение, соответствующее пункту 1\n====\nПункт 2\n----\nЗначение, соответствующее пункту 2\n====\nПункт 3\n----\nЗначение, соответствующее пункту 3\n====\n\nCONFIG\nis_randomize: false\nhtml: true\n</code></pre>\n<p>is_randomize - перемешиваются ли варианты в первом столбце (во втором всегда перемешиваются)<br />\nhtml - допускается ли html, по умолчанию да</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 2,
+      "type": "StepMatch",
+      "header": "Авторы и произведения",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Авторы и произведения</h2>\n<p>Кто автор произведения?</p>",
+            "name": "matching",
+            "video": null,
+            "options": {},
+            "source": {
+              "preserve_firsts_order": true,
+              "is_html_enabled": true,
+              "pairs": [
+                {
+                  "first": "Муму",
+                  "second": "Тургенев И.С."
+                },
+                {
+                  "first": "Война и мир",
+                  "second": "Толстой Л.Н."
+                },
+                {
+                  "first": "Бородино",
+                  "second": "Лермонтов М.Ю."
+                }
+              ]
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
+        }
+      }
+    },
+    {
+      "position": 3,
+      "type": "StepMatch",
+      "header": "Пример на опции",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Пример на опции</h2>\n<p>Добавлено перемешивание в первом столбце (is_randomize)<br />\nИзменены баллы за задачу (score)</p>\n<p>Как называют детенышей животных?</p>",
+            "name": "matching",
+            "video": null,
+            "options": {},
+            "source": {
+              "preserve_firsts_order": false,
+              "is_html_enabled": true,
+              "pairs": [
+                {
+                  "first": "Корова",
+                  "second": "Телёнок"
+                },
+                {
+                  "first": "Лошадь",
+                  "second": "Жеребёнок"
+                },
+                {
+                  "first": "Овца",
+                  "second": "Ягнёнок"
+                }
+              ]
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": "3"
+        }
+      }
+    }
+  ]
+}
