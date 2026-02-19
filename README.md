@@ -124,7 +124,7 @@ CONFIG
 html: true
 ```
 
-## Тип MATCH - шаг Задача на сопоставление
+### Тип MATCH - шаг Задача на сопоставление
 * [Задача на сопоставление](https://stepik.org/lesson/385336/step/1)
 * [Примеры](https://github.com/tatyderb/stepik_deploy/blob/main/examples/step2_match.md)
 

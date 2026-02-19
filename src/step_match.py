@@ -34,12 +34,7 @@ https://stepik.org/lesson/385336/
     "has_review":false,
     "time":"2026-02-19T13:43:37.903Z"
 }
-
-
-
 """
-
-# {"block":{"source":{"pairs":[,]},"tests_archive":null,"feedback_correct":"","feedback_wrong":""},"id":"9558981","has_review":false,"time":"2026-02-19T13:43:37.903Z"}
 
 import pyparsing as pp
 from pyparsing import ParseResults
