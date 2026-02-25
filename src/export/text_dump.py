@@ -10,6 +10,45 @@ from src.logged_requests import setup_logger
 from html_to_markdown import convert_to_markdown
 
 
+def fix_latex(text):
+    """Исправляет экранированные LaTeX формулы"""
+    text = text.replace(r'\(', '$').replace(r'\)', '$')
+    text = text.replace(r'\[', '$$').replace(r'\]', '$$')
+    text = re.sub(r'\\([=+\-*])', r'\1', text)
+    text = text.replace(r'\$', '$')
+    return text
+
+
+def adjust_header_levels(markdown_text, base_level=2):
+    """
+    Понижает уровни всех заголовков в markdown тексте.
+    
+    Аргументы:
+        markdown_text: текст в формате markdown
+        base_level: базовый уровень для заголовков (по умолчанию 2 для ##)
+    
+    Возвращает:
+        текст с пониженными уровнями заголовков
+    """
+    lines = markdown_text.split('\n')
+    result_lines = []
+    
+    atx_pattern = re.compile(r'^(#{1,6})\s+(.*)$')
+    
+    for line in lines:
+        atx_match = atx_pattern.match(line)
+        if atx_match:
+            hashes = atx_match.group(1)
+            title = atx_match.group(2)
+            current_level = len(hashes)
+            new_level = min(current_level + base_level - 1, 6)
+            result_lines.append('#' * new_level + ' ' + title)
+        else:
+            result_lines.append(line)
+    
+    return '\n'.join(result_lines)
+
+
 def dump_lesson(lesson_id, filename=None):
     
     setup_logger()
@@ -35,14 +74,19 @@ def dump_lesson(lesson_id, filename=None):
             block = step.get('block', {})
             html = block.get('text', '')
             
-            
-            title_match = re.search(r'<h2>(.*?)</h2>', html)
-            step_title = title_match.group(1) if title_match else f"Шаг {i}"
+            title_match = re.search(r'<h([1-6])[^>]*>(.*?)</h\1>', html, re.IGNORECASE)
             
             if title_match:
+                step_title = title_match.group(2).strip()
                 html = html[:title_match.start()] + html[title_match.end():]
+            else:
+                step_title = f"Шаг {i}"
 
             text = convert_to_markdown(html, heading_style='atx')
+            text = fix_latex(text)
+
+            if text.strip():
+                text = adjust_header_levels(text, base_level=3)
 
             all_markdown.append(f"## {step_title}")
             all_markdown.append(text.strip())
