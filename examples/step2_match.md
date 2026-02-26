@@ -54,6 +54,27 @@ MATCH
 ====
 
 
+## MATCH Вставка картинок
+(Предварительно надо добавить в файлы урока и скопировать ссылку)
+
+Сопоставьте страну и флаг
+
+MATCH
+Россия
+----
+![Флаг России](https://stepik.org/media/attachments/lesson/2237157/flag_of_Russia.png)
+====
+Франция
+----
+![Флаг Франции](https://stepik.org/media/attachments/lesson/2237157/flag_of_France.png)
+====
+Нидерланды
+----
+![Флаг Нидерландов](https://stepik.org/media/attachments/lesson/2237157/flag_of_Netherlands.png)
+====
+CONFIG
+html: true
+
 ## MATCH Пример на опции
 
 Добавлено перемешивание в первом столбце (is_randomize)
