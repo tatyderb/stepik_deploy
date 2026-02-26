@@ -95,6 +95,10 @@ class StepMatch(Step):
                 option = self.config[key]
                 d['stepSource']['block']['source']['is_html_enabled'] = ParseSchema.to_boolean(
                     option)
+                if option:
+                    for pair in d['stepSource']['block']['source']['pairs']:
+                        pair['first'] = markdown_to_html(pair['first'])
+                        pair['second'] = markdown_to_html(pair['second'])
             else:
                 option = self.config[key]
                 d['stepSource']['block']['source'][key] = ParseSchema.to_boolean(
