@@ -21,7 +21,7 @@ MATCH
 ====
 
 CONFIG
-is_randomize: false
+shuffle: false
 html: false
 '''
 
@@ -44,7 +44,7 @@ score: 3'''
 
 
 text3 = '''
-Добавлено перемешивание в первом столбце (is_randomize)
+Добавлено перемешивание в первом столбце (shuffle)
 Изменены баллы за задачу (score)
 
 Как называют детенышей животных?
@@ -64,7 +64,7 @@ MATCH
 ====
 
 CONFIG
-is_randomize: true
+shuffle: true
 score: 3
 
 '''
@@ -74,7 +74,7 @@ def test_parse_step_match():
     res = ParseSchemaStepMatch.parse_step_match(text1)
     print(f'\nparse_step_match: {res=}')
     expected_dict = {'text': 'Кто автор произведения?\n', 'pairs': [{'first': 'Муму', 'second': 'Тургенев И.С.'}, {
-        'first': 'Война и мир', 'second': 'Толстой Л.Н.'}, {'first': 'Бородино', 'second': 'Лермонтов М.Ю.'}], 'config': {'is_randomize': 'false', 'html': 'false'}}
+        'first': 'Война и мир', 'second': 'Толстой Л.Н.'}, {'first': 'Бородино', 'second': 'Лермонтов М.Ю.'}], 'config': {'shuffle': 'false', 'html': 'false'}}
     assert res == expected_dict
     res = ParseSchemaStepMatch.parse_step_match(text2)
     print(f'\nparse_step_match: {res=}')
@@ -83,6 +83,6 @@ def test_parse_step_match():
     assert res == expected_dict
     res = ParseSchemaStepMatch.parse_step_match(text3)
     print(f'\nparse_step_match: {res=}')
-    expected_dict = {'text': 'Добавлено перемешивание в первом столбце (is_randomize)\nИзменены баллы за задачу (score)\n\nКак называют детенышей животных?\n', 'pairs': [
-        {'first': 'Корова', 'second': 'Телёнок'}, {'first': 'Лошадь', 'second': 'Жеребёнок'}, {'first': 'Овца', 'second': 'Ягнёнок'}], 'config': {'is_randomize': 'true', 'score': '3'}}
+    expected_dict = {'text': 'Добавлено перемешивание в первом столбце (shuffle)\nИзменены баллы за задачу (score)\n\nКак называют детенышей животных?\n', 'pairs': [
+        {'first': 'Корова', 'second': 'Телёнок'}, {'first': 'Лошадь', 'second': 'Жеребёнок'}, {'first': 'Овца', 'second': 'Ягнёнок'}], 'config': {'shuffle': 'true', 'score': '3'}}
     assert res == expected_dict

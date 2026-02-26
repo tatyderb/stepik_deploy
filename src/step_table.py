@@ -135,9 +135,21 @@ class StepTable(Step):
         for key in self.config:
             if key == 'score':
                 d['stepSource']['cost'] = self.config['score']
-            elif key == 'is_always_correct':
+            elif key == 'shuffle_rows':
+                option = self.config[key]
+                d['stepSource']['block']['source']['options']['is_randomize_rows'] = ParseSchema.to_boolean(
+                    option)
+            elif key == 'shuffle_columns':
+                option = self.config[key]
+                d['stepSource']['block']['source']['options']['is_randomize_columns'] = ParseSchema.to_boolean(
+                    option)
+            elif key == 'accept_any_answer':
                 option = self.config[key]
                 d['stepSource']['block']['source']['is_always_correct'] = ParseSchema.to_boolean(
+                    option)
+            elif key == 'allow_multiple':
+                option = self.config[key]
+                d['stepSource']['block']['source']['options']['is_checkbox'] = ParseSchema.to_boolean(
                     option)
             else:
                 option = self.config[key]

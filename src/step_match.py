@@ -87,7 +87,7 @@ class StepMatch(Step):
         for key in self.config:
             if key == 'score':
                 d['stepSource']['cost'] = self.config['score']
-            elif key == 'is_randomize':
+            elif key == 'shuffle':
                 option = self.config[key]
                 d['stepSource']['block']['source']['preserve_firsts_order'] = not ParseSchema.to_boolean(
                     option)
