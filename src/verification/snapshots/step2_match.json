@@ -1,7 +1,7 @@
 {
   "metadata": {
     "source_md": "examples/step2_match.md",
-    "total_steps": 3,
+    "total_steps": 4,
     "lesson_id": 2237157,
     "title": "Шаг MATCH - задача на сопоставление"
   },
@@ -61,6 +61,43 @@
     },
     {
       "position": 3,
+      "type": "StepMatch",
+      "header": "Вставка картинок",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Вставка картинок</h2>\n<p>(Предварительно надо добавить в файлы урока и скопировать ссылку)</p>\n<p>Сопоставьте страну и флаг</p>",
+            "name": "matching",
+            "video": null,
+            "options": {},
+            "source": {
+              "preserve_firsts_order": true,
+              "is_html_enabled": true,
+              "pairs": [
+                {
+                  "first": "<p>Россия</p>",
+                  "second": "<p><img alt=\"Флаг России\" src=\"https://stepik.org/media/attachments/lesson/2237157/flag_of_Russia.png\" /></p>"
+                },
+                {
+                  "first": "<p>Франция</p>",
+                  "second": "<p><img alt=\"Флаг Франции\" src=\"https://stepik.org/media/attachments/lesson/2237157/flag_of_France.png\" /></p>"
+                },
+                {
+                  "first": "<p>Нидерланды</p>",
+                  "second": "<p><img alt=\"Флаг Нидерландов\" src=\"https://stepik.org/media/attachments/lesson/2237157/flag_of_Netherlands.png\" /></p>"
+                }
+              ]
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
+        }
+      }
+    },
+    {
+      "position": 4,
       "type": "StepMatch",
       "header": "Пример на опции",
       "skip": false,
