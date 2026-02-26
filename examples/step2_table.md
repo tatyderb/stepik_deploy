@@ -18,16 +18,16 @@ TABLE
 | Второй ряд |                | +              |
 
 CONFIG
-is_randomize_rows: true
-is_randomize_columns: true
-is_always_correct: false
-is_checkbox: false
+shuffle_rows: true
+shuffle_columns: true
+accept_any_answer: false
+allow_multiple: false
 ```
 
-is_randomize_rows - перемешиваются ли ряды, по умолчанию да
-is_randomize_columns - перемешиваются ли колонки, по умолчанию да
-is_always_correct - считается ли любой ответ верным, по умолчанию нет
-is_checkbox - допустим ли только один ответ в ряду, по умолчанию нет
+shuffle_rows - перемешивать ли ряды, по умолчанию да
+shuffle_columns - перемешивать ли колонки, по умолчанию да
+accept_any_answer - считается ли любой ответ верным, по умолчанию нет
+allow_multiple - да, если в каждой строке можно выбирать несколько вариантов; по умолчанию нет
 
 Ячейки можно несколькими способами:
     верный ответ: +, 1, да, true, yes, y
@@ -45,11 +45,11 @@ TABLE
 | 2 | + |   |
 | 5 |   |   |
 CONFIG
-is_checkbox: True
+allow_multiple: True
 
 ## TABLE Фиксированный порядок колонок
-Можно убрать перемешивание по колонкам (is_randomize_columns)
-(Аналогично можно убрать перемешивание по рядам (is_randomize_rows))
+Можно убрать перемешивание по колонкам (shuffle_columns)
+(Аналогично можно убрать перемешивание по рядам (shuffle_rows))
 
 Сопоставьте типы электромагнитных волн с их характерными длинами (упорядочены по возрастанию)
 TABLE
@@ -61,7 +61,7 @@ TABLE
 | Ультрафиолетовое излучение | 0 | 1 | 0 | 0 | 0 |
 | Рентгеновское излучение | 1 | 0 | 0 | 0 | 0 |
 CONFIG
-is_randomize_columns: false
+shuffle_columns: false
 
 ## TABLE Любой ответ верный
 Подходит для создания опросов и сбора обратной связи
@@ -71,6 +71,6 @@ TABLE
 | Первого пункта |   |   |   |   |   |   |   |   |   |    |
 | Второго пункта |   |   |   |   |   |   |   |   |   |    |
 CONFIG
-is_always_correct: true
-is_randomize_columns: false
-is_randomize_rows: false
+accept_any_answer: true
+shuffle_columns: false
+shuffle_rows: false
