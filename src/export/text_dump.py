@@ -1,13 +1,13 @@
 import sys
 from pathlib import Path
-import re
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.auth import read_or_create_auth_data
 from src.stepik_api import StepikSession
 from src.logged_requests import setup_logger
-from html_to_markdown import convert_to_markdown
+from markdownify import markdownify as md
+from bs4 import BeautifulSoup, NavigableString, Comment
 
 
 class BaseExporter:
@@ -18,46 +18,44 @@ class BaseExporter:
         self.position = position
         self.block = step_data.get("block", {})
         self.html = self.block.get("text", "")
+        self.soup = BeautifulSoup(self.html, 'html.parser')
 
     def export(self):
         """Основной метод экспорта"""
         title = self.extract_title()
+        self.html = str(self.soup)
         return self.format_output(title)
 
     def extract_title(self):
         """Извлекает заголовок из HTML"""
-        title_match = re.search(r"<h([1-6])[^>]*>(.*?)</h\1>", self.html, re.IGNORECASE)
-        if title_match:
-            title = title_match.group(2).strip()
-            # Удаляем заголовок из HTML
-            self.html = (
-                self.html[: title_match.start()] + self.html[title_match.end() :]
-            )
-            return title
+        for level in range(1, 7):
+            header = self.soup.find(f'h{level}')
+            if header:
+                title = header.get_text().strip()
+                header.decompose()
+                return title
         return f"Шаг {self.position}"
-
-    def fix_latex(self, text):
-        """Исправляет экранированные LaTeX формулы"""
-        text = text.replace(r"\(", "$").replace(r"\)", "$")
-        text = text.replace(r"\[", "$$").replace(r"\]", "$$")
-        text = re.sub(r"\\([=+\-*])", r"\1", text)
-        text = text.replace(r"\$", "$")
-        return text
 
     def adjust_header_levels(self, markdown_text, base_level=2):
         """Понижает уровни всех заголовков в markdown тексте"""
         lines = markdown_text.split("\n")
         result_lines = []
-        atx_pattern = re.compile(r"^(#{1,6})\s+(.*)$")
 
         for line in lines:
-            atx_match = atx_pattern.match(line)
-            if atx_match:
-                hashes = atx_match.group(1)
-                title = atx_match.group(2)
-                current_level = len(hashes)
-                new_level = min(current_level + base_level - 1, 6)
-                result_lines.append("#" * new_level + " " + title)
+            if line.startswith('#'):
+                hashes = 0
+                for char in line:
+                    if char == '#':
+                        hashes += 1
+                    else:
+                        break
+                
+                if hashes <= 6 and hashes > 0 and (len(line) == hashes or line[hashes] == ' '):
+                    title = line[hashes:].lstrip()
+                    new_level = min(hashes + base_level - 1, 6)
+                    result_lines.append("#" * new_level + " " + title)
+                else:
+                    result_lines.append(line)
             else:
                 result_lines.append(line)
 
@@ -71,11 +69,68 @@ class BaseExporter:
 class TextDump(BaseExporter):
     """Обработка текстовых шагов"""
 
+    def process_code_blocks(self, soup):
+        """Заменяет блоки кода на markdown-формат с языком программирования"""
+        for pre in soup.find_all('pre'):
+            code = pre.find('code')
+            if not code:
+                continue
+            
+            lang = None
+            if code.has_attr('class'):
+                for cls in code['class']:
+                    lang = cls[9:]
+            
+            code_text = code.get_text().strip()
+            new_text = f'```{lang or ""}\n{code_text}\n```'
+            pre.replace_with(NavigableString(f'\n\n{new_text}\n\n'))
+        
+        return soup
+
+
+    def fix_latex(self, text):
+        """
+        Исправляет LaTeX формулы в тексте после конвертации
+        """
+        parts = text.split('\\[')
+        result = [parts[0]]
+        
+        for part in parts[1:]:
+            if '\\]' in part:
+                before, after = part.split('\\]', 1)
+                result.append(f'\n\n$${before}$$\n\n{after}')
+            else:
+                result.append('\\[' + part)
+        
+        text = ''.join(result)
+        parts = text.split('\\(')
+        result = [parts[0]]
+        
+        for part in parts[1:]:
+            if '\\)' in part:
+                before, after = part.split('\\)', 1)
+                result.append(f'${before}${after}')
+            else:
+                result.append('\\(' + part)
+        
+        return ''.join(result)
+
     def format_output(self, title):
-        text = convert_to_markdown(self.html, heading_style="atx")
-        text = self.fix_latex(text)
+        self.soup = self.process_code_blocks(self.soup)
+        
+        text = md(
+            str(self.soup),
+            heading_style="ATX",
+            code_language="",
+            code_block="```",
+            strip=['script', 'style'],
+            autolinks=True,
+            escape_underscores=False,
+            escape_asterisks=False,
+        )
 
         if text.strip():
+            text = self.fix_latex(text)
             text = self.adjust_header_levels(text, base_level=3)
 
         return f"## {title}\n\n{text.strip()}\n"
