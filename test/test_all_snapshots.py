@@ -23,9 +23,10 @@ snapshot_dir = base_dir / 'src' / 'verification' / 'snapshots'
     'step2_quiz.md',
     'step2_sort.md',
     'step2_table.md',
-    'step3_essay.md',
+    'step3_space.md',
     'step3_number.md',
     'step3_string.md',
+    'step3_essay.md',
     'step4_taskinline.md',
 ])
 def test_compare_with_snapshot(markdown_filename):
