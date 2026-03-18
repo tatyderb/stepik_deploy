@@ -117,7 +117,7 @@ class StepSpace(Step):
                 # print(f"{item = }")
                 component = {
                     "type": "text",
-                    "text": markdown_to_html(item),
+                    "text": item.replace("\n", "<br>", -1),
                     "options": []
                 }
                 components.append(component)
@@ -180,6 +180,9 @@ class ParseSchemaStepSpace(ParseSchema):
         option_text = pp.Regex(r'(?:[^\]\\]|\\.)+')
 
         empty_text = pp.Empty().setParseAction(lambda: "")
+        option_text.setParseAction(
+            lambda t: [t[0].replace('\]', ']', -1)]
+        )
         option_text_or_empty = pp.Or([option_text, empty_text])
 
 
@@ -200,9 +203,7 @@ class ParseSchemaStepSpace(ParseSchema):
         sections = answer_list & pp.Opt(config)
         text_bound = cls.quoted() | sections
         text_part = pp.SkipTo(text_bound)
-        text_part.setParseAction(
-            lambda t: [t[0].replace('\]', ']', -1)]
-        )
+        
 
         schema = pp.ZeroOrMore(pp.Or([answer_list("SPACE"), text_part("TEXT")])) \
             + pp.Optional(pp.SkipTo(config | pp.StringEnd()))("TEXT") + pp.Optional(config)
