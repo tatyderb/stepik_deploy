@@ -1,7 +1,7 @@
 """
-Разбор шага типа SPACE - задача на сортировку.
+Разбор шага типа SPACE - задача на пропуски.
 
-https://stepik.org/lesson/385335/
+https://stepik.org/lesson/385339/
 {
     "block": {
         "name":"fill-blanks",
@@ -61,7 +61,6 @@ https://stepik.org/lesson/385335/
 """
 
 import pyparsing as pp
-from pyparsing import ParseResults
 
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
@@ -74,7 +73,7 @@ class StepSpace(Step):
     DEFAULT_BODY = {
         'stepSource': {
             'block': {
-                'text': 'Условие задачи',
+                'text': '',
                 'name': 'fill-blanks',
                 'source': {
                     'components': [],
@@ -89,27 +88,75 @@ class StepSpace(Step):
         }
     }
 
+
     def __init__(self, header: str = '', skip: bool = False):
         super().__init__(header=header, skip=skip)
 
     def parse(self, text: str):
         """Обрабатываем содержимое шага, разбирая его на составные части согласно типу."""
-        res = ParseSchemaStepSpace.parse_step_sort(text)
-        print(f'StepSort.parse: {res=}')
+        res = ParseSchemaStepSpace.parse_step_space(text)
+        print(f'StepSpace.parse: {res=}')
 
-        self.text = self.h2() + res['text']
-        self.options = res['options']
-        self.config = {}
-        if 'config' in res:
-            self.config = res['config']
+        self.text = self.h2() 
+
+        if res and isinstance(res[-1], dict):
+            self.config = res[-1]
+            self.space_or_text = res[:-1]
+        else:
+            self.config = {}
+            self.space_or_text = res
 
     def to_dict(self) -> dict:
         d = deepcopy(self.DEFAULT_BODY)
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
-        d['stepSource']['block']['source']['options'] = self.options
+        
+
+        components = []
+        for item in self.space_or_text:
+            if isinstance(item, str):
+                # print(f"{item = }")
+                component = {
+                    "type": "text",
+                    "text": markdown_to_html(item),
+                    "options": []
+                }
+                components.append(component)
+                
+            elif isinstance(item, list):
+                 
+                options_list = []
+                
+                for option in item:
+                    options_list.append({
+                        "text": option[-1],
+                        "is_correct": len(option) == 1
+                    })
+                    
+                component = {
+                    "type": "input" if all(option["is_correct"] for option in options_list) else "select",
+                    "text": "",
+                    "options": options_list
+                }
+                components.append(component)
+    
+        d['stepSource']['block']['source']['components'] = components
+
+
         for key in self.config:
             if key == 'score':
                 d['stepSource']['cost'] = self.config['score']
+            elif key == 'case_sensitive':
+                option = self.config[key]
+                d['stepSource']['block']['source']['is_case_sensitive'] = ParseSchema.to_boolean(
+                    option)
+            elif key == 'visual_feedback':
+                option = self.config[key]
+                d['stepSource']['block']['source']['is_detailed_feedback'] = ParseSchema.to_boolean(
+                    option)
+            elif key == 'partial_correct':
+                option = self.config[key]
+                d['stepSource']['block']['source']['is_partially_correct'] = ParseSchema.to_boolean(
+                    option)
             else:
                 option = self.config[key]
                 d['stepSource']['block']['source'][key] = ParseSchema.to_boolean(
@@ -132,11 +179,14 @@ class ParseSchemaStepSpace(ParseSchema):
         error_marker = pp.Literal("*")
         option_text = pp.Regex(r'(?:[^\]\\]|\\.)+')
 
+        empty_text = pp.Empty().setParseAction(lambda: "")
+        option_text_or_empty = pp.Or([option_text, empty_text])
+
 
         answer_option = pp.Group(
             (pp.Optional(error_marker)("marker") +
             pp.Literal("[").suppress() + 
-            option_text("text") + 
+            option_text_or_empty("text") + 
             pp.Literal("]").suppress())
         )
 
@@ -150,9 +200,12 @@ class ParseSchemaStepSpace(ParseSchema):
         sections = answer_list & pp.Opt(config)
         text_bound = cls.quoted() | sections
         text_part = pp.SkipTo(text_bound)
+        text_part.setParseAction(
+            lambda t: [t[0].replace('\]', ']', -1)]
+        )
 
         schema = pp.ZeroOrMore(pp.Or([answer_list("SPACE"), text_part("TEXT")])) \
-            + pp.Optional(pp.SkipTo(config | pp.LineEnd()))("TEXT") + pp.Optional(config)
+            + pp.Optional(pp.SkipTo(config | pp.StringEnd()))("TEXT") + pp.Optional(config)
 
         return schema
 

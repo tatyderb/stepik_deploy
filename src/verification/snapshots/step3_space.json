@@ -1,0 +1,621 @@
+{
+  "metadata": {
+    "source_md": "examples/step3_space.md",
+    "total_steps": 7,
+    "lesson_id": 2253457,
+    "title": "Шаг SPACE - задача на пропуски"
+  },
+  "steps": [
+    {
+      "position": 1,
+      "type": "StepText",
+      "header": "Шаблон",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Шаблон</h2>\n<p><a href=\"https://stepik.org/lesson/385339/step/1\">Задача на пропуски</a></p>\n<pre><code>## SPACE Заголовок\n\nТекст перед пропуском с выпадающим списком &lt;[правильный ответ 1], [правильный ответ 2], *[неправильный ответ]&gt;\n\nТекст перед пропуском без выпадающего списка (варианты ответов не показываются, указываются только верные) &lt;[правильный ответ 1], [правильный ответ 2]&gt;\n\n\nCONFIG\ncase_sensitive: false\nvisual_feedback: false\npartial_correct: false\nscore: 1\n</code></pre>\n<p>У этого типа шага есть два типа пропусков:<br />\n1. Выпадающий список. Нужно отметить знаком \"*\" неправильные ответы<br />\n2. Нет выпадающего списка. Тогда нужно записать только правильные варианты</p>\n<p>Доступны следующие дополнительные параметры:</p>\n<ul>\n<li>case_sensitive<br />\nРегистр ответа должен совпадать: регулирует точность совпадения введенного ответа с заданным правильным ответом;<br />\nПо умолчанию нет</li>\n<li>visual_feedback<br />\nПоказывать верные и ошибочные ячейки (детализировать фидбек учащимся): подсвечивает для учащихся верные и неверные ответы: красным крестом отмечаются неверно заполненные пропуски, зеленой галочкой – верные.<br />\nПо умолчанию нет</li>\n<li>partial_correct<br />\nОценка зависит от числа верных ячеек: позволяет начислить учащемуся частичный балл в зависимости от того, как много пропусков он заполнил верно.<br />\nПо умолчанию нет</li>\n</ul>\n<p>В вариантах ответа можно использовать ], но тогда нужно экранировать \\]</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 2,
+      "type": "StepSpace",
+      "header": "Без выпадающего списка",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Без выпадающего списка</h2>",
+            "name": "fill-blanks",
+            "source": {
+              "components": [
+                {
+                  "type": "text",
+                  "text": "<p>Поэму \"Медный всадник\" написал</p>",
+                  "options": []
+                },
+                {
+                  "type": "input",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "Пушкин",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "А.С. Пушкин",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "А. С. Пушкин",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "Александр Сергеевич Пушкин",
+                      "is_correct": true
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "",
+                  "options": []
+                }
+              ],
+              "is_case_sensitive": false,
+              "is_detailed_feedback": false,
+              "is_partially_correct": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2
+        }
+      }
+    },
+    {
+      "position": 3,
+      "type": "StepSpace",
+      "header": "Выпадающий список",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Выпадающий список</h2>",
+            "name": "fill-blanks",
+            "source": {
+              "components": [
+                {
+                  "type": "text",
+                  "text": "<p>Поэму \"Кому на Руси жить хорошо\" написал</p>",
+                  "options": []
+                },
+                {
+                  "type": "select",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "Пушкин",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "Тургеньев",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "Некрасов",
+                      "is_correct": true
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "",
+                  "options": []
+                }
+              ],
+              "is_case_sensitive": false,
+              "is_detailed_feedback": false,
+              "is_partially_correct": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2
+        }
+      }
+    },
+    {
+      "position": 4,
+      "type": "StepSpace",
+      "header": "Смешанный вариант",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Смешанный вариант</h2>",
+            "name": "fill-blanks",
+            "source": {
+              "components": [
+                {
+                  "type": "select",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "void",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "int",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "float",
+                      "is_correct": false
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>main</p>",
+                  "options": []
+                },
+                {
+                  "type": "select",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "()",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "{}",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "<>",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "[\\]",
+                      "is_correct": false
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>{</p>",
+                  "options": []
+                },
+                {
+                  "type": "input",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "printf",
+                      "is_correct": true
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>(\"Hello world!\");<br />\n    return 0;<br />\n}</p>",
+                  "options": []
+                }
+              ],
+              "is_case_sensitive": false,
+              "is_detailed_feedback": false,
+              "is_partially_correct": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2
+        }
+      }
+    },
+    {
+      "position": 5,
+      "type": "StepSpace",
+      "header": "case_sensitive",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>case_sensitive</h2>",
+            "name": "fill-blanks",
+            "source": {
+              "components": [
+                {
+                  "type": "text",
+                  "text": "<p>Если нужно, чтобы регистр ответа совпадал:</p>\n<p>Самый маленький по площади материк -</p>",
+                  "options": []
+                },
+                {
+                  "type": "input",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "Австралия",
+                      "is_correct": true
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>.<br />\nПустыня</p>",
+                  "options": []
+                },
+                {
+                  "type": "input",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "Сахара",
+                      "is_correct": true
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<ul>\n<li>самая большая жаркая пустыня в мире.<br />\nСтолица Японии -</li>\n</ul>",
+                  "options": []
+                },
+                {
+                  "type": "input",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "Токио",
+                      "is_correct": true
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>.<br />\nСтолица Канады -</p>",
+                  "options": []
+                },
+                {
+                  "type": "input",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "Оттава",
+                      "is_correct": true
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>.</p>",
+                  "options": []
+                }
+              ],
+              "is_case_sensitive": true,
+              "is_detailed_feedback": false,
+              "is_partially_correct": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2
+        }
+      }
+    },
+    {
+      "position": 6,
+      "type": "StepSpace",
+      "header": "visual_feedback",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>visual_feedback</h2>",
+            "name": "fill-blanks",
+            "source": {
+              "components": [
+                {
+                  "type": "text",
+                  "text": "<p>Если хочется, чтобы было видно, где ошибки</p>\n<p>Биология наука о</p>",
+                  "options": []
+                },
+                {
+                  "type": "select",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "растениях",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "животных",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "грибах",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "жизни",
+                      "is_correct": true
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>.<br />\nУ человека нормальный набор хромосом состоит из</p>",
+                  "options": []
+                },
+                {
+                  "type": "select",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "23",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "46",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "32",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "18",
+                      "is_correct": false
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>пар.<br />\nК прокариотам относятся</p>",
+                  "options": []
+                },
+                {
+                  "type": "select",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "бактерии",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "археи",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "грибы",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "вирусы",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "растения",
+                      "is_correct": false
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>.<br />\nВ молекуле ДНК азотистое основание аденин комплементарно</p>",
+                  "options": []
+                },
+                {
+                  "type": "select",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "гуанину",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "тимину",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "цитозину",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "урацилу",
+                      "is_correct": false
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>.<br />\nОрганоид, отвечающий за модификацию и упаковку веществ в клетке, - это</p>",
+                  "options": []
+                },
+                {
+                  "type": "select",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "митохондрия",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "аппарат Гольджи",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "рибосома",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "ядро",
+                      "is_correct": false
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>.</p>",
+                  "options": []
+                }
+              ],
+              "is_case_sensitive": false,
+              "is_detailed_feedback": true,
+              "is_partially_correct": false
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2
+        }
+      }
+    },
+    {
+      "position": 7,
+      "type": "StepSpace",
+      "header": "partial_correct",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>partial_correct</h2>",
+            "name": "fill-blanks",
+            "source": {
+              "components": [
+                {
+                  "type": "text",
+                  "text": "<p>Если хочется, чтобы начислялись баллы за частично верный ответ</p>\n<p>Первая мировая война началась в</p>",
+                  "options": []
+                },
+                {
+                  "type": "select",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "1914",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "1939",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "1905",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "1917",
+                      "is_correct": false
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>году.<br />\nКрупнейшее восстание рабов в Древнем Риме под предводительством Спартака произошло в</p>",
+                  "options": []
+                },
+                {
+                  "type": "select",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "I веке н.э.",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "I веке до н.э.",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "II веке н.э.",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "V веке до н.э.",
+                      "is_correct": false
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>.<br />\nПервый император в истории России — это</p>",
+                  "options": []
+                },
+                {
+                  "type": "select",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "Иван Грозный",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "Пётр I",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "Иван III",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "Николай II",
+                      "is_correct": false
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>.<br />\nХолодная война - это период противостояния между</p>",
+                  "options": []
+                },
+                {
+                  "type": "select",
+                  "text": "",
+                  "options": [
+                    {
+                      "text": "Россией и Францией",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "СССР и США",
+                      "is_correct": true
+                    },
+                    {
+                      "text": "Германией и Англией",
+                      "is_correct": false
+                    },
+                    {
+                      "text": "Китаем и Японией",
+                      "is_correct": false
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "text": "<p>.</p>",
+                  "options": []
+                }
+              ],
+              "is_case_sensitive": false,
+              "is_detailed_feedback": false,
+              "is_partially_correct": true
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 2
+        }
+      }
+    }
+  ]
+}
