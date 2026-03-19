@@ -3,7 +3,7 @@ import pytest
 import markdown
 from bs4 import BeautifulSoup
 
-from src.export.text_dump import (
+from src.export.dump import (
     dump_lesson,
     get_exporter,
     TextDump,
