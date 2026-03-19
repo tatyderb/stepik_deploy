@@ -7,7 +7,7 @@ import pytest
 import json
 from bs4 import BeautifulSoup
 
-from src.export.text_dump import NumberDump, get_exporter
+from src.export.dump import NumberDump, get_exporter
 
 
 # ========== ТЕСТ 1: БАЗОВОЕ ФОРМАТИРОВАНИЕ NUMBER ШАГА ==========
