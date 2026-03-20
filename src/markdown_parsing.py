@@ -4,11 +4,11 @@ import sys
 
 from pyparsing import ParseException
 
+from src.settings import settings
 import src.step as step
 
 
 _PARSE_ERROR_EXIT_CODE = 1
-
 
 def parse_error(line_number: int = -1, line: str = '', error_msg: str = '', exit_program: bool = True):
 
@@ -38,7 +38,7 @@ class ParseSchema:
     def to_number(cls, text: str) -> int | float:
         """Преобразует строку в int или float. Убедитесь сначала, что это число."""
         return float(text) if '.' in text else int(text)
-    
+
     @classmethod
     def to_boolean(cls, word: str) -> bool:
         """Преобразует слово в bool. Доступны несколько вариантов"""
@@ -49,7 +49,7 @@ class ParseSchema:
         false_parser = pp.oneOf(false_values, caseless=True).setParseAction(lambda: False)
 
         bool_parser = true_parser | false_parser
-    
+
         try:
             result = bool_parser.parseString(word.strip())
             return result[0]
@@ -127,7 +127,6 @@ class ParseSchema:
         schema.setParseAction(lambda t: t.as_dict()['config'][0] )
         return schema
 
-
     @classmethod
     def variable_value(cls) -> pp.ParserElement:
         # TODO: убрать, так как есть схема variables
@@ -137,6 +136,21 @@ class ParseSchema:
         sign = (pp.Literal('=')  | pp.Literal(':'))
         configure_set = variable + pp.Suppress(sign + pp.White()[...]) + value
         return configure_set
+
+    @classmethod
+    def step_header_parser(cls) -> pp.ParserElement:
+        """
+        Создает парсер для заголовка шага с учетом настроек.
+        Возвращает элемент для поиска начала шага.
+        """
+        step_begin = pp.LineStart() + pp.Literal(settings.STEP_BEGIN)
+
+        if '#' in settings.STEP_BEGIN:
+            step_begin = step_begin + pp.White()[1, ...]
+        else:
+            step_begin = step_begin + pp.Optional(pp.White())
+
+        return step_begin
 
     @classmethod
     def document(cls) -> pp.ParserElement:
@@ -153,7 +167,10 @@ class ParseSchema:
 
         # Определяем грамматику
         h1_header = pp.LineStart() + "#" + pp.Suppress(pp.White()) + pp.restOfLine("h1_header")  # Заголовок уровня 1
-        h2_header = pp.LineStart() + "##" + pp.Suppress(pp.White()) + pp.restOfLine("h2_header")  # Заголовок уровня 2
+
+        step_begin = cls.step_header_parser()  # Получаем парсер разделителя
+        step_content = pp.restOfLine("h2_header")
+        h2_header = step_begin + step_content
 
         # Текст до следующего заголовка или конца документа с учетом ## внутри вставок кода
         text_bound = cls.quoted | h2_header | pp.stringEnd
@@ -174,7 +191,7 @@ class ParseSchema:
         h2_entry.setParseAction(lambda t: {'h2': t.h2_header, 'text': t.text})
 
         # Весь документ может содержать любую комбинацию этих элементов
-        markdown_document = h1_entry + pp.OneOrMore(h2_entry)
+        markdown_document = h1_entry + pp.ZeroOrMore(h2_entry)
         def format_data(t: list[dict]):
             d = t[0]
             d['steps'] = t[1:]
@@ -205,26 +222,24 @@ class ParseSchema:
 
     @classmethod
     def step_header(cls) -> pp.ParserElement:
-        """Scheme '## [[SKIP] TYPE] header' to (type, header, skip)"""
+        """Scheme 'STEP_BEGIN [[SKIP] TYPE] header' to (type, header, skip)"""
         step_type = pp.one_of(cls.__step_types, as_keyword=True)('type')
         header = pp.rest_of_line()('header')
         skip = pp.Keyword(cls.__skip_keyword)('skip')
-        # step_module = pp.Suppress('##' + pp.White()[1, ...]) + skip[0, 1] + step_type[0, 1] + skip[0, 1] + header
-        step_module = skip[0, 1] + step_type[0, 1] + skip[0, 1] + header
+
+        step_module = pp.Suppress(cls.step_header_parser()) + skip[0, 1] + step_type[0, 1] + skip[0, 1] + header
         return step_module
 
     @classmethod
-    def parse_step_header(cls, line: str) -> (bool, bool, str, str):
-        """Разбор заголовка шага.'## [[SKIP] TYPE] header' to (ok, skip, type, header)"""
+    def parse_step_header(cls, line: str) -> (bool, str, bool, str):
+        """Разбор заголовка шага.'STEP_BEGIN [[SKIP] TYPE] header' to (ok, skip, type, header)"""
         try:
             res = cls.step_header().parseString(line).asDict()
             # print(f"parse_step_header: <{line}> {res=}")
             # TEXT type by default
             if 'type' not in res:
                 res['type'] = 'TEXT'
-            return True, res['type'], 'skip' in res, res['header'].strip()
+            skip = "skip" in res
+            return True, res['type'], skip, res['header'].strip()
         except pp.ParseException:
-
-            return False, False, None, ''
-
-
+            return False, "", False, ""
