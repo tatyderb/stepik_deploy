@@ -111,6 +111,27 @@ class BaseExporter:
     def format_output(self, title: str) -> str:
         """Форматирует вывод"""
         return f"## {title}\n\n"
+    
+    def _dump_config(self, source: dict, step_data: dict) -> List[str]:
+        """
+        Общий метод для дампа конфигурации шага.
+        """
+        config_lines: List[str] = []
+        
+        if "cost" in step_data:
+            config_lines.append(f"score: {step_data['cost']}")
+        
+        skip_params = {'options', 'sample_size', 'pattern', 'match_substring', 'code', 'is_text_disabled', 'is_file_disabled', 'extra_param', 'is_options_feedback'}
+        
+        for param_name, param_value in source.items():
+            if param_name not in skip_params and param_value is not None:
+                if isinstance(param_value, bool):
+                    param_value = 'true' if param_value else 'false'
+                elif not isinstance(param_value, (str, int, float)):
+                    continue
+                config_lines.append(f"{param_name}: {param_value}")
+        
+        return config_lines
 
 
 class TextDump(BaseExporter):
@@ -184,6 +205,7 @@ class NumberDump(BaseExporter):
                 else:
                     answers.append(f"ANSWER: {answer}")
             except ValueError:
+                print(f"WARNING: Некорректное значение max_error='{max_error}' для ответа '{answer}' в шаге {self.position}", file=sys.stderr)
                 answers.append(f"ANSWER: {answer}")
         
         text = md(
@@ -210,19 +232,7 @@ class NumberDump(BaseExporter):
         if answers:
             result_parts.append("\n" + "\n".join(answers))
         
-        config_lines: list[str] = []
-        
-        if "cost" in self.step_data:
-            config_lines.append(f"score: {self.step_data['cost']}")
-        
-        skip_params = {'options', 'sample_size', 'is_options_feedback'}
-        for param_name, param_value in source.items():
-            if param_name not in skip_params and param_value is not None:
-                if isinstance(param_value, bool):
-                    param_value = 'true' if param_value else 'false'
-                elif not isinstance(param_value, (str, int, float)):
-                    continue
-                config_lines.append(f"{param_name}: {param_value}")
+        config_lines = self._dump_config(source, self.step_data)
         
         if config_lines:
             result_parts.append("\nCONFIG")
@@ -231,10 +241,44 @@ class NumberDump(BaseExporter):
         return "\n".join(result_parts) + "\n"
     
 class StringDump(BaseExporter):
-    """Заглушка для STRING шагов"""
+    """Обработка STRING шагов"""
 
     def format_output(self, title: str) -> str:
-        return f"## SKIP STRING {title}\n\nNot implemented yet!\n"
+        source: dict[str, any] = self.block.get("source", {})
+        pattern: str = source.get("pattern", "")
+        
+        text = md(
+            str(self.soup),
+            heading_style="ATX",
+            code_language="",
+            code_block="```",
+            strip=['script', 'style'],
+            autolinks=True,
+            escape_underscores=False,
+            escape_asterisks=False,
+        )
+        
+        if text.strip():
+            text = self.fix_latex(text)
+            text = self.adjust_header_levels(text, base_level=3)
+        
+        result_parts: list[str] = []
+        result_parts.append(f"## {title}")
+        
+        if text.strip():
+            result_parts.append("\n" + text.strip())
+        
+        if pattern:
+            result_parts.append(f"\nANSWER: {pattern}")
+        
+        config_lines = self._dump_config(source, self.step_data)
+        
+        if config_lines:
+            result_parts.append("\nCONFIG")
+            result_parts.append("\n".join(config_lines))
+        
+        return "\n".join(result_parts) + "\n"
+
 
 
 class EssayDump(BaseExporter):
