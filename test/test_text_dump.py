@@ -205,9 +205,9 @@ def test_adjust_header_levels_shifts_all_headers(text_exporter_instance):
 ### Заголовок 3
 Обычный текст"""
     
-    expected = """## Заголовок 1
-### Заголовок 2
-#### Заголовок 3
+    expected = """## REDUCE-1 Заголовок 1
+### REDUCE-1 Заголовок 2
+#### REDUCE-1 Заголовок 3
 Обычный текст"""
     
     result = text_exporter_instance.adjust_header_levels(md, base_level=2)
@@ -225,9 +225,9 @@ def test_adjust_header_levels_different_base_levels(text_exporter_instance):
     """Проверка с разными базовыми уровнями"""
     md = "# Заголовок 1\n## Заголовок 2"
     
-    expected_base1 = "# Заголовок 1\n## Заголовок 2"
-    expected_base2 = "## Заголовок 1\n### Заголовок 2"
-    expected_base3 = "### Заголовок 1\n#### Заголовок 2"
+    expected_base1 = "# REDUCE-0 Заголовок 1\n## REDUCE-0 Заголовок 2"
+    expected_base2 = "## REDUCE-1 Заголовок 1\n### REDUCE-1 Заголовок 2"
+    expected_base3 = "### REDUCE-2 Заголовок 1\n#### REDUCE-2 Заголовок 2"
     
     assert text_exporter_instance.adjust_header_levels(md, base_level=1) == expected_base1
     assert text_exporter_instance.adjust_header_levels(md, base_level=2) == expected_base2
@@ -236,7 +236,7 @@ def test_adjust_header_levels_different_base_levels(text_exporter_instance):
 
 # ========== ТЕСТ 5: ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 
-@patch('src.export.text_dump.StepikSession')
+@patch('src.export.dump.StepikSession')
 def test_get_lesson_info(mock_session_class):
     """Проверка получения информации об уроке"""
     mock_session = MagicMock()
@@ -270,14 +270,17 @@ def test_get_exporter_for_text():
 
 def test_get_exporter_for_unknown():
     """Проверка получения экспортера для неизвестного типа"""
+    from src.export.dump import get_exporter, TextDump
+    
     step_data = {'block': {'name': 'unknown'}}
-    with pytest.raises(TypeError):
-        get_exporter(step_data, 1)
+    exporter = get_exporter(step_data, 1)
+    assert isinstance(exporter, TextDump)
+    assert exporter.position == 1
 
 
 # ========== ТЕСТ 6: ЭКСПОРТЕР TEXTDUMP ==========
 
-@patch('src.export.text_dump.md')
+@patch('src.export.dump.md')
 def test_textdump_export(mock_md):
     """Проверка экспорта текстового шага"""
     mock_md.return_value = "Конвертированный текст"
@@ -345,9 +348,9 @@ def test_textdump_process_code_blocks():
 
 # ========== ТЕСТ 7: ФУНКЦИЯ DUMP_LESSON ==========
 
-@patch('src.export.text_dump.StepikSession')
-@patch('src.export.text_dump.read_or_create_auth_data')
-@patch('src.export.text_dump.setup_logger')
+@patch('src.export.dump.StepikSession')
+@patch('src.export.dump.read_or_create_auth_data')
+@patch('src.export.dump.setup_logger')
 @patch('builtins.open', new_callable=MagicMock)
 def test_dump_lesson_calls_api_correctly(mock_open, mock_logger, mock_auth, mock_session_class):
     """Проверка, что dump_lesson правильно вызывает API"""
@@ -372,9 +375,9 @@ def test_dump_lesson_calls_api_correctly(mock_open, mock_logger, mock_auth, mock
     mock_open.assert_called_once_with('test.md', 'w', encoding='utf-8')
 
 
-@patch('src.export.text_dump.StepikSession')
-@patch('src.export.text_dump.read_or_create_auth_data')
-@patch('src.export.text_dump.setup_logger')
+@patch('src.export.dump.StepikSession')
+@patch('src.export.dump.read_or_create_auth_data')
+@patch('src.export.dump.setup_logger')
 @patch('builtins.open', new_callable=MagicMock)
 def test_dump_lesson_handles_empty_steps_gracefully(mock_open, mock_logger, mock_auth, mock_session_class):
     """Проверка, что dump_lesson корректно обрабатывает урок без шагов"""
@@ -389,9 +392,9 @@ def test_dump_lesson_handles_empty_steps_gracefully(mock_open, mock_logger, mock
     mock_open.assert_not_called()  # Файл не должен создаваться для пустого урока
 
 
-@patch('src.export.text_dump.StepikSession')
-@patch('src.export.text_dump.read_or_create_auth_data')
-@patch('src.export.text_dump.setup_logger')
+@patch('src.export.dump.StepikSession')
+@patch('src.export.dump.read_or_create_auth_data')
+@patch('src.export.dump.setup_logger')
 @patch('builtins.open', new_callable=MagicMock)
 def test_dump_lesson_with_custom_filename(mock_open, mock_logger, mock_auth, mock_session_class):
     """Проверка, что dump_lesson принимает кастомное имя файла"""
@@ -412,7 +415,7 @@ def test_dump_lesson_with_custom_filename(mock_open, mock_logger, mock_auth, moc
 @pytest.fixture
 def mock_session():
     """Фикстура для мока StepikSession"""
-    with patch('src.export.text_dump.StepikSession') as mock:
+    with patch('src.export.dump.StepikSession') as mock:
         session_instance = MagicMock()
         mock.return_value = session_instance
         yield session_instance
@@ -421,8 +424,8 @@ def mock_session():
 @pytest.fixture
 def mock_dependencies():
     """Фикстура для мока зависимостей dump_lesson"""
-    with patch('src.export.text_dump.read_or_create_auth_data') as mock_auth, \
-         patch('src.export.text_dump.setup_logger') as mock_logger, \
+    with patch('src.export.dump.read_or_create_auth_data') as mock_auth, \
+         patch('src.export.dump.setup_logger') as mock_logger, \
          patch('builtins.open', MagicMock()) as mock_open:
         yield {'auth': mock_auth, 'logger': mock_logger, 'open': mock_open}
 

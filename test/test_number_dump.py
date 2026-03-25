@@ -301,6 +301,75 @@ CONFIG
     
     assert exporter.export().strip() == expected.strip()
 
+# ========== ТЕСТ 9: ПРОВЕРКА ОБРАБОТКИ НЕКОРРЕКТНОГО MAX_ERROR ==========
+
+def test_number_dump_invalid_max_error(capsys):
+    """Проверка обработки некорректного значения max_error"""
+    step_data = {
+        'block': {
+            'name': 'number',
+            'text': '<p>Тест с некорректной погрешностью</p>',
+            'source': {
+                'options': [
+                    {'answer': '10.5', 'max_error': 'invalid_value'}
+                ]
+            }
+        },
+        'cost': 2
+    }
+    exporter = NumberDump(step_data, position=5)
+    result = exporter.export()
+    
+    captured = capsys.readouterr()
+    assert "WARNING: Некорректное значение max_error='invalid_value' для ответа '10.5' в шаге 5" in captured.err
+    
+    expected = """## Шаг 5
+
+Тест с некорректной погрешностью
+
+ANSWER: 10.5
+
+CONFIG
+score: 2"""
+    
+    assert result.strip() == expected.strip()
+
+
+def test_number_dump_invalid_max_error_multiple_answers(capsys):
+    """Проверка обработки некорректного max_error среди нескольких ответов"""
+    step_data = {
+        'block': {
+            'name': 'number',
+            'text': '<p>Тест с несколькими ответами и ошибкой в одном</p>',
+            'source': {
+                'options': [
+                    {'answer': '1.0', 'max_error': '0.0'},
+                    {'answer': '2.0', 'max_error': 'invalid'},
+                    {'answer': '3.0', 'max_error': '0.5'}
+                ]
+            }
+        },
+        'cost': 3
+    }
+    exporter = NumberDump(step_data, position=10)
+    result = exporter.export()
+    
+    captured = capsys.readouterr()
+    assert "WARNING: Некорректное значение max_error='invalid' для ответа '2.0' в шаге 10" in captured.err
+    
+    expected = """## Шаг 10
+
+Тест с несколькими ответами и ошибкой в одном
+
+ANSWER: 1.0
+ANSWER: 2.0
+ANSWER: 3.0 +-0.5
+
+CONFIG
+score: 3"""
+    
+    assert result.strip() == expected.strip()
+
 # ========== ТЕСТ 10: ПОЛНЫЙ УРОК С NUMBER ШАГАМИ ==========
 
 def test_complete_number_lesson():
