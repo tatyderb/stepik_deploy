@@ -63,6 +63,51 @@ class BaseExporter:
 
         return "\n".join(result_lines)
 
+    def fix_latex(self, text: str) -> str:
+        """
+        Исправляет LaTeX формулы в тексте после конвертации markdownify.
+        
+        Проблема: markdownify не умеет обрабатывать математические формулы,
+        поэтому в результирующем markdown они остаются в исходном LaTeX-формате
+        с разделителями \(...\) и \[...\].
+        
+        Пример исходного текста (после markdownify):
+            "Вставка отдельной формулы \(e=mc^2\) в тексте. 
+            Отдельно стоящая формула \[y = \sin x\]"
+        
+        Требуется преобразовать в:
+            "Вставка отдельной формулы $e=mc^2$ в тексте.
+            Отдельно стоящая формула 
+            
+            $$y = \sin x$$"
+        
+        Где:
+        - \(...\) → $...$  (inline формулы)
+        - \[...\] → \n\n$$...$$\n\n  (display формулы с переносами)
+        """
+        parts = text.split('\\[')
+        result: List[str] = [parts[0]]
+
+        for part in parts[1:]:
+            if '\\]' in part:
+                before, after = part.split('\\]', 1)
+                result.append(f'\n\n$${before}$$\n\n{after}')
+            else:
+                result.append('\\[' + part)
+
+        text = ''.join(result)
+        parts = text.split('\\(')
+        result = [parts[0]]
+
+        for part in parts[1:]:
+            if '\\)' in part:
+                before, after = part.split('\\)', 1)
+                result.append(f'${before}${after}')
+            else:
+                result.append('\\(' + part)
+
+        return ''.join(result)
+
     def format_output(self, title: str) -> str:
         """Форматирует вывод"""
         return f"## {title}\n\n"
@@ -91,33 +136,6 @@ class TextDump(BaseExporter):
             pre.replace_with(NavigableString(f'\n\n{new_text}\n\n'))
 
         return soup
-
-    def fix_latex(self, text: str) -> str:
-        """
-        Исправляет LaTeX формулы в тексте после конвертации
-        """
-        parts = text.split('\\[')
-        result: List[str] = [parts[0]]
-
-        for part in parts[1:]:
-            if '\\]' in part:
-                before, after = part.split('\\]', 1)
-                result.append(f'\n\n$${before}$$\n\n{after}')
-            else:
-                result.append('\\[' + part)
-
-        text = ''.join(result)
-        parts = text.split('\\(')
-        result = [parts[0]]
-
-        for part in parts[1:]:
-            if '\\)' in part:
-                before, after = part.split('\\)', 1)
-                result.append(f'${before}${after}')
-            else:
-                result.append('\\(' + part)
-
-        return ''.join(result)
 
     def format_output(self, title: str) -> str:
         self.soup = self.process_code_blocks(self.soup)
@@ -148,12 +166,70 @@ class QuizDump(BaseExporter):
 
 
 class NumberDump(BaseExporter):
-    """Заглушка для NUMBER шагов"""
+    """Обработка численных задач (NUMBER)"""
 
     def format_output(self, title: str) -> str:
-        return f"## SKIP NUMBER {title}\n\nNot implemented yet!\n"
-
-
+        
+        source: dict[str, any] = self.block.get("source", {})
+        options: list[dict[str, str]] = source.get("options", [])
+        
+        answers: list[str] = []
+        for opt in options:
+            answer: str = opt.get("answer", "")
+            max_error: str = opt.get("max_error", "0")
+            
+            try:
+                if max_error and float(max_error) != 0:
+                    answers.append(f"ANSWER: {answer} +-{max_error}")
+                else:
+                    answers.append(f"ANSWER: {answer}")
+            except ValueError:
+                answers.append(f"ANSWER: {answer}")
+        
+        text = md(
+            str(self.soup),
+            heading_style="ATX",
+            code_language="",
+            code_block="```",
+            strip=['script', 'style'],
+            autolinks=True,
+            escape_underscores=False,
+            escape_asterisks=False,
+        )
+        
+        if text.strip():
+            text = self.fix_latex(text)
+            text = self.adjust_header_levels(text, base_level=3)
+        
+        result_parts: list[str] = []
+        result_parts.append(f"## {title}")
+        
+        if text.strip():
+            result_parts.append("\n" + text.strip())
+        
+        if answers:
+            result_parts.append("\n" + "\n".join(answers))
+        
+        config_lines: list[str] = []
+        
+        if "cost" in self.step_data:
+            config_lines.append(f"score: {self.step_data['cost']}")
+        
+        skip_params = {'options', 'sample_size', 'is_options_feedback'}
+        for param_name, param_value in source.items():
+            if param_name not in skip_params and param_value is not None:
+                if isinstance(param_value, bool):
+                    param_value = 'true' if param_value else 'false'
+                elif not isinstance(param_value, (str, int, float)):
+                    continue
+                config_lines.append(f"{param_name}: {param_value}")
+        
+        if config_lines:
+            result_parts.append("\nCONFIG")
+            result_parts.append("\n".join(config_lines))
+        
+        return "\n".join(result_parts) + "\n"
+    
 class StringDump(BaseExporter):
     """Заглушка для STRING шагов"""
 
