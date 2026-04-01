@@ -18,7 +18,7 @@ from src.export.dump import (
 @pytest.fixture
 def text_exporter():
     """Фикстура для создания экземпляра TextDump"""
-    return TextDump({'block': {'text': ''}}, 1)
+    return TextDump({'block': {'text': '', 'name': 'text'}}, 1)
 
 
 @pytest.mark.parametrize("input_text, expected", [
@@ -195,7 +195,7 @@ def test_unknown_html_tags_are_preserved():
 @pytest.fixture
 def text_exporter_instance():
     """Фикстура для создания экземпляра TextDump"""
-    return TextDump({'block': {'text': ''}}, 1)
+    return TextDump({'block': {'text': '', 'name': 'text'}}, 1)
 
 
 def test_adjust_header_levels_shifts_all_headers(text_exporter_instance):
@@ -297,7 +297,7 @@ def test_textdump_export(mock_md):
         with patch.object(exporter, 'adjust_header_levels', return_value="Конвертированный текст"):
             result = exporter.export()
     
-    assert '## Заголовок' in result
+    assert '## TEXT Заголовок' in result
     assert 'Конвертированный текст' in result
     mock_md.assert_called_once()
 
@@ -314,7 +314,7 @@ def test_textdump_without_title():
     exporter = TextDump(step_data, 5)
     result = exporter.export()
     
-    assert '## Шаг 5' in result
+    assert '## TEXT Шаг 5' in result
 
 
 def test_textdump_extract_title():
@@ -464,7 +464,7 @@ def test_dump_lesson_with_text_content(mock_session, mock_dependencies):
     
     assert '# Тестовый урок' in written_content
     assert 'lesson: 123' in written_content
-    assert '## Привет' in written_content
+    assert '## TEXT Привет' in written_content
     assert 'Мир' in written_content
 
 

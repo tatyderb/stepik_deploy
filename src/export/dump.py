@@ -20,6 +20,7 @@ class BaseExporter:
         self.block = step_data.get("block", {})
         self.html = self.block.get("text", "")
         self.soup = BeautifulSoup(self.html, 'html.parser')
+        self.step_type = self.block.get("name", "unknown")
 
     def export(self) -> str:
         """Основной метод экспорта"""
@@ -110,7 +111,7 @@ class BaseExporter:
 
     def format_output(self, title: str) -> str:
         """Форматирует вывод"""
-        return f"## {title}\n\n"
+        return f"## {self.step_type.upper()} {title}\n\n"
     
     def _dump_config(self, source: dict, step_data: dict) -> List[str]:
         """
@@ -121,14 +122,24 @@ class BaseExporter:
         if "cost" in step_data:
             config_lines.append(f"score: {step_data['cost']}")
         
-        skip_params = {'options', 'sample_size', 'pattern', 'match_substring', 'code', 'is_text_disabled', 'is_file_disabled', 'extra_param', 'is_options_feedback'}
+        allowed_params = {
+            'text': [],
+            'number': [],
+            'string': ['case_sensitive', 'use_re'],
+            'choice': ['shuffle'],
+            'matching': ['shuffle', 'html'],
+            'sorting': ['html'],
+            'table': ['allow_multiple', 'shuffle_columns', 'accept_any_answer', 'shuffle_rows'],
+            'free-answer': ['is_attachments_enabled', 'is_html_enabled', 'manual_scoring'],
+            'code': ['lang', 'mode', 'open_tests', 'checker']
+        }
+        
+        step_type = self.block.get('name', 'unknown')
+        allowed = allowed_params.get(step_type, [])
+        
         
         for param_name, param_value in source.items():
-            if param_name not in skip_params and param_value is not None:
-                if isinstance(param_value, bool):
-                    param_value = 'true' if param_value else 'false'
-                elif not isinstance(param_value, (str, int, float)):
-                    continue
+            if param_name in allowed and isinstance(param_value, (bool, str, int, float)):
                 config_lines.append(f"{param_name}: {param_value}")
         
         return config_lines
@@ -176,14 +187,14 @@ class TextDump(BaseExporter):
             text = self.fix_latex(text)
             text = self.adjust_header_levels(text, base_level=3)
 
-        return f"## {title}\n\n{text.strip()}\n"
+        return f"## {self.step_type.upper()} {title}\n\n{text.strip()}\n"
 
 
 class QuizDump(BaseExporter):
     """Заглушка для QUIZ шагов"""
 
     def format_output(self, title: str) -> str:
-        return f"## SKIP QUIZ {title}\n\nNot implemented yet!\n"
+        return f"## {self.step_type.upper()} SKIP QUIZ {title}\n\nNot implemented yet!\n"
 
 
 class NumberDump(BaseExporter):
@@ -224,7 +235,7 @@ class NumberDump(BaseExporter):
             text = self.adjust_header_levels(text, base_level=3)
         
         result_parts: list[str] = []
-        result_parts.append(f"## {title}")
+        result_parts.append(f"## {self.step_type.upper()} {title}")
         
         if text.strip():
             result_parts.append("\n" + text.strip())
@@ -263,7 +274,7 @@ class StringDump(BaseExporter):
             text = self.adjust_header_levels(text, base_level=3)
         
         result_parts: list[str] = []
-        result_parts.append(f"## {title}")
+        result_parts.append(f"## {self.step_type.upper()} {title}")
         
         if text.strip():
             result_parts.append("\n" + text.strip())
@@ -285,35 +296,35 @@ class EssayDump(BaseExporter):
     """Заглушка для ESSAY шагов"""
 
     def format_output(self, title: str) -> str:
-        return f"## SKIP ESSAY {title}\n\nNot implemented yet!\n"
+        return f"## {self.step_type.upper()} SKIP ESSAY {title}\n\nNot implemented yet!\n"
 
 
 class SortDump(BaseExporter):
     """Заглушка для SORT шагов"""
 
     def format_output(self, title: str) -> str:
-        return f"## SKIP SORT {title}\n\nNot implemented yet!\n"
+        return f"## {self.step_type.upper()} SKIP SORT {title}\n\nNot implemented yet!\n"
 
 
 class TableDump(BaseExporter):
     """Заглушка для TABLE шагов"""
 
     def format_output(self, title: str) -> str:
-        return f"## SKIP TABLE {title}\n\nNot implemented yet!\n"
+        return f"## {self.step_type.upper()} SKIP TABLE {title}\n\nNot implemented yet!\n"
 
 
 class CodeDump(BaseExporter):
     """Заглушка для TASKINLINE шагов"""
 
     def format_output(self, title: str) -> str:
-        return f"## SKIP TASKINLINE {title}\n\nNot implemented yet!\n"
+        return f"## {self.step_type.upper()} SKIP TASKINLINE {title}\n\nNot implemented yet!\n"
 
 
 class VideoDump(BaseExporter):
     """Заглушка для VIDEO шагов"""
 
     def format_output(self, title: str) -> str:
-        return f"## SKIP VIDEO {title}\n\nNot implemented yet!\n"
+        return f"## {self.step_type.upper()} SKIP VIDEO {title}\n\nNot implemented yet!\n"
 
 
 def get_exporter(step_data: Dict[str, Any], position: int) -> BaseExporter:
