@@ -186,7 +186,7 @@ class TestStringDump:
         exporter = StringDump(simple_step_data, position=1)
         result = exporter.export()
 
-        expected = """## Простой случай
+        expected = """## STRING Простой случай
 
 Как называется шахматная фигура, которая ходит по вертикали и горизонтали?
 
@@ -194,9 +194,8 @@ ANSWER: ладья
 
 CONFIG
 score: 1
-use_re: false
-case_sensitive: false
-"""
+use_re: False
+case_sensitive: False"""
 
         assert result.strip() == expected.strip()
 
@@ -205,7 +204,7 @@ case_sensitive: false
         exporter = StringDump(case_sensitive_step_data, position=1)
         result = exporter.export()
 
-        expected = """## Демонстрация опции CONFIG
+        expected = """## STRING Демонстрация опции CONFIG
 
 Назовите столицу России
 
@@ -213,9 +212,8 @@ ANSWER: Москва
 
 CONFIG
 score: 1
-use_re: false
-case_sensitive: true
-"""
+use_re: False
+case_sensitive: True"""
 
         assert result.strip() == expected.strip()
 
@@ -224,7 +222,7 @@ case_sensitive: true
         exporter = StringDump(regex_step_data, position=1)
         result = exporter.export()
 
-        expected = """## Регулярные выражения
+        expected = """## STRING Регулярные выражения
 
 Напишите север или юг
 
@@ -232,9 +230,8 @@ ANSWER: север|юг
 
 CONFIG
 score: 1
-use_re: true
-case_sensitive: false
-"""
+use_re: True
+case_sensitive: False"""
 
         assert result.strip() == expected.strip()
 
@@ -243,7 +240,7 @@ case_sensitive: false
         exporter = StringDump(multiline_step_data, position=1)
         result = exporter.export()
 
-        expected = """## Многострочные ответы
+        expected = """## STRING Многострочные ответы
 
 Напишите три строки стихотворения
 
@@ -253,9 +250,8 @@ ANSWER: Открой сомкнуты негой взоры
 
 CONFIG
 score: 5
-use_re: false
-case_sensitive: false
-"""
+use_re: False
+case_sensitive: False"""
 
         assert result.strip() == expected.strip()
 
@@ -264,7 +260,7 @@ case_sensitive: false
         exporter = StringDump(no_title_step_data, position=7)
         result = exporter.export()
 
-        expected = """## Шаг 7
+        expected = """## STRING Шаг 7
 
 Первый месяц года?
 
@@ -272,9 +268,8 @@ ANSWER: январь
 
 CONFIG
 score: 1
-use_re: false
-case_sensitive: false
-"""
+use_re: False
+case_sensitive: False"""
 
         assert result.strip() == expected.strip()
 
@@ -283,7 +278,7 @@ case_sensitive: false
         exporter = StringDump(file_only_step_data, position=1)
         result = exporter.export()
 
-        expected = """## Загрузка файла
+        expected = """## STRING Загрузка файла
 
 Загрузите файл с решением
 
@@ -291,9 +286,8 @@ ANSWER: solution.txt
 
 CONFIG
 score: 3
-use_re: false
-case_sensitive: false
-"""
+use_re: False
+case_sensitive: False"""
 
         assert result.strip() == expected.strip()
 
@@ -302,7 +296,7 @@ case_sensitive: false
         exporter = StringDump(substring_step_data, position=1)
         result = exporter.export()
 
-        expected = """## Поиск подстроки
+        expected = """## STRING Поиск подстроки
 
 В каком городе находится Кремль?
 
@@ -310,9 +304,8 @@ ANSWER: Москва
 
 CONFIG
 score: 1
-use_re: false
-case_sensitive: false
-"""
+use_re: False
+case_sensitive: False"""
 
         assert result.strip() == expected.strip()
 
@@ -321,7 +314,7 @@ case_sensitive: false
         exporter = StringDump(multiple_answers_step_data, position=1)
         result = exporter.export()
 
-        expected = """## Множественные ответы
+        expected = """## STRING Множественные ответы
 
 Как называется величина det(A)?
 
@@ -329,14 +322,13 @@ ANSWER: детерминант|определитель
 
 CONFIG
 score: 1
-use_re: true
-case_sensitive: false
-"""
+use_re: True
+case_sensitive: False"""
 
         assert result.strip() == expected.strip()
 
     def test_skip_unnecessary_config_params(self):
-        """Тест: проверка, что ненужные параметры не попадают в CONFIG"""
+        """Тест: проверка, что в CONFIG попадают только разрешенные параметры"""
         step_data = {
             "id": 8491284,
             "cost": 1,
@@ -345,12 +337,12 @@ case_sensitive: false
                 "text": "<h2>Проверка конфига</h2>\n<p>Тестовый шаг</p>",
                 "source": {
                     "pattern": "test",
-                    "options": {"some": "option"},  # должно быть пропущено
-                    "sample_size": 1,               # должно быть пропущено
-                    "code": "# some code",          # должно быть пропущено
+                    "options": {"some": "option"},
+                    "sample_size": 1,
+                    "code": "# some code",
                     "use_re": False,
                     "case_sensitive": False,
-                    "custom_param": "value"         # должно быть сохранено
+                    "custom_param": "value"
                 }
             }
         }
@@ -358,7 +350,7 @@ case_sensitive: false
         exporter = StringDump(step_data, position=1)
         result = exporter.export()
 
-        expected = """## Проверка конфига
+        expected = """## STRING Проверка конфига
 
 Тестовый шаг
 
@@ -366,12 +358,15 @@ ANSWER: test
 
 CONFIG
 score: 1
-use_re: false
-case_sensitive: false
-custom_param: value
-"""
+use_re: False
+case_sensitive: False"""
 
         assert result.strip() == expected.strip()
+        # Проверяем, что лишние параметры не попали
+        assert "options" not in result
+        assert "sample_size" not in result
+        assert "code" not in result
+        assert "custom_param" not in result
 
     def test_empty_pattern(self):
         """Тест: шаг с пустым pattern"""
@@ -396,15 +391,14 @@ custom_param: value
         exporter = StringDump(step_data, position=1)
         result = exporter.export()
 
-        expected = """## Пустой ответ
+        expected = """## STRING Пустой ответ
 
 Введите ответ
 
 CONFIG
 score: 1
-use_re: false
-case_sensitive: false
-"""
+use_re: False
+case_sensitive: False"""
 
         assert result.strip() == expected.strip()
         assert "ANSWER:" not in result
@@ -433,7 +427,7 @@ case_sensitive: false
         exporter = StringDump(step_data, position=1)
         result = exporter.export()
 
-        expected = """## Все опции
+        expected = """## STRING Все опции
 
 Тест со всеми настройками
 
@@ -441,12 +435,13 @@ ANSWER: test_pattern
 
 CONFIG
 score: 10
-use_re: true
-case_sensitive: true
+use_re: True
+case_sensitive: True
 """
 
         assert result.strip() == expected.strip()
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+        assert "match_substring" not in result
+        assert "is_text_disabled" not in result
+        assert "is_file_disabled" not in result
+        assert "code" not in result
+        assert "extra_param" not in result

@@ -34,12 +34,9 @@ def number_exporter():
 
 def test_number_dump_basic_formatting(number_exporter):
     """Проверка базового форматирования численной задачи"""
-    with patch.object(number_exporter, 'extract_title', return_value="Тестовый заголовок"):
-        result = number_exporter.export()
+    result = number_exporter.export()
     
-    expected = """## Тестовый заголовок
-
-#### REDUCE-2 Тестовый заголовок
+    expected = """## NUMBER Тестовый заголовок
 
 Чему равно 2+2?
 
@@ -67,7 +64,7 @@ def test_number_dump_without_title():
     }
     exporter = NumberDump(step_data, 5)
     
-    expected = """## Шаг 5
+    expected = """## NUMBER Шаг 5
 
 Просто текст без заголовка
 
@@ -93,7 +90,7 @@ def test_number_dump_with_accuracy(answer, max_error, expected_answer):
     step_data = {
         'block': {
             'name': 'number',
-            'text': '<p>Тест с точностью</p>',
+            'text': '<h2>Тест с точностью</h2>',
             'source': {
                 'options': [
                     {'answer': answer, 'max_error': max_error}
@@ -104,9 +101,7 @@ def test_number_dump_with_accuracy(answer, max_error, expected_answer):
     }
     exporter = NumberDump(step_data, 1)
     
-    expected = f"""## Шаг 1
-
-Тест с точностью
+    expected = f"""## NUMBER Тест с точностью
 
 {expected_answer}
 
@@ -123,7 +118,7 @@ def test_number_dump_multiple_answers():
     step_data = {
         'block': {
             'name': 'number',
-            'text': '<p>Найдите корни уравнения x^2-3x+2=0</p>',
+            'text': '<h2>Найдите корни уравнения x^2-3x+2=0</h2>',
             'source': {
                 'options': [
                     {'answer': '1', 'max_error': '0'},
@@ -136,9 +131,7 @@ def test_number_dump_multiple_answers():
     }
     exporter = NumberDump(step_data, 1)
     
-    expected = """## Шаг 1
-
-Найдите корни уравнения x^2-3x+2=0
+    expected = """## NUMBER Найдите корни уравнения x^2-3x+2=0
 
 ANSWER: 1
 ANSWER: 2
@@ -149,14 +142,14 @@ score: 3"""
     assert exporter.export().strip() == expected.strip()
 
 
-# ========== ТЕСТ 4: ПРОВЕРКА SKIP_PARAMS ==========
+# ========== ТЕСТ 4: ПРОВЕРКА БЕЛЫХ СПИСКОВ ==========
 
-def test_number_dump_skip_params():
-    """Проверка, что технические параметры не попадают в CONFIG"""
+def test_number_dump_white_list():
+    """Проверка, что только разрешенные параметры попадают в CONFIG (для NUMBER белый список пустой)"""
     step_data = {
         'block': {
             'name': 'number',
-            'text': '<p>Тест с доп параметрами</p>',
+            'text': '<h2>Тест с параметрами</h2>',
             'source': {
                 'options': [{'answer': '5', 'max_error': '0'}],
                 'sample_size': 1,
@@ -168,21 +161,19 @@ def test_number_dump_skip_params():
     }
     exporter = NumberDump(step_data, 1)
     
-    expected = """## Шаг 1
-
-Тест с доп параметрами
+    expected = """## NUMBER Тест с параметрами
 
 ANSWER: 5
 
 CONFIG
-score: 1
-some_custom_param: value"""
+score: 1"""
     
     result = exporter.export().strip()
     assert result == expected.strip()
     
     assert "sample_size" not in result
     assert "is_options_feedback" not in result
+    assert "some_custom_param" not in result
 
 
 # ========== ТЕСТ 5: ПРОВЕРКА ИЗВЛЕЧЕНИЯ ЗАГОЛОВКА ==========
@@ -201,7 +192,7 @@ def test_number_dump_extract_title():
     }
     exporter = NumberDump(step_data, 1)
     
-    expected = """## Важный заголовок
+    expected = """## NUMBER Важный заголовок
 
 Текст задачи
 
@@ -239,7 +230,7 @@ def test_number_dump_with_real_data_format():
     
     exporter = NumberDump(real_step_data, 5)
     
-    expected = """## Шаг 5
+    expected = """## NUMBER Шаг 5
 
 Шаг без заголовка.
 
@@ -281,7 +272,7 @@ def test_number_dump_score_values(score_value, expected_score):
     step_data = {
         'block': {
             'name': 'number',
-            'text': '<p>Тест с разными баллами</p>',
+            'text': '<h2>Тест с разными баллами</h2>',
             'source': {
                 'options': [{'answer': '5', 'max_error': '0'}]
             }
@@ -290,9 +281,7 @@ def test_number_dump_score_values(score_value, expected_score):
     }
     exporter = NumberDump(step_data, 1)
     
-    expected = f"""## Шаг 1
-
-Тест с разными баллами
+    expected = f"""## NUMBER Тест с разными баллами
 
 ANSWER: 5
 
@@ -301,6 +290,7 @@ CONFIG
     
     assert exporter.export().strip() == expected.strip()
 
+
 # ========== ТЕСТ 9: ПРОВЕРКА ОБРАБОТКИ НЕКОРРЕКТНОГО MAX_ERROR ==========
 
 def test_number_dump_invalid_max_error(capsys):
@@ -308,7 +298,7 @@ def test_number_dump_invalid_max_error(capsys):
     step_data = {
         'block': {
             'name': 'number',
-            'text': '<p>Тест с некорректной погрешностью</p>',
+            'text': '<h2>Тест с некорректной погрешностью</h2>',
             'source': {
                 'options': [
                     {'answer': '10.5', 'max_error': 'invalid_value'}
@@ -323,9 +313,7 @@ def test_number_dump_invalid_max_error(capsys):
     captured = capsys.readouterr()
     assert "WARNING: Некорректное значение max_error='invalid_value' для ответа '10.5' в шаге 5" in captured.err
     
-    expected = """## Шаг 5
-
-Тест с некорректной погрешностью
+    expected = """## NUMBER Тест с некорректной погрешностью
 
 ANSWER: 10.5
 
@@ -340,7 +328,7 @@ def test_number_dump_invalid_max_error_multiple_answers(capsys):
     step_data = {
         'block': {
             'name': 'number',
-            'text': '<p>Тест с несколькими ответами и ошибкой в одном</p>',
+            'text': '<h2>Тест с несколькими ответами и ошибкой в одном</h2>',
             'source': {
                 'options': [
                     {'answer': '1.0', 'max_error': '0.0'},
@@ -357,9 +345,7 @@ def test_number_dump_invalid_max_error_multiple_answers(capsys):
     captured = capsys.readouterr()
     assert "WARNING: Некорректное значение max_error='invalid' для ответа '2.0' в шаге 10" in captured.err
     
-    expected = """## Шаг 10
-
-Тест с несколькими ответами и ошибкой в одном
+    expected = """## NUMBER Тест с несколькими ответами и ошибкой в одном
 
 ANSWER: 1.0
 ANSWER: 2.0
@@ -423,19 +409,14 @@ def test_complete_number_lesson():
         ""
     ]
     
-    for i, exporter in enumerate(exporters, 1):
-        with patch.object(exporter, 'extract_title') as mock_title:
-            titles = ["Простой вопрос", "С точностью", "Два корня"]
-            mock_title.return_value = titles[i-1]
-            lesson_parts.append(exporter.export())
+    for exporter in exporters:
+        lesson_parts.append(exporter.export())
     
     expected_lesson = """# Численные задачи
 
 lesson: 12345
 
-## Простой вопрос
-
-#### REDUCE-2 Простой вопрос
+## NUMBER Простой вопрос
 
 2 + 2 = ?
 
@@ -444,9 +425,7 @@ ANSWER: 4
 CONFIG
 score: 1
 
-## С точностью
-
-#### REDUCE-2 С точностью
+## NUMBER С точностью
 
 Чему равно 1/3?
 
@@ -455,9 +434,7 @@ ANSWER: 0.333 +-0.001
 CONFIG
 score: 2
 
-## Два корня
-
-#### REDUCE-2 Два корня
+## NUMBER Два корня
 
 Найдите корни x^2-5x+6=0
 
@@ -470,7 +447,3 @@ score: 3"""
     
     result = "\n".join(lesson_parts).strip()
     assert result == expected_lesson
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
