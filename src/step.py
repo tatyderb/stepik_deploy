@@ -6,7 +6,9 @@ from src.stepik_api import StepikSession
 
 
 class Step(ABC):
-    STEP_TYPES = ['QUIZ', 'SORT', 'MATCH', 'TABLE', 'SPACE', 'CHOICE', 'TEXT', 'STRING', 'NUMBER', 'TASKINLINE', 'ESSAY']
+    STEP_TYPES = ['CHOICE', 'ESSAY', 'MATCH', 'NUMBER',
+                  'QUIZ', 'SORT', 'SPACE', 'STRING', 
+                  'TABLE', 'TASKINLINE', 'TEXT']
 
     def __init__(self, header: str = '', skip: bool = False):
         self.header = header  # текст заголовка шага без ##

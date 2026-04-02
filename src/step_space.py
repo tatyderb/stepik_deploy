@@ -56,8 +56,6 @@ https://stepik.org/lesson/385339/
     "time":"2025-11-22T20:13:34.776Z"
 }
 
-
-{"block":{"name":"fill-blanks","text":"Вы можете изменить условие задания в этом поле и указать настройки ниже.","video":null,"options":{},"subtitle_files":[],"is_deprecated":false,"source":{"components":[{"type":"text","text":"Поэму \"Медный всадник\" написал ","options":[]},{"type":"input","text":"","options":[{"text":"Пушкин","is_correct":true},{"text":"А.С. Пушкин","is_correct":true},{"text":"А. С. Пушкин","is_correct":true},{"text":"[Александр Сергеевич Пушкин","is_correct":true}]},{"type":"text","text":"Поэму \"Кому на Руси жить хорошо\" написал ","options":[]},{"type":"select","text":"","options":[{"text":"Пушкин","is_correct":false},{"text":"Тургеньев","is_correct":false},{"text":"Некрасов","is_correct":true}]}],"is_case_sensitive":false,"is_detailed_feedback":false,"is_partially_correct":false},"subtitles":{},"tests_archive":null,"feedback_correct":"","feedback_wrong":""},"id":"9627339","has_review":false,"time":"2026-03-12T23:14:10.494Z"}
 """
 
 import pyparsing as pp
@@ -88,6 +86,24 @@ class StepSpace(Step):
         }
     }
 
+    DEFAULT_COMPONENT_TEXT = {
+        "type": "text",
+        "text": "",
+        "options": []
+    }
+
+    DEFAULT_COMPONENT_INPUT_SELECT = {
+        "type": "",  # будет заполнено позже: "input" или "select"
+        "text": "",
+        "options": []  # будет заполнено списком вариантов
+    }
+
+    # Шаблон для отдельного варианта ответа (option)
+    DEFAULT_OPTION = {
+        "text": "",
+        "is_correct": False
+    }
+
 
     def __init__(self, header: str = '', skip: bool = False):
         super().__init__(header=header, skip=skip)
@@ -99,10 +115,21 @@ class StepSpace(Step):
 
         self.text = self.h2() 
 
+        # Проверяем, есть ли в результате парсинга конфигурационные параметры
+        # Условие проверяет два момента:
+        # - res не пуст (есть какие‑то данные после парсинга)
+        # - последний элемент res является словарем (dict)
         if res and isinstance(res[-1], dict):
+            # Если условие выполнено:
+            # - последний элемент res - это словарь с настройками (score, case_sensitive и т.д.)
+            # Сохраняем его в атрибут self.config для дальнейшей обработки
             self.config = res[-1]
+
+            # - все элементы res, кроме последнего, — это содержимое шага (текст и поля для заполнения)
+            # Сохраняем их в атрибут self.space_or_text
             self.space_or_text = res[:-1]
         else:
+            # нет словаря с настройками
             self.config = {}
             self.space_or_text = res
 
@@ -110,33 +137,37 @@ class StepSpace(Step):
         d = deepcopy(self.DEFAULT_BODY)
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
         
-
         components = []
         for item in self.space_or_text:
             if isinstance(item, str):
-                # print(f"{item = }")
-                component = {
-                    "type": "text",
-                    "text": item.replace("\n", "<br>", -1),
-                    "options": []
-                }
+                # Используем шаблон для текста, заполняем поле "text"
+                component = deepcopy(self.DEFAULT_COMPONENT_TEXT)
+
+                # Согласно https://stepik.org/lesson/385339/step/4?unit=374784
+                # для переноса строки нужно использовать <br>
+                component["text"] = item.replace("\n", "<br>")
+
                 components.append(component)
                 
             elif isinstance(item, list):
+                # Создаём копию шаблона для input/select
+                component = deepcopy(self.DEFAULT_COMPONENT_INPUT_SELECT)
                  
                 options_list = []
-                
                 for option in item:
-                    options_list.append({
-                        "text": option[-1],
-                        "is_correct": len(option) == 1
-                    })
+                    # Создаём копию шаблона опции
+                    option_template = deepcopy(self.DEFAULT_OPTION)
+                    # Заполняем поля
+                    option_template["text"] = option[-1]
+                    option_template["is_correct"] = len(option) == 1
+                    # Добавляем в список опций
+                    options_list.append(option_template)
                     
-                component = {
-                    "type": "input" if all(option["is_correct"] for option in options_list) else "select",
-                    "text": "",
-                    "options": options_list
-                }
+                # Определяем тип компоненты
+                component["type"] = "input" if all(opt["is_correct"] for opt in options_list) else "select"
+                # Заполняем опции
+                component["options"] = options_list
+
                 components.append(component)
     
         d['stepSource']['block']['source']['components'] = components
@@ -183,29 +214,29 @@ class ParseSchemaStepSpace(ParseSchema):
         option_text.setParseAction(
             lambda t: [t[0].replace('\]', ']', -1)]
         )
-        option_text_or_empty = pp.Or([option_text, empty_text])
+        option_text_or_empty = option_text ^ empty_text
 
 
         answer_option = pp.Group(
             (pp.Optional(error_marker)("marker") +
-            pp.Literal("[").suppress() + 
+            pp.Suppress(pp.Literal("[")) + 
             option_text_or_empty("text") + 
-            pp.Literal("]").suppress())
+            pp.Suppress(pp.Literal("]")))
         )
 
         answer_list = pp.Group(
-            pp.Literal("<").suppress() + 
+            pp.Suppress(pp.Literal("<")) + 
             pp.DelimitedList(answer_option) + 
-            pp.Literal(">").suppress()
+            pp.Suppress(pp.Literal(">"))
         )
 
         config = cls.config()('config')
-        sections = answer_list & pp.Opt(config)
+        sections = answer_list & pp.Optional(config)
         text_bound = cls.quoted() | sections
         text_part = pp.SkipTo(text_bound)
         
 
-        schema = pp.ZeroOrMore(pp.Or([answer_list("SPACE"), text_part("TEXT")])) \
+        schema = pp.ZeroOrMore(answer_list("SPACE") ^ text_part("TEXT")) \
             + pp.Optional(pp.SkipTo(config | pp.StringEnd()))("TEXT") + pp.Optional(config)
 
         return schema
