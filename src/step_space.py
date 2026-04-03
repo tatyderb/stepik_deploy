@@ -98,7 +98,6 @@ class StepSpace(Step):
         "options": []  # будет заполнено списком вариантов
     }
 
-    # Шаблон для отдельного варианта ответа (option)
     DEFAULT_OPTION = {
         "text": "",
         "is_correct": False
@@ -115,21 +114,12 @@ class StepSpace(Step):
 
         self.text = self.h2() 
 
-        # Проверяем, есть ли в результате парсинга конфигурационные параметры
-        # Условие проверяет два момента:
-        # - res не пуст (есть какие‑то данные после парсинга)
-        # - последний элемент res является словарем (dict)
+        # res состоит из списка с text/input/select и словаря с настройками в конце (опционально)
         if res and isinstance(res[-1], dict):
-            # Если условие выполнено:
-            # - последний элемент res - это словарь с настройками (score, case_sensitive и т.д.)
-            # Сохраняем его в атрибут self.config для дальнейшей обработки
             self.config = res[-1]
-
-            # - все элементы res, кроме последнего, — это содержимое шага (текст и поля для заполнения)
-            # Сохраняем их в атрибут self.space_or_text
             self.space_or_text = res[:-1]
         else:
-            # нет словаря с настройками
+
             self.config = {}
             self.space_or_text = res
 
@@ -140,7 +130,6 @@ class StepSpace(Step):
         components = []
         for item in self.space_or_text:
             if isinstance(item, str):
-                # Используем шаблон для текста, заполняем поле "text"
                 component = deepcopy(self.DEFAULT_COMPONENT_TEXT)
 
                 # Согласно https://stepik.org/lesson/385339/step/4?unit=374784
@@ -150,22 +139,23 @@ class StepSpace(Step):
                 components.append(component)
                 
             elif isinstance(item, list):
-                # Создаём копию шаблона для input/select
                 component = deepcopy(self.DEFAULT_COMPONENT_INPUT_SELECT)
                  
                 options_list = []
                 for option in item:
-                    # Создаём копию шаблона опции
+                    # опции парсятся в следующем формате:
+                    # ['Пётр I'] правильный вариант
+                    # ['*', 'Николай II'] неправильный
+                    
                     option_template = deepcopy(self.DEFAULT_OPTION)
-                    # Заполняем поля
                     option_template["text"] = option[-1]
                     option_template["is_correct"] = len(option) == 1
-                    # Добавляем в список опций
                     options_list.append(option_template)
                     
-                # Определяем тип компоненты
+
+                # Если все опции верные, то определяем тип как input (без выпадающего списка)
+                # Иначе выпадающий список select
                 component["type"] = "input" if all(opt["is_correct"] for opt in options_list) else "select"
-                # Заполняем опции
                 component["options"] = options_list
 
                 components.append(component)
