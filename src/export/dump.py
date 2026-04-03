@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from src.auth import read_or_create_auth_data
 from src.stepik_api import StepikSession
 from src.logged_requests import setup_logger
+from src.settings import settings
 from markdownify import markdownify as md
 from bs4 import BeautifulSoup, NavigableString, Comment, Tag
 
@@ -38,31 +39,31 @@ class BaseExporter:
                 return title
         return f"Шаг {self.position}"
 
-    def adjust_header_levels(self, markdown_text: str, base_level: int = 2) -> str:
-        """Понижает уровни всех заголовков в markdown тексте"""
-        lines = markdown_text.split("\n")
-        result_lines = []
-        reduce_by = base_level - 1
+    #def adjust_header_levels(self, markdown_text: str, base_level: int = 2) -> str:
+    #    """Понижает уровни всех заголовков в markdown тексте"""
+    #    lines = markdown_text.split("\n")
+    #    result_lines = []
+    #    reduce_by = base_level - 1
+    #
+    #    for line in lines:
+    #        if line.startswith('#'):
+    #            hashes = 0
+    #            for char in line:
+    #                if char == '#':
+    #                    hashes += 1
+    #                else:
+    #                    break
+    #
+    #            if hashes <= 6 and hashes > 0 and (len(line) == hashes or line[hashes] == ' '):
+    #                title = line[hashes:].lstrip()
+    #                new_level = min(hashes + reduce_by, 6)
+    #                result_lines.append("#" * new_level + f" REDUCE-{reduce_by} " + title)
+    #            else:
+    #                result_lines.append(line)
+    #        else:
+    #            result_lines.append(line)
 
-        for line in lines:
-            if line.startswith('#'):
-                hashes = 0
-                for char in line:
-                    if char == '#':
-                        hashes += 1
-                    else:
-                        break
-
-                if hashes <= 6 and hashes > 0 and (len(line) == hashes or line[hashes] == ' '):
-                    title = line[hashes:].lstrip()
-                    new_level = min(hashes + reduce_by, 6)
-                    result_lines.append("#" * new_level + f" REDUCE-{reduce_by} " + title)
-                else:
-                    result_lines.append(line)
-            else:
-                result_lines.append(line)
-
-        return "\n".join(result_lines)
+    #    return "\n".join(result_lines)
 
     def fix_latex(self, text: str) -> str:
         """
@@ -111,17 +112,17 @@ class BaseExporter:
 
     def format_output(self, title: str) -> str:
         """Форматирует вывод"""
-        return f"## {self.step_type.upper()} {title}\n\n"
-    
+        return f"{settings.STEP_BEGIN} {self.step_type.upper()} {title}\n\n"
+
     def _dump_config(self, source: dict, step_data: dict) -> List[str]:
         """
         Общий метод для дампа конфигурации шага.
         """
         config_lines: List[str] = []
-        
+
         if "cost" in step_data:
             config_lines.append(f"score: {step_data['cost']}")
-        
+
         allowed_params = {
             'text': [],
             'number': [],
@@ -133,15 +134,14 @@ class BaseExporter:
             'free-answer': ['is_attachments_enabled', 'is_html_enabled', 'manual_scoring'],
             'code': ['lang', 'mode', 'open_tests', 'checker']
         }
-        
+
         step_type = self.block.get('name', 'unknown')
         allowed = allowed_params.get(step_type, [])
-        
-        
+
         for param_name, param_value in source.items():
             if param_name in allowed and isinstance(param_value, (bool, str, int, float)):
                 config_lines.append(f"{param_name}: {param_value}")
-        
+
         return config_lines
 
 
@@ -185,31 +185,31 @@ class TextDump(BaseExporter):
 
         if text.strip():
             text = self.fix_latex(text)
-            text = self.adjust_header_levels(text, base_level=3)
+            #text = self.adjust_header_levels(text, base_level=3)
 
-        return f"## {self.step_type.upper()} {title}\n\n{text.strip()}\n"
+        return f"{settings.STEP_BEGIN} {self.step_type.upper()} {title}\n\n{text.strip()}\n"
 
 
 class QuizDump(BaseExporter):
     """Заглушка для QUIZ шагов"""
 
     def format_output(self, title: str) -> str:
-        return f"## {self.step_type.upper()} SKIP QUIZ {title}\n\nNot implemented yet!\n"
+        return f"{settings.STEP_BEGIN} SKIP {self.step_type.upper()} {title}\n\nNot implemented yet!\n"
 
 
 class NumberDump(BaseExporter):
     """Обработка численных задач (NUMBER)"""
 
     def format_output(self, title: str) -> str:
-        
+
         source: dict[str, any] = self.block.get("source", {})
         options: list[dict[str, str]] = source.get("options", [])
-        
+
         answers: list[str] = []
         for opt in options:
             answer: str = opt.get("answer", "")
             max_error: str = opt.get("max_error", "0")
-            
+
             try:
                 if max_error and float(max_error) != 0:
                     answers.append(f"ANSWER: {answer} +-{max_error}")
@@ -218,7 +218,7 @@ class NumberDump(BaseExporter):
             except ValueError:
                 print(f"WARNING: Некорректное значение max_error='{max_error}' для ответа '{answer}' в шаге {self.position}", file=sys.stderr)
                 answers.append(f"ANSWER: {answer}")
-        
+
         text = md(
             str(self.soup),
             heading_style="ATX",
@@ -229,35 +229,35 @@ class NumberDump(BaseExporter):
             escape_underscores=False,
             escape_asterisks=False,
         )
-        
+
         if text.strip():
             text = self.fix_latex(text)
-            text = self.adjust_header_levels(text, base_level=3)
-        
+            #text = self.adjust_header_levels(text, base_level=3)
+
         result_parts: list[str] = []
-        result_parts.append(f"## {self.step_type.upper()} {title}")
-        
+        result_parts.append(f"{settings.STEP_BEGIN} {self.step_type.upper()} {title}")
+
         if text.strip():
             result_parts.append("\n" + text.strip())
-        
+
         if answers:
             result_parts.append("\n" + "\n".join(answers))
-        
+
         config_lines = self._dump_config(source, self.step_data)
-        
+
         if config_lines:
             result_parts.append("\nCONFIG")
             result_parts.append("\n".join(config_lines))
-        
+
         return "\n".join(result_parts) + "\n"
-    
+
 class StringDump(BaseExporter):
     """Обработка STRING шагов"""
 
     def format_output(self, title: str) -> str:
         source: dict[str, any] = self.block.get("source", {})
         pattern: str = source.get("pattern", "")
-        
+
         text = md(
             str(self.soup),
             heading_style="ATX",
@@ -268,63 +268,91 @@ class StringDump(BaseExporter):
             escape_underscores=False,
             escape_asterisks=False,
         )
-        
+
         if text.strip():
             text = self.fix_latex(text)
-            text = self.adjust_header_levels(text, base_level=3)
-        
+            #text = self.adjust_header_levels(text, base_level=3)
+
         result_parts: list[str] = []
-        result_parts.append(f"## {self.step_type.upper()} {title}")
-        
+        result_parts.append(f"{settings.STEP_BEGIN} {self.step_type.upper()} {title}")
+
         if text.strip():
             result_parts.append("\n" + text.strip())
-        
+
         if pattern:
             result_parts.append(f"\nANSWER: {pattern}")
-        
+
         config_lines = self._dump_config(source, self.step_data)
-        
+
         if config_lines:
             result_parts.append("\nCONFIG")
             result_parts.append("\n".join(config_lines))
-        
+
         return "\n".join(result_parts) + "\n"
 
 
-
 class EssayDump(BaseExporter):
-    """Заглушка для ESSAY шагов"""
+    """Обработка шагов с открытым ответом (ESSAY)"""
 
     def format_output(self, title: str) -> str:
-        return f"## {self.step_type.upper()} SKIP ESSAY {title}\n\nNot implemented yet!\n"
+        source: dict[str, any] = self.block.get("source", {})
+
+        text = md(
+            str(self.soup),
+            heading_style="ATX",
+            code_language="",
+            code_block="```",
+            strip=['script', 'style'],
+            autolinks=True,
+            escape_underscores=False,
+            escape_asterisks=False,
+        )
+
+        if text.strip():
+            text = self.fix_latex(text)
+            #text = self.adjust_header_levels(text, base_level=3)
+
+        result_parts: list[str] = []
+        result_parts.append(f"{settings.STEP_BEGIN} ESSAY {title}")
+
+        if text.strip():
+            result_parts.append("\n" + text.strip())
+
+        # Добавляем секцию CONFIG с параметрами шага
+        config_lines = self._dump_config(source, self.step_data)
+        if config_lines:
+            result_parts.append("\nCONFIG")
+            result_parts.append("\n".join(config_lines))
+
+        return "\n".join(result_parts) + "\n"
 
 
 class SortDump(BaseExporter):
     """Заглушка для SORT шагов"""
 
     def format_output(self, title: str) -> str:
-        return f"## {self.step_type.upper()} SKIP SORT {title}\n\nNot implemented yet!\n"
+        return f"{settings.STEP_BEGIN} SKIP {self.step_type.upper()} {title}\n\nNot implemented yet!\n"
 
 
 class TableDump(BaseExporter):
     """Заглушка для TABLE шагов"""
 
     def format_output(self, title: str) -> str:
-        return f"## {self.step_type.upper()} SKIP TABLE {title}\n\nNot implemented yet!\n"
+        return f"{settings.STEP_BEGIN} SKIP {self.step_type.upper()} {title}\n\nNot implemented yet!\n"
 
 
 class CodeDump(BaseExporter):
     """Заглушка для TASKINLINE шагов"""
 
     def format_output(self, title: str) -> str:
-        return f"## {self.step_type.upper()} SKIP TASKINLINE {title}\n\nNot implemented yet!\n"
+        return f"{settings.STEP_BEGIN} SKIP {self.step_type.upper()} {title}\n\nNot implemented yet!\n"
 
 
 class VideoDump(BaseExporter):
     """Заглушка для VIDEO шагов"""
 
     def format_output(self, title: str) -> str:
-        return f"## {self.step_type.upper()} SKIP VIDEO {title}\n\nNot implemented yet!\n"
+        return f"{settings.STEP_BEGIN} SKIP {self.step_type.upper()} {title}\n\nNot implemented yet!\n"
 
 
 def get_exporter(step_data: Dict[str, Any], position: int) -> BaseExporter:
@@ -406,7 +434,7 @@ def dump_lesson(lesson_id: int, filename: Optional[str] = None) -> None:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Использование: python text_dump.py LESSON_ID [filename]")
+        print("Использование: python dump.py LESSON_ID [filename]")
         sys.exit(1)
 
     lesson_id = int(sys.argv[1])
