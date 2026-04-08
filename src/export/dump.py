@@ -1,6 +1,9 @@
 import sys
+from abc import abstractmethod, ABC
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Type
+from markdownify import markdownify as md
+from bs4 import BeautifulSoup, NavigableString, Comment, Tag
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -8,81 +11,75 @@ from src.auth import read_or_create_auth_data
 from src.stepik_api import StepikSession
 from src.logged_requests import setup_logger
 from src.settings import settings
-from markdownify import markdownify as md
-from bs4 import BeautifulSoup, NavigableString, Comment, Tag
 
 
-class BaseExporter:
+class BaseExporter(ABC):
     """Базовый класс для экспорта шагов в markdown"""
 
     def __init__(self, step_data: Dict[str, Any], position: int) -> None:
         self.step_data = step_data
         self.position = position
         self.block = step_data.get("block", {})
+        self.step_type = self.block.get("name", "unknown").upper()
         self.html = self.block.get("text", "")
         self.soup = BeautifulSoup(self.html, 'html.parser')
-        self.step_type = self.block.get("name", "unknown")
+        self.set_type()
+
+    def set_type(self):
+        """Здесь можно установить другое название типа для markdown"""
+        self.step_type = self.block.get("name", "unknown").upper()
 
     def export(self) -> str:
-        """Основной метод экспорта"""
-        title = self.extract_title()
-        self.html = str(self.soup)
-        return self.format_output(title)
+        """Окончательное преобразование json в markdown"""
+        # при дампе: строго новый формат начала шага
+        return f"{settings.STEP_BEGIN} {self.step_type}\n\n{self.format_output()}\n"
 
-    def extract_title(self) -> str:
-        """Извлекает заголовок из HTML"""
-        for level in range(1, 7):
-            header = self.soup.find(f'h{level}')
-            if header and isinstance(header, Tag):
-                title = header.get_text().strip()
-                header.decompose()
-                return title
-        return f"Шаг {self.position}"
+    @abstractmethod
+    def format_output(self) -> str:
+        """Представление шага в формате markdown."""
+        pass
 
-    #def adjust_header_levels(self, markdown_text: str, base_level: int = 2) -> str:
-    #    """Понижает уровни всех заголовков в markdown тексте"""
-    #    lines = markdown_text.split("\n")
-    #    result_lines = []
-    #    reduce_by = base_level - 1
-    #
-    #    for line in lines:
-    #        if line.startswith('#'):
-    #            hashes = 0
-    #            for char in line:
-    #                if char == '#':
-    #                    hashes += 1
-    #                else:
-    #                    break
-    #
-    #            if hashes <= 6 and hashes > 0 and (len(line) == hashes or line[hashes] == ' '):
-    #                title = line[hashes:].lstrip()
-    #                new_level = min(hashes + reduce_by, 6)
-    #                result_lines.append("#" * new_level + f" REDUCE-{reduce_by} " + title)
-    #            else:
-    #                result_lines.append(line)
-    #        else:
-    #            result_lines.append(line)
+    @classmethod
+    def process_code_blocks(cls, soup: BeautifulSoup) -> BeautifulSoup:
+        """Заменяет блоки кода на markdown-формат с языком программирования"""
+        for pre in soup.find_all('pre'):
+            code = pre.find('code')
+            if not code or not isinstance(code, Tag):
+                continue
 
-    #    return "\n".join(result_lines)
+            lang: Optional[str] = None
+            if code.has_attr('class') and isinstance(code['class'], list):
+                for cls in code['class']:
+                    if cls.startswith('language-'):
+                        lang = cls[9:]
+                    elif cls.startswith('lang-'):
+                        lang = cls[5:]
 
-    def fix_latex(self, text: str) -> str:
-        """
+            code_text = code.get_text().strip()
+            new_text = f'```{lang or ""}\n{code_text}\n```'
+            pre.replace_with(NavigableString(f'\n\n{new_text}\n\n'))
+
+        return soup
+
+    @classmethod
+    def fix_latex(cls, text: str) -> str:
+        r"""
         Исправляет LaTeX формулы в тексте после конвертации markdownify.
-        
+
         Проблема: markdownify не умеет обрабатывать математические формулы,
         поэтому в результирующем markdown они остаются в исходном LaTeX-формате
         с разделителями \(...\) и \[...\].
-        
+
         Пример исходного текста (после markdownify):
-            "Вставка отдельной формулы \(e=mc^2\) в тексте. 
+            "Вставка отдельной формулы \(e=mc^2\) в тексте.
             Отдельно стоящая формула \[y = \sin x\]"
-        
+
         Требуется преобразовать в:
             "Вставка отдельной формулы $e=mc^2$ в тексте.
-            Отдельно стоящая формула 
-            
+            Отдельно стоящая формула
+
             $$y = \sin x$$"
-        
+
         Где:
         - \(...\) → $...$  (inline формулы)
         - \[...\] → \n\n$$...$$\n\n  (display формулы с переносами)
@@ -110,13 +107,35 @@ class BaseExporter:
 
         return ''.join(result)
 
-    def format_output(self, title: str) -> str:
-        """Форматирует вывод"""
-        return f"{settings.STEP_BEGIN} {self.step_type.upper()} {title}\n\n"
+    @classmethod
+    def html_to_markdown(cls, soup: BeautifulSoup, has_codeblock: bool = True, has_latex: bool = True):
+        """Преобразует текст из html в mardown с корректным преобразованием вставок кода и математических формул.
+        has_codeblock: вставлять ли название языка в блок кода для подсветки синтаксиса
+        has_latex: могут ли быть в тексте математические формулы
+        """
+        if has_codeblock:
+            soup = cls.process_code_blocks(soup)
 
-    def _dump_config(self, source: dict, step_data: dict) -> List[str]:
+        text = md(
+            str(soup),
+            heading_style="ATX",
+            code_language="",
+            code_block="```",
+            strip=['script', 'style'],
+            autolinks=True,
+            escape_underscores=False,
+            escape_asterisks=False,
+        )
+
+        if has_latex:
+            text = cls.fix_latex(text)
+
+        return text
+
+    def dump_config(self, source: dict, step_data: dict) -> List[str]:
         """
         Общий метод для дампа конфигурации шага.
+        TODO: писать только то, что отличается от настроек типа.
         """
         config_lines: List[str] = []
 
@@ -145,69 +164,66 @@ class BaseExporter:
         return config_lines
 
 
+class BaseNotImplementedExporter(BaseExporter):
+    def export(self) -> str:
+        """Окончательное преобразование json в markdown"""
+        # заглушка для нереализованных типов
+        return f"{settings.STEP_BEGIN} SKIP {self.step_type}\n\nNot implemented yet!\n"
+
+    def format_output(self) -> str:
+        pass
+
+
 class TextDump(BaseExporter):
     """Обработка текстовых шагов"""
 
-    def process_code_blocks(self, soup: BeautifulSoup) -> BeautifulSoup:
-        """Заменяет блоки кода на markdown-формат с языком программирования"""
-        for pre in soup.find_all('pre'):
-            code = pre.find('code')
-            if not code or not isinstance(code, Tag):
-                continue
-
-            lang: Optional[str] = None
-            if code.has_attr('class') and isinstance(code['class'], list):
-                for cls in code['class']:
-                    if cls.startswith('language-'):
-                        lang = cls[9:]
-                    elif cls.startswith('lang-'):
-                        lang = cls[5:]
-
-            code_text = code.get_text().strip()
-            new_text = f'```{lang or ""}\n{code_text}\n```'
-            pre.replace_with(NavigableString(f'\n\n{new_text}\n\n'))
-
-        return soup
-
-    def format_output(self, title: str) -> str:
-        self.soup = self.process_code_blocks(self.soup)
-
-        text = md(
-            str(self.soup),
-            heading_style="ATX",
-            code_language="",
-            code_block="```",
-            strip=['script', 'style'],
-            autolinks=True,
-            escape_underscores=False,
-            escape_asterisks=False,
-        )
-
-        if text.strip():
-            text = self.fix_latex(text)
-            #text = self.adjust_header_levels(text, base_level=3)
-
-        return f"{settings.STEP_BEGIN} {self.step_type.upper()} {title}\n\n{text.strip()}\n"
+    def format_output(self) -> str:
+        text = self.html_to_markdown(self.soup)
+        return text.strip()
 
 
-class QuizDump(BaseExporter):
-    """Заглушка для QUIZ шагов"""
-
-    def format_output(self, title: str) -> str:
-        return f"{settings.STEP_BEGIN} SKIP {self.step_type.upper()} {title}\n\nNot implemented yet!\n"
+class QuizDump(BaseNotImplementedExporter):
+    pass
 
 
 class NumberDump(BaseExporter):
     """Обработка численных задач (NUMBER)"""
 
-    def format_output(self, title: str) -> str:
+    def format_output(self) -> str:
+        """
+        Из
+        {
+          "block": {
+            "name": "number",
+            "text": "текст условия задачи в html",
+            "source": {
+              "options": [{
+                  "answer": "4.0",
+                  "max_error": "0.0"
+                },
+                {
+                  "answer": "-8.5",
+                  "max_error": "0.1"
+                }],
+            },
+          },
+        }
+        возвращаем в виде строки
+        текст условия задачи в markdown
+
+        ANSWER: 4.0
+        ANSWER: -8.5 +- 0.1
+
+        :return: шаг в виде строки в формате markdown
+        """
 
         source: dict[str, any] = self.block.get("source", {})
         options: list[dict[str, str]] = source.get("options", [])
 
+        # Правильных ответов может быть несколько
         answers: list[str] = []
         for opt in options:
-            answer: str = opt.get("answer", "")
+            answer: str = opt["answer"]
             max_error: str = opt.get("max_error", "0")
 
             try:
@@ -216,143 +232,103 @@ class NumberDump(BaseExporter):
                 else:
                     answers.append(f"ANSWER: {answer}")
             except ValueError:
-                print(f"WARNING: Некорректное значение max_error='{max_error}' для ответа '{answer}' в шаге {self.position}", file=sys.stderr)
-                answers.append(f"ANSWER: {answer}")
+                raise ValueError(
+                    f"WARNING: Некорректное значение max_error='{max_error}' для ответа '{answer}' в шаге {self.position}"
+                )
 
-        text = md(
-            str(self.soup),
-            heading_style="ATX",
-            code_language="",
-            code_block="```",
-            strip=['script', 'style'],
-            autolinks=True,
-            escape_underscores=False,
-            escape_asterisks=False,
-        )
-
-        if text.strip():
-            text = self.fix_latex(text)
-            #text = self.adjust_header_levels(text, base_level=3)
-
-        result_parts: list[str] = []
-        result_parts.append(f"{settings.STEP_BEGIN} {self.step_type.upper()} {title}")
-
-        if text.strip():
-            result_parts.append("\n" + text.strip())
-
-        if answers:
-            result_parts.append("\n" + "\n".join(answers))
-
-        config_lines = self._dump_config(source, self.step_data)
-
-        if config_lines:
-            result_parts.append("\nCONFIG")
-            result_parts.append("\n".join(config_lines))
-
+        result_parts: list[str] = [
+            self.html_to_markdown(self.soup),
+            "",
+            *answers,
+            "",
+            "CONFIG",
+            *self.dump_config(source, self.step_data)
+        ]
         return "\n".join(result_parts) + "\n"
+
 
 class StringDump(BaseExporter):
     """Обработка STRING шагов"""
 
-    def format_output(self, title: str) -> str:
+    def format_output(self) -> str:
+        """
+        Преобразует json в markdown
+        {
+          "block": {
+            "name": "string",
+            "text": "<h2>Регулярные выражения</h2>\n<p>Напишите север или юг</p>",
+            "source": {
+              "pattern": "север|юг",
+              "use_re": true,
+              "match_substring": false,
+              "case_sensitive": false,
+              "is_text_disabled": false,
+              "is_file_disabled": true
+            }
+          },
+        }
+        в
+        ##  Регулярные выражения
+        Напишите север или юг
+        ANSWER: север|юг
+        CONFIG
+        use_re: false
+        match_substring: false
+        case_sensitive: false
+        is_text_disabled: false
+        is_file_disabled: true
+
+        :return: текст в формате markdown
+        """
         source: dict[str, any] = self.block.get("source", {})
-        pattern: str = source.get("pattern", "")
 
-        text = md(
-            str(self.soup),
-            heading_style="ATX",
-            code_language="",
-            code_block="```",
-            strip=['script', 'style'],
-            autolinks=True,
-            escape_underscores=False,
-            escape_asterisks=False,
-        )
-
-        if text.strip():
-            text = self.fix_latex(text)
-            #text = self.adjust_header_levels(text, base_level=3)
-
-        result_parts: list[str] = []
-        result_parts.append(f"{settings.STEP_BEGIN} {self.step_type.upper()} {title}")
-
-        if text.strip():
-            result_parts.append("\n" + text.strip())
-
-        if pattern:
-            result_parts.append(f"\nANSWER: {pattern}")
-
-        config_lines = self._dump_config(source, self.step_data)
-
-        if config_lines:
-            result_parts.append("\nCONFIG")
-            result_parts.append("\n".join(config_lines))
-
+        result_parts: list[str] = [
+            self.html_to_markdown(self.soup).strip(),
+            "",
+            f"ANSWER: {source['pattern']}",
+            "",
+            "CONFIG",
+            *self.dump_config(source, self.step_data)
+        ]
         return "\n".join(result_parts) + "\n"
 
 
 class EssayDump(BaseExporter):
     """Обработка шагов с открытым ответом (ESSAY)"""
 
-    def format_output(self, title: str) -> str:
+    def set_type(self):
+        self.step_type = "ESSAY"
+
+    def format_output(self) -> str:
         source: dict[str, any] = self.block.get("source", {})
 
-        text = md(
-            str(self.soup),
-            heading_style="ATX",
-            code_language="",
-            code_block="```",
-            strip=['script', 'style'],
-            autolinks=True,
-            escape_underscores=False,
-            escape_asterisks=False,
-        )
-
-        if text.strip():
-            text = self.fix_latex(text)
-            #text = self.adjust_header_levels(text, base_level=3)
-
-        result_parts: list[str] = []
-        result_parts.append(f"{settings.STEP_BEGIN} ESSAY {title}")
-
-        if text.strip():
-            result_parts.append("\n" + text.strip())
-
-        # Добавляем секцию CONFIG с параметрами шага
-        config_lines = self._dump_config(source, self.step_data)
-        if config_lines:
-            result_parts.append("\nCONFIG")
-            result_parts.append("\n".join(config_lines))
-
+        result_parts: list[str] = [
+            self.html_to_markdown(self.soup).strip(),
+            "",
+            "CONFIG",
+            *self.dump_config(source, self.step_data)
+        ]
         return "\n".join(result_parts) + "\n"
 
 
-class SortDump(BaseExporter):
+class SortDump(BaseNotImplementedExporter):
     """Заглушка для SORT шагов"""
-
-    def format_output(self, title: str) -> str:
-        return f"{settings.STEP_BEGIN} SKIP {self.step_type.upper()} {title}\n\nNot implemented yet!\n"
+    pass
 
 
-class TableDump(BaseExporter):
+class TableDump(BaseNotImplementedExporter):
     """Заглушка для TABLE шагов"""
-
-    def format_output(self, title: str) -> str:
-        return f"{settings.STEP_BEGIN} SKIP {self.step_type.upper()} {title}\n\nNot implemented yet!\n"
+    pass
 
 
-class CodeDump(BaseExporter):
+class CodeDump(BaseNotImplementedExporter):
     """Заглушка для TASKINLINE шагов"""
-
-    def format_output(self, title: str) -> str:
-        return f"{settings.STEP_BEGIN} SKIP {self.step_type.upper()} {title}\n\nNot implemented yet!\n"
+    pass
 
 
-class VideoDump(BaseExporter):
+class VideoDump(BaseNotImplementedExporter):
     """Заглушка для VIDEO шагов"""
-
-    def format_output(self, title: str) -> str:
-        return f"{settings.STEP_BEGIN} SKIP {self.step_type.upper()} {title}\n\nNot implemented yet!\n"
+    pass
 
 
 def get_exporter(step_data: Dict[str, Any], position: int) -> BaseExporter:
@@ -393,7 +369,7 @@ def generate_lesson_header(lesson_title: str, lesson_id: int) -> List[str]:
     return [f"# {lesson_title}", "", f"lesson: {lesson_id}", ""]
 
 
-def dump_lesson(lesson_id: int, filename: Optional[str] = None) -> None:
+def dump_lesson(lesson_id: int, filename: str | Path | None = None) -> None:
     """
     Скачивает урок со Stepik и сохраняет в markdown файл
     """
@@ -433,11 +409,13 @@ def dump_lesson(lesson_id: int, filename: Optional[str] = None) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Использование: python dump.py LESSON_ID [filename]")
-        sys.exit(1)
-
-    lesson_id = int(sys.argv[1])
-    filename = sys.argv[2] if len(sys.argv) > 2 else None
-
-    dump_lesson(lesson_id, filename)
+    # if len(sys.argv) < 2:
+    #     print("Использование: python dump.py LESSON_ID [filename]")
+    #     sys.exit(1)
+    #
+    # lesson_id = int(sys.argv[1])
+    # filename = sys.argv[2] if len(sys.argv) > 2 else None
+    #
+    # dump_lesson(lesson_id, filename)
+    t = TextDump({'block': {'text': '', 'name': 'text'}}, 1)
+    print(t.export())

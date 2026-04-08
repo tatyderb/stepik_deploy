@@ -12,6 +12,7 @@ from src.export.dump import (
     BaseExporter,
 )
 
+pytestmark = pytest.mark.step_begin("---1234")
 
 # ========== ТЕСТ 1: ПРЕОБРАЗОВАНИЕ LaTeX ==========
 
@@ -190,50 +191,6 @@ def test_unknown_html_tags_are_preserved():
     assert 'Подвал' in result
 
 
-# ========== ТЕСТ 4: ФУНКЦИЯ ADJUST_HEADER_LEVELS ==========
-
-@pytest.fixture
-def text_exporter_instance():
-    """Фикстура для создания экземпляра TextDump"""
-    return TextDump({'block': {'text': '', 'name': 'text'}}, 1)
-
-
-def test_adjust_header_levels_shifts_all_headers(text_exporter_instance):
-    """Проверка смещения уровней заголовков"""
-    md = """# Заголовок 1
-## Заголовок 2
-### Заголовок 3
-Обычный текст"""
-    
-    expected = """## REDUCE-1 Заголовок 1
-### REDUCE-1 Заголовок 2
-#### REDUCE-1 Заголовок 3
-Обычный текст"""
-    
-    result = text_exporter_instance.adjust_header_levels(md, base_level=2)
-    assert result == expected
-
-
-def test_adjust_header_levels_ignores_non_headers(text_exporter_instance):
-    """Проверка, что обычный текст не меняется"""
-    md = "Обычный текст\n* пункт списка\n| таблица |"
-    result = text_exporter_instance.adjust_header_levels(md)
-    assert result == md
-
-
-def test_adjust_header_levels_different_base_levels(text_exporter_instance):
-    """Проверка с разными базовыми уровнями"""
-    md = "# Заголовок 1\n## Заголовок 2"
-    
-    expected_base1 = "# REDUCE-0 Заголовок 1\n## REDUCE-0 Заголовок 2"
-    expected_base2 = "## REDUCE-1 Заголовок 1\n### REDUCE-1 Заголовок 2"
-    expected_base3 = "### REDUCE-2 Заголовок 1\n#### REDUCE-2 Заголовок 2"
-    
-    assert text_exporter_instance.adjust_header_levels(md, base_level=1) == expected_base1
-    assert text_exporter_instance.adjust_header_levels(md, base_level=2) == expected_base2
-    assert text_exporter_instance.adjust_header_levels(md, base_level=3) == expected_base3
-
-
 # ========== ТЕСТ 5: ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
 
 @patch('src.export.dump.StepikSession')
@@ -280,6 +237,7 @@ def test_get_exporter_for_unknown():
 
 # ========== ТЕСТ 6: ЭКСПОРТЕР TEXTDUMP ==========
 
+# пример работы с mock функций (для истории и чтобы смотреть на образец)
 @patch('src.export.dump.md')
 def test_textdump_export(mock_md):
     """Проверка экспорта текстового шага"""
@@ -294,11 +252,9 @@ def test_textdump_export(mock_md):
     
     exporter = TextDump(step_data, 1)
     with patch.object(exporter, 'fix_latex', return_value="Конвертированный текст"):
-        with patch.object(exporter, 'adjust_header_levels', return_value="Конвертированный текст"):
-            result = exporter.export()
+        result = exporter.export()
     
-    assert '## TEXT Заголовок' in result
-    assert 'Конвертированный текст' in result
+    assert '---1234 TEXT\n\nКонвертированный текст\n' == result
     mock_md.assert_called_once()
 
 
@@ -314,36 +270,28 @@ def test_textdump_without_title():
     exporter = TextDump(step_data, 5)
     result = exporter.export()
     
-    assert '## TEXT Шаг 5' in result
-
-
-def test_textdump_extract_title():
-    """Проверка извлечения заголовка из HTML"""
-    step_data = {
-        'block': {
-            'text': '<h3>Важный заголовок</h3><p>Текст</p>',
-            'name': 'text'
-        }
-    }
-    
-    exporter = TextDump(step_data, 1)
-    assert exporter.extract_title() == 'Важный заголовок'
-    assert '<h3>' not in str(exporter.soup)
+    assert '---1234 TEXT\n\nПросто текст без заголовка\n' == result
 
 
 def test_textdump_process_code_blocks():
     """Проверка обработки блоков кода"""
     html = '<pre><code class="language-python">print("Hello")</code></pre>'
     step_data = {'block': {'text': html, 'name': 'text'}}
+
+    expected_codeblock = """
+
+```python
+print("Hello")
+```
+
+"""
     
     exporter = TextDump(step_data, 1)
     exporter.soup = BeautifulSoup(html, 'html.parser')
     exporter.soup = exporter.process_code_blocks(exporter.soup)
     
     result = str(exporter.soup)
-    assert '```python' in result
-    assert 'print("Hello")' in result
-    assert '```' in result
+    assert result == expected_codeblock
 
 
 # ========== ТЕСТ 7: ФУНКЦИЯ DUMP_LESSON ==========
@@ -455,17 +403,14 @@ def test_dump_lesson_with_text_content(mock_session, mock_dependencies):
         {'title': 'Тестовый урок', 'steps': [1]},
         {'block': {'name': 'text', 'text': '<h2>Привет</h2><p>Мир</p>'}}
     ]
-    
+    expected_lesson_md = '# Тестовый урок\n\nlesson: 123\n\n---1234 TEXT\n\n## Привет\n\nМир\n'
     dump_lesson(123, 'test.md')
     
     # Проверяем запись в файл
     handle = mock_dependencies['open'].return_value.__enter__.return_value
     written_content = ''.join(call[0][0] for call in handle.write.call_args_list)
-    
-    assert '# Тестовый урок' in written_content
-    assert 'lesson: 123' in written_content
-    assert '## TEXT Привет' in written_content
-    assert 'Мир' in written_content
+
+    assert written_content == expected_lesson_md
 
 
 def test_dump_lesson_empty_steps(mock_session, mock_dependencies):

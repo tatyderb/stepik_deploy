@@ -10,6 +10,8 @@ from typing import Dict, Any
 from src.export.dump import StringDump
 
 
+pytestmark = pytest.mark.step_begin("---1234")
+
 class TestStringDump:
     """Тесты для экспорта STRING шагов"""
 
@@ -186,7 +188,9 @@ class TestStringDump:
         exporter = StringDump(simple_step_data, position=1)
         result = exporter.export()
 
-        expected = """## STRING Простой случай
+        expected = """---1234 STRING
+
+## Простой случай
 
 Как называется шахматная фигура, которая ходит по вертикали и горизонтали?
 
@@ -204,7 +208,9 @@ case_sensitive: False"""
         exporter = StringDump(case_sensitive_step_data, position=1)
         result = exporter.export()
 
-        expected = """## STRING Демонстрация опции CONFIG
+        expected = """---1234 STRING
+
+## Демонстрация опции CONFIG
 
 Назовите столицу России
 
@@ -222,7 +228,9 @@ case_sensitive: True"""
         exporter = StringDump(regex_step_data, position=1)
         result = exporter.export()
 
-        expected = """## STRING Регулярные выражения
+        expected = """---1234 STRING
+
+## Регулярные выражения
 
 Напишите север или юг
 
@@ -240,7 +248,9 @@ case_sensitive: False"""
         exporter = StringDump(multiline_step_data, position=1)
         result = exporter.export()
 
-        expected = """## STRING Многострочные ответы
+        expected = """---1234 STRING
+
+## Многострочные ответы
 
 Напишите три строки стихотворения
 
@@ -260,7 +270,7 @@ case_sensitive: False"""
         exporter = StringDump(no_title_step_data, position=7)
         result = exporter.export()
 
-        expected = """## STRING Шаг 7
+        expected = """---1234 STRING
 
 Первый месяц года?
 
@@ -278,7 +288,9 @@ case_sensitive: False"""
         exporter = StringDump(file_only_step_data, position=1)
         result = exporter.export()
 
-        expected = """## STRING Загрузка файла
+        expected = """---1234 STRING
+
+## Загрузка файла
 
 Загрузите файл с решением
 
@@ -296,7 +308,9 @@ case_sensitive: False"""
         exporter = StringDump(substring_step_data, position=1)
         result = exporter.export()
 
-        expected = """## STRING Поиск подстроки
+        expected = """---1234 STRING
+
+## Поиск подстроки
 
 В каком городе находится Кремль?
 
@@ -314,7 +328,9 @@ case_sensitive: False"""
         exporter = StringDump(multiple_answers_step_data, position=1)
         result = exporter.export()
 
-        expected = """## STRING Множественные ответы
+        expected = """---1234 STRING
+
+## Множественные ответы
 
 Как называется величина det(A)?
 
@@ -350,7 +366,9 @@ case_sensitive: False"""
         exporter = StringDump(step_data, position=1)
         result = exporter.export()
 
-        expected = """## STRING Проверка конфига
+        expected = """---1234 STRING
+
+## Проверка конфига
 
 Тестовый шаг
 
@@ -391,9 +409,13 @@ case_sensitive: False"""
         exporter = StringDump(step_data, position=1)
         result = exporter.export()
 
-        expected = """## STRING Пустой ответ
+        expected = """---1234 STRING
+
+## Пустой ответ
 
 Введите ответ
+
+ANSWER: 
 
 CONFIG
 score: 1
@@ -401,7 +423,6 @@ use_re: False
 case_sensitive: False"""
 
         assert result.strip() == expected.strip()
-        assert "ANSWER:" not in result
 
     def test_all_config_options(self):
         """Тест: шаг со всеми возможными опциями"""
@@ -427,7 +448,9 @@ case_sensitive: False"""
         exporter = StringDump(step_data, position=1)
         result = exporter.export()
 
-        expected = """## STRING Все опции
+        expected = """---1234 STRING
+
+## Все опции
 
 Тест со всеми настройками
 

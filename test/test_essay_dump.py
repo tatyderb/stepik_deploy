@@ -4,6 +4,8 @@ import pytest
 from src.export.dump import EssayDump, get_exporter
 
 
+pytestmark = pytest.mark.step_begin("---1234")
+
 @pytest.fixture
 def basic_essay_data():
     """Фикстура: простой ESSAY шаг"""
@@ -43,7 +45,9 @@ def test_essay_basic_export(basic_essay_data):
     exporter = EssayDump(basic_essay_data, position=1)
     result = exporter.export()
 
-    expected = """## ESSAY Ваше мнение
+    expected = """---1234 ESSAY
+
+## Ваше мнение
 
 Опишите преимущества Python.
 
@@ -61,7 +65,7 @@ def test_essay_without_title(essay_without_title):
     exporter = EssayDump(essay_without_title, position=3)
     result = exporter.export()
 
-    expected = """## ESSAY Шаг 3
+    expected = """---1234 ESSAY
 
 Какой язык программирования вы предпочитаете?
 
@@ -91,7 +95,9 @@ def test_essay_with_latex():
     exporter = EssayDump(step_data, position=1)
     result = exporter.export()
 
-    expected = """## ESSAY Формула
+    expected = """---1234 ESSAY
+
+## Формула
 
 Объясните смысл $E=mc^2$.
 
@@ -128,7 +134,9 @@ def test_essay_all_config_options():
     exporter = EssayDump(step_data, position=2)
     result = exporter.export()
 
-    expected = """## ESSAY Полный набор опций
+    expected = """---1234 ESSAY
+
+## Полный набор опций
 
 Тестирование всех настроек
 
@@ -158,7 +166,9 @@ def test_essay_minimal_config():
     exporter = EssayDump(step_data, position=1)
     result = exporter.export()
 
-    expected = """## ESSAY Минимальные настройки
+    expected = """---1234 ESSAY
+
+## Минимальные настройки
 
 Только текст
 
