@@ -5,6 +5,7 @@
 import pytest
 
 from src.export.dump import NumberDump, get_exporter
+from src.settings import settings
 
 
 pytestmark = pytest.mark.step_begin("---1234")
@@ -33,6 +34,9 @@ def number_exporter():
 
 def test_number_dump_basic_formatting(number_exporter):
     """Проверка базового форматирования численной задачи"""
+    original = settings.STEP_BEGIN
+    settings.STEP_BEGIN = '12345678!@#'
+    
     result = number_exporter.export()
     
     expected = """---1234 NUMBER
@@ -46,11 +50,15 @@ ANSWER: 4
 CONFIG
 score: 2"""
     
+    settings.STEP_BEGIN = original
     assert result.strip() == expected.strip()
 
 
 def test_number_dump_without_title():
     """Проверка экспорта шага без заголовка"""
+    original = settings.STEP_BEGIN
+    settings.STEP_BEGIN = '12345678!@#'
+    
     step_data = {
         'block': {
             'name': 'number',
@@ -74,6 +82,7 @@ ANSWER: 42
 CONFIG
 score: 1"""
     
+    settings.STEP_BEGIN = original
     assert exporter.export().strip() == expected.strip()
 
 
@@ -88,6 +97,9 @@ score: 1"""
 ])
 def test_number_dump_with_accuracy(answer, max_error, expected_answer):
     """Проверка форматирования ответов с точностью"""
+    original = settings.STEP_BEGIN
+    settings.STEP_BEGIN = '12345678!@#'
+    
     step_data = {
         'block': {
             'name': 'number',
@@ -118,6 +130,9 @@ score: 1"""
 
 def test_number_dump_multiple_answers():
     """Проверка форматирования нескольких ответов"""
+    original = settings.STEP_BEGIN
+    settings.STEP_BEGIN = '12345678!@#'
+    
     step_data = {
         'block': {
             'name': 'number',
@@ -145,6 +160,7 @@ CONFIG
 score: 3
 """
     
+    settings.STEP_BEGIN = original
     assert exporter.export().strip() == expected.strip()
 
 
@@ -152,6 +168,9 @@ score: 3
 
 def test_number_dump_white_list():
     """Проверка, что только разрешенные параметры попадают в CONFIG (для NUMBER белый список пустой)"""
+    original = settings.STEP_BEGIN
+    settings.STEP_BEGIN = '12345678!@#'
+    
     step_data = {
         'block': {
             'name': 'number',
@@ -177,8 +196,8 @@ CONFIG
 score: 1"""
     
     result = exporter.export().strip()
+    settings.STEP_BEGIN = original
     assert result == expected.strip()
-    
     assert "sample_size" not in result
     assert "is_options_feedback" not in result
     assert "some_custom_param" not in result
@@ -188,6 +207,8 @@ score: 1"""
 
 def test_number_dump_with_real_data_format():
     """Проверка форматирования на основе реального урока Stepik 1950069"""
+    original = settings.STEP_BEGIN
+    settings.STEP_BEGIN = '12345678!@#'
     
     real_step_data = {
         "id": 9775138,
@@ -221,6 +242,7 @@ ANSWER: 5.0
 CONFIG
 score: 2"""
     
+    settings.STEP_BEGIN = original
     assert exporter.export().strip() == expected.strip()
 
 # ========== ТЕСТ 7: ПРОВЕРКА ФУНКЦИИ GET_EXPORTER ==========
@@ -242,6 +264,9 @@ def test_get_exporter_returns_number_dump():
 
 def test_number_dump_invalid_max_error(capsys):
     """Проверка обработки некорректного значения max_error"""
+    original = settings.STEP_BEGIN
+    settings.STEP_BEGIN = '12345678!@#'
+    
     step_data = {
         'block': {
             'name': 'number',
@@ -263,6 +288,9 @@ def test_number_dump_invalid_max_error(capsys):
 
 def test_number_dump_invalid_max_error_multiple_answers(capsys):
     """Проверка обработки некорректного max_error среди нескольких ответов"""
+    original = settings.STEP_BEGIN
+    settings.STEP_BEGIN = '12345678!@#'
+    
     step_data = {
         'block': {
             'name': 'number',
@@ -287,6 +315,8 @@ def test_number_dump_invalid_max_error_multiple_answers(capsys):
 
 def test_complete_number_lesson():
     """Проверка полного урока с несколькими number шагами"""
+    original = settings.STEP_BEGIN
+    settings.STEP_BEGIN = '12345678!@#'
     
     mock_step_data = [
         # Шаг 1
@@ -380,4 +410,5 @@ CONFIG
 score: 3"""
 
     result = "\n".join(lesson_parts).strip()
+    settings.STEP_BEGIN = original
     assert result == expected_lesson

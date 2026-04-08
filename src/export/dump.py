@@ -182,8 +182,46 @@ class TextDump(BaseExporter):
         return text.strip()
 
 
-class QuizDump(BaseNotImplementedExporter):
-    pass
+class QuizDump(BaseExporter):
+    """Обработка QUIZ шагов (выбор одного или нескольких вариантов)"""
+
+    def set_type(self):
+        self.step_type = "QUIZ"
+
+    def format_output(self) -> str:
+        source: dict[str, any] = self.block.get("source", {})
+        options: list[dict[str, any]] = source.get("options", [])
+
+        variants = []
+        for idx, opt in enumerate(options, 1):
+            opt_text = BeautifulSoup(opt.get("text", ""), 'html.parser').get_text().strip()
+            letter = chr(ord('A') + idx - 1)
+            variants.append(f"{letter}. {opt_text}")
+        
+        correct = []
+        for idx, opt in enumerate(options, 1):
+            if opt.get("is_correct", False):
+                correct.append(chr(ord('A') + idx - 1))
+        
+        answers : list[str] = []
+        if correct:
+            if len(correct) > 1:
+                answers.append(f"\nANSWER: {', '.join(correct)}")
+            else:
+                answers.append(f"\nANSWER: {correct[0]}")
+        
+        result_parts: list[str] = [
+            self.html_to_markdown(self.soup),
+            "",
+            *variants,
+            "",
+            *answers,
+            "",
+            "CONFIG",
+            *self.dump_config(source, self.step_data)
+        ]
+        
+        return "\n".join(result_parts) + "\n"
 
 
 class NumberDump(BaseExporter):
@@ -219,6 +257,8 @@ class NumberDump(BaseExporter):
 
         source: dict[str, any] = self.block.get("source", {})
         options: list[dict[str, str]] = source.get("options", [])
+
+        self.soup = self.process_code_blocks(self.soup)
 
         # Правильных ответов может быть несколько
         answers: list[str] = []
@@ -301,6 +341,8 @@ class EssayDump(BaseExporter):
 
     def format_output(self) -> str:
         source: dict[str, any] = self.block.get("source", {})
+
+        self.soup = self.process_code_blocks(self.soup)
 
         result_parts: list[str] = [
             self.html_to_markdown(self.soup).strip(),
