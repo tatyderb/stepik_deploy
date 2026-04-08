@@ -197,7 +197,7 @@ class ParseSchema:
         return markdown_document
 
     @classmethod
-    def parse_document(cls, line: str) -> list[dict]:
+    def parse_document(cls, line: str) -> dict:
         """Разбивает файл на крупные блоки и возвращает их в формате
         @TODO: проверять, что переменные из списка, если еще какие - сообщение об ошибке
         {
