@@ -368,6 +368,24 @@ def generate_lesson_header(lesson_title: str, lesson_id: int) -> List[str]:
     """
     return [f"# {lesson_title}", "", f"lesson: {lesson_id}", ""]
 
+def lesson_snapshot_to_markdown(snapshot: dict) -> str:
+    """Преобразует снапшот с json или результат запроса содержимого урока в markdown."""
+    lesson_id = snapshot['metadata']['lesson_id']
+    lesson_title = snapshot['metadata']['title']
+    all_markdown: list[str] = generate_lesson_header(lesson_title, lesson_id)
+    # print(f"{all_markdown=}")
+
+    for snapshot_step in snapshot['steps']:
+        # print("+++++++++++++++++++++++++++++++++++++++ SNAPSHOT")
+        # print(snapshot_step)
+        # print("+++++++++++++++++++++++++++++++++++++++ MARKDOWN")
+        exporter = get_exporter(step_data=snapshot_step['data']['stepSource'], position=snapshot_step['position'])
+        step_markdown = exporter.export()
+        # print(step_markdown)
+        # print("+++++++++++++++++++++++++++++++++++++++")
+        all_markdown.append(step_markdown)
+
+    return '\n'.join(all_markdown)
 
 def dump_lesson(lesson_id: int, filename: str | Path | None = None) -> None:
     """

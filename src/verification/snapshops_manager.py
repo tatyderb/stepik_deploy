@@ -1,13 +1,38 @@
+"""
+Проверка deploy: конвертация из markdown в body POST запросов для каждого шага.
+* Исходный файл в формате markdown в директории examples, например markdown_file=examples/step_first.md
+* Ему соответствует образец (snapshot) src/verification/step_first.json, свой формат json
+* Читается markdown файл и разбирается на шаги
+* Для каждого шага сравнивается Step.to_dict и snapshot['steps'][i]['data']
+
+Подготовка образов (snapshot) - один раз создаются, хранятся в репозитории и далее используются
+* Читается markdown файл и разбирается на шаги
+* Для каждого шага Step.to_dict записывается snapshot['steps'][i]['data']
+Опция CLI -update
+
+Проверка dump:
+* чтение snapshot файла
+* Для каждого шага:
+    * data = snapshot['steps'][i]['data']
+    * конвертация из snapshot['steps'][i]['data'] в markdown
+    * конвертация из markdown в result_data, используя Step.to_dict()
+    * сравнение data и result_data
+"""
+
+
 import json
 import sys
-from enum import StrEnum, IntEnum, auto
+from enum import StrEnum, IntEnum, auto, Enum
 from pathlib import Path
 from typing import Any
 import click
 
+from src.export.dump import lesson_snapshot_to_markdown
 from src.lesson import Lesson
+from src.settings import settings
 from src.step import Step
 from src.utils import truncate, DEFAULT_MAX_LEN
+import src.export.dump as dump
 
 SNAPSHOTS_DIR = "snapshots"
 SNAPSHOT_EXTENSION = ".json"
@@ -38,6 +63,12 @@ class Verbose(IntEnum):
     STEP = auto()           # по каждому шагу - pass, fail, skip, расхождение количества шагов, неожиданный skip
     DEBUG = auto()          # разница в полях dict шагов
     DUMP = auto()           # не обрезаем строки, в которых найдено различие, ставит SnapshotManager.truncate = False
+
+
+class SnapshotAction(Enum):
+    CREATE = auto()         # создание снапшота
+    CHECK_MD2JSON = auto()  # проверка процесса "деплоя" - перевода из markdown в json
+    CHECK_JSON2MD = auto()  # проверка процесса "дампа" - перевода из json в markdown
 
 class SnapshotManager:
     LINE_LESSON_SEPARATOR = "=" * (DEFAULT_MAX_LEN // 2)
@@ -77,17 +108,14 @@ class SnapshotManager:
         snapshot_name = md_path.stem + SNAPSHOT_EXTENSION
         return self.snapshots_dir / snapshot_name
 
-    def create_snapshot(self, md_filename: str) -> str:
-        """Создает/обновляет снапшот урока"""
-
+    def markdown_to_snapshot(self, md_text: str) -> dict:
+        """Преобразует текст в формате markdown в словарь снапшота."""
         lesson = Lesson()
 
-        with open(md_filename, 'r', encoding='utf-8') as f:
-            lesson.parse_markdown(f.read())
+        lesson.parse_markdown(md_text)
 
         snapshot_data = {
             "metadata": {
-                "source_md": md_filename,
                 "total_steps": len(lesson.steps),
                 "lesson_id": lesson.lesson_id,
                 "title": lesson.title
@@ -107,6 +135,15 @@ class SnapshotManager:
             }
             snapshot_data["steps"].append(snapshot_step)
 
+        return snapshot_data
+
+    def create_snapshot(self, md_filename: str | Path) -> str:
+        """Создает/обновляет снапшот урока"""
+
+        with open(md_filename, 'r', encoding='utf-8') as f:
+            md_text = f.read()
+            snapshot_data = self.markdown_to_snapshot(md_text=md_text)
+
         snapshot_path = self.get_snapshot_path(md_filename)
         with open(snapshot_path, 'w', encoding='utf-8') as fout:
             json.dump(snapshot_data, fout, indent=2, ensure_ascii=False)
@@ -114,10 +151,14 @@ class SnapshotManager:
         return f"Снапшот создан: {snapshot_path}"
 
     def load_snapshot(self, md_filename: str) -> dict[str, Any]:
-        """Загружает снапшот из файла"""
-        snapshot_path = None
+        """Загружает снапшот из файла.
+        Если md_filename имеет расширение .md, то это markdown файл, по которому надо найти файл со снапшотом."""
+        snapshot_path = md_filename
         try:
-            snapshot_path = self.get_snapshot_path(md_filename)
+            path = Path(md_filename)
+
+            if Path(md_filename).with_suffix(".md"):
+                snapshot_path = self.get_snapshot_path(md_filename)
             with open(snapshot_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except OSError as e:
@@ -125,34 +166,28 @@ class SnapshotManager:
         except (json.JSONDecodeError, UnicodeDecodeError) as e:
             raise CompareError(f"Ошибка загрузки снапшота {e}")
 
-    def check_lesson(self, markdown_filename: str | Path, step_position: int = 0) -> StatusLesson:
-        """Проверяет урок из файла markdown_filename, сравнивая его с существующим снапшотом.
-        Если задан step_position, то сравнивается только указанный шаг (нумерация с 1, может быть отрицательным).
-        step_position = 0 - проверить весь урок.
+    def check_lesson_data(self,
+                          expected_lesson: dict,
+                          result_lesson: Lesson,
+                          expected_filename: str,
+                          step_position: int = 0,
+                          mode: str = 'DEPLOY') -> StatusLesson:
+        """Берет информацию об уроке из result_lesson и сравнивает ее и все шаги урока с expected_lesson.
+        Если задан ненулевой step_position, сравнивается только указанный шаг.
+        Имя исходного файла filename используется только для печати диагностики об ошибках.
         """
-        # Читаем снапшот из файла
-        try:
-            lesson = Lesson()
-            with open(markdown_filename, 'r', encoding='utf-8') as f:
-                lesson.parse_markdown(f.read(), step_position=step_position)
 
-            snapshot = self.load_snapshot(markdown_filename)
-        except CompareError as e:
-            self.trace(Verbose.ERROR, str(e))
-            self.trace(Verbose.ERROR, SNAPSHOT_ACTION)
-            return StatusLesson.FAILED
-
-        markdown_steps = lesson.steps
+        markdown_steps = result_lesson.steps
         markdown_length = len(markdown_steps)
-        snapshot_steps = snapshot["steps"]
+        snapshot_steps = expected_lesson["steps"]
         snapshot_length = len(snapshot_steps)
-        step_position = lesson.make_position_positive(step_position=step_position)
+        step_position = result_lesson.make_position_positive(step_position=step_position)
 
         self.trace(Verbose.LESSON,
                    self.LINE_LESSON_SEPARATOR + '\n',
-                   f"Урок {markdown_filename}\n",
-                    f"\t{snapshot_length} шагов - снапшот файл\n",
-                    f"\t{markdown_length} шагов - markdown файл\n"
+                   f"Урок {mode} {expected_filename}\n",
+                   f"\t{snapshot_length} шагов - снапшот файл\n",
+                   f"\t{markdown_length} шагов - markdown файл\n"
                    )
 
         step_results = []
@@ -204,8 +239,75 @@ class SnapshotManager:
 
         # по статусам сравнения шагов вычисляем статус сравнения урока
         result = self.total_results(step_results)
-        self.print_lesson_summary(result, markdown_filename)
+        self.print_lesson_summary(result, expected_filename, mode)
         return result['status']
+
+    def check_lesson(self, markdown_filename: str | Path, step_position: int = 0) -> StatusLesson:
+        """Проверяет урок из файла markdown_filename, сравнивая его с существующим снапшотом.
+        Если задан step_position, то сравнивается только указанный шаг (нумерация с 1, может быть отрицательным).
+        step_position = 0 - проверить весь урок.
+        """
+        # Читаем снапшот из файла
+        try:
+            snapshot = self.load_snapshot(markdown_filename)
+
+            lesson = Lesson()
+            with open(markdown_filename, 'r', encoding='utf-8') as f:
+                lesson.parse_markdown(f.read(), step_position=step_position)
+
+            return self.check_lesson_data(
+                expected_lesson=snapshot,
+                result_lesson=lesson,
+                step_position=step_position,
+                expected_filename=markdown_filename
+            )
+
+        except CompareError as e:
+            self.trace(Verbose.ERROR, str(e))
+            self.trace(Verbose.ERROR, SNAPSHOT_ACTION)
+            return StatusLesson.FAILED
+
+
+    def check_lesson_dump(self, markdown_filename: str | Path, step_position: int = 0) -> StatusLesson:
+        """
+        Проверка dump:
+        * чтение snapshot файла
+        * Для каждого шага:
+            * data = snapshot['steps'][i]['data']
+            * конвертация из snapshot['steps'][i]['data'] в markdown
+            * конвертация из markdown в result_data, используя Step.to_dict()
+            * сравнение data и result_data
+
+        Если задан step_position, то сравнивается только указанный шаг (нумерация с 1, может быть отрицательным).
+        step_position = 0 - проверить весь урок.
+        """
+        # Читаем снапшот из файла и из него делаем markdown текст
+        try:
+            LINE = '+' * 50
+            snapshot = self.load_snapshot(markdown_filename)
+            self.trace(Verbose.DEBUG, LINE)
+            self.trace(Verbose.DEBUG, str(snapshot))
+            markdown_text = dump.lesson_snapshot_to_markdown(snapshot)
+            self.trace(Verbose.DEBUG, LINE)
+            self.trace(Verbose.DEBUG, markdown_text)
+            self.trace(Verbose.DEBUG, LINE)
+
+            lesson = Lesson()
+            lesson.parse_markdown(markdown_text, step_position=step_position)
+
+            return self.check_lesson_data(
+                expected_lesson=snapshot,
+                result_lesson=lesson,
+                step_position=step_position,
+                expected_filename=markdown_filename,
+                mode='DUMP'
+            )
+
+        except CompareError as e:
+            self.trace(Verbose.ERROR, str(e))
+            self.trace(Verbose.ERROR, SNAPSHOT_ACTION)
+            return StatusLesson.FAILED
+
 
     def compare_step(self, position: int, markdown_step: Step, snapshot_step: dict) -> StatusStep:
         """Сравнивает содержимое markdown_step.to_dict() и snapshot_step.
@@ -221,12 +323,13 @@ class SnapshotManager:
             return StatusStep.FAILED
 
         # не совпадает заголовок шага
-        snapshot_step_header = snapshot_step["header"]
-        markdown_step_header = markdown_step.header.strip()
-        if snapshot_step_header != markdown_step_header:
-            msg = f"\t{StatusStep.FAILED} Шаг {position}: изменился заголовок шага {snapshot_step_header} → {markdown_step_header}"
-            self.trace(Verbose.STEP, msg)
-            return StatusStep.FAILED
+        if settings.STEP_BEGIN == settings.LEGACY_STEP_BEGIN:
+            snapshot_step_header = snapshot_step["header"]
+            markdown_step_header = markdown_step.header.strip()
+            if snapshot_step_header != markdown_step_header:
+                msg = f"\t{StatusStep.FAILED} Шаг {position}: изменился заголовок шага {snapshot_step_header} → {markdown_step_header}"
+                self.trace(Verbose.STEP, msg)
+                return StatusStep.FAILED
 
         # сравниваем данные
         snapshot_data = snapshot_step["data"]
@@ -291,12 +394,12 @@ class SnapshotManager:
 
         return totals
 
-    def print_lesson_summary(self, result: dict, filename: str | Path):
+    def print_lesson_summary(self, result: dict, filename: str | Path, mode: str):
         """Трассировка итогов сравнения всех шагов урока."""
 
         self.trace(Verbose.SUMMARY,
                    self.LINE_STEP_SEPARATOR,
-                   f"{result['status']}  Урок: {filename}",
+                   f"{result['status']}  Урок {mode.upper()}: {filename}",
                     f"\tВсего шагов: {result['steps_verified']}, из них",
                     f"\tPASS: {result['steps_passed']}",
                     f"\tFAIL: {result['steps_failed']}",
@@ -342,9 +445,12 @@ def main(filename: str, step: int, update: bool, verbose: str):
             # Создаем/обновляем снапшот
             result = manager.create_snapshot(filename)
             click.echo(result)
-
         else:
+            # TODO: тут должно быть запомнить старое значение и после проверок его восстановить, но зачем?
+            settings.STEP_BEGIN = settings.LEGACY_STEP_BEGIN
             manager.check_lesson(markdown_filename=filename, step_position=step)
+            settings.STEP_BEGIN = '---1234'
+            manager.check_lesson_dump(markdown_filename=filename, step_position=step)
 
     except Exception as e:
         click.echo(f"Ошибка: {e}")
