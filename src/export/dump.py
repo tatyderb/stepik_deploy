@@ -206,12 +206,12 @@ class QuizDump(BaseExporter):
         answers : list[str] = []
         if correct:
             if len(correct) > 1:
-                answers.append(f"\nANSWER: {', '.join(correct)}")
+                answers.append(f"ANSWER: {', '.join(correct)}")
             else:
-                answers.append(f"\nANSWER: {correct[0]}")
+                answers.append(f"ANSWER: {correct[0]}")
         
         result_parts: list[str] = [
-            self.html_to_markdown(self.soup),
+            self.html_to_markdown(self.soup).strip(),
             "",
             *variants,
             "",
@@ -258,8 +258,6 @@ class NumberDump(BaseExporter):
         source: dict[str, any] = self.block.get("source", {})
         options: list[dict[str, str]] = source.get("options", [])
 
-        self.soup = self.process_code_blocks(self.soup)
-
         # Правильных ответов может быть несколько
         answers: list[str] = []
         for opt in options:
@@ -277,7 +275,7 @@ class NumberDump(BaseExporter):
                 )
 
         result_parts: list[str] = [
-            self.html_to_markdown(self.soup),
+            self.html_to_markdown(self.soup).strip(),
             "",
             *answers,
             "",
@@ -342,8 +340,6 @@ class EssayDump(BaseExporter):
     def format_output(self) -> str:
         source: dict[str, any] = self.block.get("source", {})
 
-        self.soup = self.process_code_blocks(self.soup)
-
         result_parts: list[str] = [
             self.html_to_markdown(self.soup).strip(),
             "",
@@ -353,9 +349,72 @@ class EssayDump(BaseExporter):
         return "\n".join(result_parts) + "\n"
 
 
-class SortDump(BaseNotImplementedExporter):
-    """Заглушка для SORT шагов"""
-    pass
+class SortDump(BaseExporter):
+    """Обработка SORT шагов (задачи на сортировку/упорядочивание)"""
+
+    def set_type(self):
+        self.step_type = "SORT"
+
+    def format_output(self) -> str:
+        source: dict[str, any] = self.block.get("source", {})
+        options: list[dict[str, str]] = source.get("options", [])
+        
+        sort_items = []
+        for opt in options:
+            opt_text = opt.get("text", "").strip()
+            if opt_text:
+                sort_items.append(opt_text)
+                sort_items.append("====")
+        
+        result_parts: list[str] = [
+            self.html_to_markdown(self.soup).strip(),
+            "",
+            "SORT",
+            *sort_items,
+            "",
+            "CONFIG",
+            *self.dump_config(source, self.step_data)
+        ]
+        
+        return "\n".join(result_parts) + "\n"
+
+
+class MatchDump(BaseExporter):
+    """Обработка MATCH шагов (задачи на сопоставление)"""
+
+    def set_type(self):
+        self.step_type = "MATCH"
+
+    def format_output(self) -> str:
+        source: dict[str, any] = self.block.get("source", {})
+        pairs: list[dict[str, str]] = source.get("pairs", [])
+        preserve_firsts_order: bool = source.get("preserve_firsts_order", True)
+        
+        match_items = []
+        if pairs:
+            for pair in pairs:
+                first = pair.get("first", "").strip()
+                second = pair.get("second", "").strip()
+                match_items.append(first)
+                match_items.append("----")
+                match_items.append(second)
+                match_items.append("====")
+        
+        config_lines = self.dump_config(source, self.step_data)
+        config_lines.insert(0, f"shuffle: {not preserve_firsts_order}")   
+
+        result_parts: list[str] = [
+            self.html_to_markdown(self.soup).strip(),
+            "",
+            "MATCH",
+            *match_items,
+            "",
+            "CONFIG",
+            *config_lines
+        ]
+        
+        return "\n".join(result_parts) + "\n"    
+
 
 
 class TableDump(BaseNotImplementedExporter):
@@ -387,7 +446,8 @@ def get_exporter(step_data: Dict[str, Any], position: int) -> BaseExporter:
         "sorting": SortDump,
         "table": TableDump,
         "code": CodeDump,
-        "video": VideoDump
+        "video": VideoDump,
+        "matching": MatchDump
     }
 
     exporter_class = exporters.get(step_type, TextDump)
