@@ -1,7 +1,10 @@
 """
 Utils for markdown -> html conversion.
 """
+import difflib
 from datetime import datetime
+from pathlib import Path
+
 import markdown  # https://python-markdown.github.io
 
 # максимальная печатаемая длина строки
@@ -27,3 +30,20 @@ def truncate(line: str, max_len: int = DEFAULT_MAX_LEN, ignore: bool = False) ->
         return line
 
     return line[:max_len-3] + "..."
+
+def context_diff_files(file1: str | Path, file2: str | Path, context_line_number: int =3) -> str:
+    """Вывод различий с n строками контекста"""
+    with open(file1, 'r', encoding='utf-8') as f1, \
+            open(file2, 'r', encoding='utf-8') as f2:
+        lines1 = f1.readlines()
+        lines2 = f2.readlines()
+
+    diff = difflib.context_diff(lines1, lines2,
+                                fromfile=str(file1),
+                                tofile=str(file2),
+                                n=context_line_number)
+
+    # for s in diff:
+    #     print(s, end='')
+    return ''.join(diff)
+
