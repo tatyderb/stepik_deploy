@@ -1,4 +1,14 @@
 """
+Новый план проверки дампа:
+* заранее вместе с эталонным снапшотом делается эталонный дамп и проверяется глазами/руками, заносится в репозиторий.
+    examples/step1_markdown.md -> examples/step1_markdown_dump.md
+* проверка:
+    * по указанному дампу маркдауна examples/step1_markdown_dump.md сделать еще один дамп,
+    сохранить в src/verification/step1_markdown.md и сравнить построчно.
+    * проблема в SKIP шагах исходного макрдауна, если там реализованный тип шага и шаг сделан для эксперимента, то подумать, что будет сдамплено и как.
+
+
+
 Проверка deploy: конвертация из markdown в body POST запросов для каждого шага.
 * Исходный файл в формате markdown в директории examples, например markdown_file=examples/step_first.md
 * Ему соответствует образец (snapshot) src/verification/step_first.json, свой формат json
@@ -22,10 +32,12 @@
 
 import json
 import sys
+import tempfile
 from enum import StrEnum, IntEnum, auto, Enum
 from pathlib import Path
 from typing import Any
 import click
+from bs4 import BeautifulSoup
 
 from src.export.dump import lesson_snapshot_to_markdown
 from src.lesson import Lesson
@@ -36,6 +48,7 @@ import src.export.dump as dump
 
 SNAPSHOTS_DIR = "snapshots"
 SNAPSHOT_EXTENSION = ".json"
+MARKDOWN_TMP_DIR = "tmp_markdown"
 MAX_TEXT_LINES_PREVIEW = 3
 SNAPSHOT_ACTION = "Используйте опцию -u для создания снапшота"
 
@@ -43,17 +56,30 @@ class CompareError(Exception):
     pass
 
 # Статусы
-class StatusLesson(StrEnum):
+class StatusBase(StrEnum):
     PASSED = "✅ "
+    EXPECTED_WARNING = "❕ "
+    EXPECTED_FAILED = "‼️ "
+    WARNING ="⚠️ "
     FAILED = "❌ "
-    IN_PROGRESS = "In progress "
 
-class StatusStep(StrEnum):
-    PASSED = "✅ "
-    FAILED = "❌ "
-    SKIP = "➖ "
-    REMOVE = SKIP
-    ADD = "➕ "
+StatusLesson = StrEnum(
+    'StatusLesson',
+    [(name, member.value) for name, member in StatusBase.__members__.items()] +
+    [
+        ('IN_PROGRESS', "In progress ")
+    ]
+)
+
+StatusStep = StrEnum(
+    'StatusLesson',
+    [(name, member.value) for name, member in StatusBase.__members__.items()] +
+    [
+        ('SKIP', "➖ "),
+        ('REMOVE', "➖ "),
+        ('ADD', "➕ "),
+    ]
+)
 
 
 class Verbose(IntEnum):
@@ -267,41 +293,59 @@ class SnapshotManager:
             self.trace(Verbose.ERROR, SNAPSHOT_ACTION)
             return StatusLesson.FAILED
 
-
-    def check_lesson_dump(self, markdown_filename: str | Path, step_position: int = 0) -> StatusLesson:
-        """
-        Проверка dump:
-        * чтение snapshot файла
-        * Для каждого шага:
-            * data = snapshot['steps'][i]['data']
-            * конвертация из snapshot['steps'][i]['data'] в markdown
-            * конвертация из markdown в result_data, используя Step.to_dict()
-            * сравнение data и result_data
-
+    def check_pulled_lesson_dump(self, markdown_filename: str | Path, step_position: int = 0) -> StatusLesson:
+        """Проверяет урок из файла markdown_filename,
+        * по файлу идем в его снапшот
+        * оттуда берем его lesson_id
+        * скачиваем информацию об уроке + ВСЕ шаги и преобразуем ее в markdown (resulted_markdown_path)
+        * из markdown делаем snapshot (result_snapshot_path)
+        * сравнивая его с существующим снапшотом
         Если задан step_position, то сравнивается только указанный шаг (нумерация с 1, может быть отрицательным).
         step_position = 0 - проверить весь урок.
         """
-        # Читаем снапшот из файла и из него делаем markdown текст
+
+        # Читаем снапшот из файла
         try:
-            LINE = '+' * 50
             snapshot = self.load_snapshot(markdown_filename)
-            self.trace(Verbose.DEBUG, LINE)
-            self.trace(Verbose.DEBUG, str(snapshot))
-            markdown_text = dump.lesson_snapshot_to_markdown(snapshot)
-            self.trace(Verbose.DEBUG, LINE)
-            self.trace(Verbose.DEBUG, markdown_text)
-            self.trace(Verbose.DEBUG, LINE)
+            lesson_id = snapshot["metadata"]["lesson_id"]
 
-            lesson = Lesson()
-            lesson.parse_markdown(markdown_text, step_position=step_position)
+            result_markdown_path, result_snapshot_path = self.make_tmp_paths(markdown_filename)
 
-            return self.check_lesson_data(
-                expected_lesson=snapshot,
-                result_lesson=lesson,
-                step_position=step_position,
-                expected_filename=markdown_filename,
-                mode='DUMP'
-            )
+            # # теперь все снапшоты будут записываться сюда
+            # tmp_dir = Path(__file__).parent / "tmp_markdown"
+            # markdown_name = Path(markdown_filename).name
+            # # куда будем класть полученные markdown и snapshot файлы из скаченных
+            # result_markdown_path = tmp_dir / markdown_name
+            # result_snapshot_path = result_markdown_path.with_suffix(".json")
+
+            dump.dump_lesson(lesson_id=lesson_id, filename=result_markdown_path)
+            self.snapshots_dir = result_markdown_path.parent
+            self.create_snapshot(result_markdown_path)
+
+            step_results = []
+            with open(result_snapshot_path, "r", encoding="utf8") as result_fin:
+                result_snapshot = json.load(result_fin)
+                print(f"{len(snapshot["steps"])=}")
+                print(f"{len(result_snapshot["steps"])=}")
+                for position, snapshot_step in enumerate(snapshot["steps"]):
+                    if step_position and position != step_position:
+                        msg = f"\t{StatusStep.SKIP} Шаг {position+1}: пропускаем."
+                        self.trace(Verbose.STEP, msg)
+                        step_results.append(StatusStep.SKIP)
+                        # на всякий случай, если кто-то нарушит цепочку if..elif..else
+                        continue
+
+                    result_snapshot_step = result_snapshot["steps"][position]
+                    result = self.compare_step_snapshots(
+                        snapshot_step_result=result_snapshot_step,
+                        snapshot_step=snapshot_step,
+                        position=position+1)
+                    step_results.append(result)
+
+                # по статусам сравнения шагов вычисляем статус сравнения урока
+                result = self.total_results(step_results)
+                self.print_lesson_summary(result, markdown_filename, 'DUMP')
+                return result["status"]
 
         except CompareError as e:
             self.trace(Verbose.ERROR, str(e))
@@ -336,17 +380,71 @@ class SnapshotManager:
         markdown_data = markdown_step.to_dict()
 
         # трассировка внутри сравнения
-        if self.compare_dict_as_json(snapshot_data, markdown_data):
-            msg = f"\t{StatusStep.PASSED} Шаг {position}: ok"
-            self.trace(Verbose.STEP, msg)
-            return StatusStep.PASSED
+        msg = ""
+        compare_result = self.compare_dict_as_json(snapshot_data, markdown_data)
+        match(compare_result):
+            case StatusStep.PASSED:
+                msg = f"\t{StatusStep.PASSED} Шаг {position}: ok"
+            # case StatusStep.WARNING:
+            #     msg = f"\t{StatusStep.WARNING} Шаг {position}: HTML warning"
+            case StatusStep.FAILED:
+                msg = f"\t{StatusStep.FAILED} Шаг {position}: обнаружены различия"
+            case _:
+                msg = f"\t Unexpected status {compare_result} сравнения шага {position}: ???"
 
-        msg = f"\t{StatusStep.FAILED} Шаг {position}: обнаружены различия"
         self.trace(Verbose.STEP, msg)
-        return StatusStep.FAILED
+        return compare_result
 
 
-    def compare_dict_as_json(self, markdown_dict: dict, snapshot_dict: dict) -> bool:
+    def compare_step_snapshots(self, position: int, snapshot_step_result: dict, snapshot_step: dict) -> StatusStep:
+        """Сравнивает содержимое snapshot_step_result и snapshot_step.
+        Тип шага, заголовок, содержимое.
+        Возвращает статус сравненного шага.
+        """
+        # не совпадает тип шага
+        snapshot_step_type = snapshot_step["type"]
+        result_step_type = snapshot_step_result["type"]
+        if snapshot_step_type != result_step_type:
+            msg = f"\t{StatusStep.FAILED} Шаг {position}: изменился тип шага {snapshot_step_type} → {result_step_type}"
+            self.trace(Verbose.STEP, msg)
+            return StatusStep.FAILED
+
+        # не совпадает заголовок шага - не проверяем!
+
+        # сравниваем данные
+        snapshot_data = snapshot_step["data"]
+        result_data = snapshot_step_result["data"]
+
+        # трассировка внутри сравнения
+        compare_result = self.compare_dict_as_json(snapshot_data, result_data, skip_problem_html_tags=True)
+        match compare_result:
+            case StatusStep.PASSED:
+                msg = f"\t{StatusStep.PASSED} Шаг {position}: ok"
+            case StatusStep.WARNING:
+                msg = f"\t{StatusStep.WARNING} Шаг {position}: HTML warning"
+            case StatusStep.FAILED:
+                msg = f"\t{StatusStep.FAILED} Шаг {position}: обнаружены различия"
+            case _:
+                msg = f"\t Unexpected status {compare_result} сравнения шага {position}: ???"
+
+        self.trace(Verbose.STEP, msg)
+        return compare_result
+
+    @classmethod
+    def remove_problem_html_tags(cls, text) -> str:
+        """
+        Используется для сравнения html кода
+        :param text:
+        :return:
+        """
+        # если это вообще не HTML, ничего не меняем
+        if not ("<" in text and ">" in text):
+            return text
+        soup = BeautifulSoup(text, 'html.parser')
+        result = soup.get_text()
+        return result
+
+    def compare_dict_as_json(self, markdown_dict: dict, snapshot_dict: dict, skip_problem_html_tags: bool = False) -> StatusStep:
         """Сравниваем словари рекурсивно до первой разницы или до конца, если разницы нет.
         Возвращает True, если словари одинаковые."""
 
@@ -356,15 +454,29 @@ class SnapshotManager:
         md_json = json.dumps(markdown_dict, indent=2, ensure_ascii=False, sort_keys=True).splitlines()
         sn_json = json.dumps(snapshot_dict, indent=2, ensure_ascii=False, sort_keys=True).splitlines()
         self.trace(Verbose.DEBUG, self.LINE_INTERSTEP_SEPARATOR)
+        has_warning_line = False
         for md_line, sn_line in zip(md_json, sn_json):
             if md_line == sn_line:
                 self.trace(Verbose.DEBUG, truncate(indent + md_line, ignore=self.truncate))
             else:
                 self.trace(Verbose.DEBUG, truncate(indent + StatusStep.ADD +    " markdown: "+ md_line, ignore=self.truncate))
                 self.trace(Verbose.DEBUG, truncate(indent + StatusStep.REMOVE + " snapshot: "+ sn_line, ignore=self.truncate))
-                return False
+                md_line_no_html = self.remove_problem_html_tags(md_line)
+                sn_line_no_html = self.remove_problem_html_tags(sn_line)
+                print(f"~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                print(f"{md_line_no_html=}")
+                print(f"~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                print(f"{sn_line_no_html=}")
+                print(f"~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+                print(f"{skip_problem_html_tags=} + {md_line_no_html == sn_line_no_html}")
+                if skip_problem_html_tags and md_line_no_html == sn_line_no_html:
+                    self.trace(Verbose.DEBUG,
+                               truncate(indent + StatusStep.WARNING + " strip: " + md_line, ignore=self.truncate))
+                    has_warning_line = True
+                else:
+                    return StatusStep.FAILED
 
-        return True
+        return StatusStep.WARNING if has_warning_line else StatusStep.PASSED
 
     @staticmethod
     def total_results(step_results: list[StatusStep]) -> dict:
@@ -372,25 +484,19 @@ class SnapshotManager:
         Возвращаем статус сравнения урока вместе со статусами шагов."""
         totals = {
             "status": StatusLesson.IN_PROGRESS,
+            "step_results": step_results,
             "steps_verified": 0,
-            "steps_passed": 0,
-            "steps_failed": 0,
-            "steps_skipped": 0,
-            "step_results": step_results
+            str(StatusStep.SKIP): 0    # потому что не входит в StatusBase, потому что не может быть статусом урока
         }
-        for step in step_results:
-            totals['steps_verified'] += 1
-            match step:
-                case StatusStep.PASSED:
-                    totals['steps_passed'] += 1
-                case StatusStep.SKIP:
-                    totals['steps_skipped'] += 1
-                case StatusStep.FAILED:
-                    totals['steps_failed'] += 1
-                case '_':
-                    raise ValueError(f'Unknown step status {step}')
+        # статус всего урока - самый последний из встреченных статусов
+        for step_status in StatusBase:
+            totals[str(step_status)] = 0
+            if step_status in step_results:
+                totals['status'] = step_status
 
-        totals['status'] = StatusLesson.FAILED if totals['steps_failed'] > 0 else StatusLesson.PASSED
+        for step_status in step_results:
+            totals['steps_verified'] += 1
+            totals[str(step_status)] += 1
 
         return totals
 
@@ -401,12 +507,24 @@ class SnapshotManager:
                    self.LINE_STEP_SEPARATOR,
                    f"{result['status']}  Урок {mode.upper()}: {filename}",
                     f"\tВсего шагов: {result['steps_verified']}, из них",
-                    f"\tPASS: {result['steps_passed']}",
-                    f"\tFAIL: {result['steps_failed']}",
-                    f"\tSKIP: {result['steps_skipped']}",
+                    f"\tPASS: {result[StatusBase.PASSED]}",
+                    f"\tWARN: {result[StatusBase.WARNING]}",
+                    f"\tFAIL: {result[StatusBase.FAILED]}",
+                    f"\tSKIP: {result[StatusStep.SKIP]}",
                    sep='\n',
                    end='\n'
                 )
+
+    def make_tmp_paths(self, path: str | Path) -> (Path, Path):
+        """Из пути к исходному markdown файлу path получает путь к временному файлу с тем же именем.
+        Если нужно, создает директорию."""
+        tmp_dir = Path(__file__).parent / MARKDOWN_TMP_DIR
+        tmp_dir.resolve()
+        if not tmp_dir.exists():
+            tmp_dir.mkdir()
+        filename = Path(path)
+        return tmp_dir / filename.name, tmp_dir / filename.with_suffix(".json").name
+
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -449,8 +567,9 @@ def main(filename: str, step: int, update: bool, verbose: str):
             # TODO: тут должно быть запомнить старое значение и после проверок его восстановить, но зачем?
             settings.STEP_BEGIN = settings.LEGACY_STEP_BEGIN
             manager.check_lesson(markdown_filename=filename, step_position=step)
+            manager.trace(Verbose.LESSON, "--- DUMP --------------")
             settings.STEP_BEGIN = '---1234'
-            manager.check_lesson_dump(markdown_filename=filename, step_position=step)
+            manager.check_pulled_lesson_dump(markdown_filename=filename, step_position=step)
 
     except Exception as e:
         click.echo(f"Ошибка: {e}")
@@ -460,3 +579,7 @@ def main(filename: str, step: int, update: bool, verbose: str):
 
 if __name__ == "__main__":
     main()
+    # for status in StatusLesson:
+    #     print(status)
+    # print(StatusLesson, type(StatusLesson))
+    # print(StatusLesson.IN_PROGRESS)
