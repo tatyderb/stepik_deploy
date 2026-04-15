@@ -6,8 +6,9 @@ from src.stepik_api import StepikSession
 
 
 class Step(ABC):
-    STEP_TYPES = ['CHOICE', 'ESSAY', 'MATCH', 'NUMBER',
-                  'QUIZ', 'SORT', 'SPACE', 'STRING', 
+    # убран тип шага 'CHOICE' (нет такого, по крайней мере сейчас)
+    STEP_TYPES = ['ESSAY', 'GENNUMBER', 'MATCH', 'NUMBER',
+                  'QUIZ', 'SORT', 'SPACE', 'STRING',
                   'TABLE', 'TASKINLINE', 'TEXT']
 
     def __init__(self, header: str = '', skip: bool = False):
@@ -40,8 +41,15 @@ class Step(ABC):
     @classmethod
     def create_by_type(cls, step_type: str = 'TEXT', header: str = '', skip: bool = False, step_body: str=''):
         match step_type:
-            case 'TEXT':
-                return StepText(header=header, skip=skip)
+            case 'ESSAY':
+                from src.step_essay import StepEssay
+                return StepEssay(header=header, skip=skip)
+            case 'GENNUMBER':
+                from src.step_gennumber import StepGennumber
+                return StepGennumber(header=header, skip=skip)
+            case 'MATCH':
+                from src.step_match import StepMatch
+                return StepMatch(header=header, skip=skip)
             case 'NUMBER':
                 from src.step_number import StepNumber
                 return StepNumber(header=header, skip=skip)
@@ -51,24 +59,20 @@ class Step(ABC):
             case 'SORT':
                 from src.step_sort import StepSort
                 return StepSort(header=header, skip=skip)
-            case 'MATCH':
-                from src.step_match import StepMatch
-                return StepMatch(header=header, skip=skip)
-            case 'TABLE':
-                from src.step_table import StepTable
-                return StepTable(header=header, skip=skip)
             case 'SPACE':
                 from src.step_space import StepSpace
                 return StepSpace(header=header, skip=skip)
-            case 'TASKINLINE':
-                from src.step_tasklinline import StepTaskinline
-                return StepTaskinline(header=header, skip=skip)
-            case 'ESSAY':
-                from src.step_essay import StepEssay
-                return StepEssay(header=header, skip=skip)
             case 'STRING':
                 from src.step_string import StepString
                 return StepString(header=header, skip=skip)
+            case 'TABLE':
+                from src.step_table import StepTable
+                return StepTable(header=header, skip=skip)
+            case 'TASKINLINE':
+                from src.step_tasklinline import StepTaskinline
+                return StepTaskinline(header=header, skip=skip)
+            case 'TEXT':
+                return StepText(header=header, skip=skip)
             case '_':
                 raise NotImplemented(f'Step type {step_type}')
 
