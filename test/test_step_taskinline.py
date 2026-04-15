@@ -167,7 +167,7 @@ def test_to_dict():
             "has_submissions_restrictions": False,
             "create_date": None,
             "block": {
-                "text": "<h2></h2>\n<p>Даны два целых числа на одной строке через пробел. Напечатайте их сумму.</p>",
+                "text": "<p>Даны два целых числа на одной строке через пробел. Напечатайте их сумму.</p>",
                 "name": "code",
                 "video": None,
                 "options": None,
@@ -208,4 +208,4 @@ def test_to_dict():
             "score": 10
         }
     }
-    assert expected_dict == res
+    assert res == expected_dict

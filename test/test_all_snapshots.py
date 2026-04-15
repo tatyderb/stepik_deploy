@@ -32,3 +32,23 @@ snapshot_dir = base_dir / 'src' / 'verification' / 'snapshots'
 def test_compare_with_snapshot(markdown_filename):
     manager = SnapshotManager()
     assert StatusLesson.PASSED == manager.check_lesson(markdown_dir / markdown_filename)
+
+@pytest.mark.step_begin("---1234")
+@pytest.mark.parametrize('markdown_filename', [
+    'step_first.md',
+    'step_second.md',
+    'step1_markdown.md',
+    # 'step2_match.md',
+    # 'step2_quiz.md',
+    # 'step2_sort.md',
+    # 'step2_table.md',
+    # 'step3_essay.md',
+    # 'step3_number.md',
+    # 'step3_string.md',
+    # 'step4_taskinline.md',
+])
+def test_compare_dump_with_reference_dump(markdown_filename):
+    manager = SnapshotManager()
+    assert StatusLesson.PASSED == manager.check_pulled_lesson_dump(markdown_dir / markdown_filename)
+
+

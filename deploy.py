@@ -4,6 +4,7 @@ from src import logged_requests
 from src.auth import read_or_create_auth_data
 from src.lesson import Lesson
 from src.logged_requests import LoggedSession
+from src.settings import settings
 from src.stepik_api import StepikSession
 from src.toc import get_file_from_toc
 
@@ -44,6 +45,8 @@ HELP_EPILOG = '''\b
 @click.option('-s', '--step', type=int, default=0, metavar='STEP',
               help='обновить только конкретный шаг,\n'
                    'нумерация с 1, поддерживаются отрицательные номера (тогда нумерация с последнего шага)')
+@click.option('--sep', type=str, default='##', metavar='STEP_BEGIN',
+              help="Разделитель шагов, settings.STEP_BEGIN.")
 # @click.option('-t', '--toc', type=str, default='', metavar='TOC',
 #               help='Пока не реализовано! Обновить урок по его TOC, формат module.lesson[.step],\n'
 #                    'примеры: 3.8 (весь урок), 3.8.2 (один шаг)')
@@ -54,7 +57,7 @@ HELP_EPILOG = '''\b
 # @click.option('--toc-update', is_flag=True, default=False,
 #               help='Пока не реализовано! обновить TOC в yaml конфиге до первой ошибки')
 # def main(filename, step, toc, lesson_id, gift, toc_update):
-def main(filename, step):
+def main(filename, step, sep):
     """Загрузка markdown или GIFT файла на сайт Stepik (или другие инструменты для работы со Stepik)."""
 
     # if step != 0 and toc:
@@ -63,7 +66,9 @@ def main(filename, step):
     logged_requests.setup_logger()
     read_or_create_auth_data()
 
-    print(f'Args: filename={filename}, step={step}')
+    print(f'Args: filename={filename}, step={step} {sep=}')
+    if sep != settings.STEP_BEGIN:
+        settings.STEP_BEGIN = sep
 
     lesson_file, position = get_lesson_file(filename, step)
     lesson = Lesson(position=position)
