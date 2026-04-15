@@ -501,13 +501,14 @@ debug - подробная разница содержимого шага, до 
               '(нумерация с 1, отрицательные - с конца, 0 - все шаги)')
 @click.option('-u', '--update', is_flag=True, help='Обновить/создать снапшот')
 @click.option('-U', '--update_dump', is_flag=True, help='Обновить/создать образец дампа урока')
+@click.option('--dump', is_flag=True, help='Проверять дампа урока')
 @click.option('-v', '--verbose',
               type=click.Choice(list(Verbose.__members__), case_sensitive=False),
               default='summary',
               help=verbose_help
 )
 @click.help_option('-h', '--help', help='Показать эту справку и выйти')
-def main(filename: str, step: int, update: bool, update_dump: bool, verbose: str):
+def main(filename: str, step: int, update: bool, update_dump: bool, dump: bool, verbose: str):
     """Менеджер снапшотов для верификации уроков Stepik"""
 
     manager = SnapshotManager()
@@ -524,16 +525,20 @@ def main(filename: str, step: int, update: bool, update_dump: bool, verbose: str
         if update_dump:
             md_dump_path = manager.md_dump_path(filename)
             manager.create_dump(src_path=filename, dst_path=md_dump_path, new_step_begin='---1234')
-        else:
-            # TODO: тут должно быть запомнить старое значение и после проверок его восстановить, но зачем?
-            settings.STEP_BEGIN = settings.LEGACY_STEP_BEGIN
-            # проверяет исходный markdown файл и его преобразование в json, сравнивает с эталонным снапшотом
-            manager.check_lesson(markdown_filename=filename, step_position=step)
+
+        if dump:
+            # проверка дампа урока по эталонному дампу
             manager.trace(Verbose.LESSON, "--- DUMP --------------")
             settings.STEP_BEGIN = '---1234'
             # по lesson_id из исходного markdown_filename делаем dump урока во временную директорию
             # и сравниваем с эталонным дампом
             manager.check_pulled_lesson_dump(markdown_filename=filename, step_position=step)
+
+        else:
+            # TODO: тут должно быть запомнить старое значение и после проверок его восстановить, но зачем?
+            settings.STEP_BEGIN = settings.LEGACY_STEP_BEGIN
+            # проверяет исходный markdown файл и его преобразование в json, сравнивает с эталонным снапшотом
+            manager.check_lesson(markdown_filename=filename, step_position=step)
 
     except Exception as e:
         click.echo(f"Ошибка: {e}")
