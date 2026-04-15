@@ -1,0 +1,137 @@
+{
+  "metadata": {
+    "source_md": "examples/step3_gennumber.md",
+    "total_steps": 4,
+    "lesson_id": 2330913,
+    "title": "Шаг GENNUMBER - численная задача со случайной генерацией условия"
+  },
+  "steps": [
+    {
+      "position": 1,
+      "type": "StepText",
+      "header": "Шаблон",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "name": "text",
+            "text": "<h2>Шаблон</h2>\n<p><a href=\"https://stepik.org/lesson/385343/step/1\">Численная задача со случайной генерацией условия</a></p>\n<pre><code>## GENNUMBER Заголовок\n\nТекст условия\n\nANSWER\nФормула, по которой вычисляется ответ +- погрешность (может быть только числом)\n\nVAR\nпеременная1 (от, до, шаг)\nпеременная2 (от, до, шаг)\n\nCONFIG\nscore: 3\n</code></pre>\n<p>Задача состоит из условия (с использованием переменных, см. примеры), формулы-ответа с возможностью указать погрешность, перечисления диапазонов значений всех переменных и возможной секции CONFIG.</p>"
+          },
+          "lesson": 0,
+          "position": 1
+        }
+      }
+    },
+    {
+      "position": 2,
+      "type": "StepGennumber",
+      "header": "Простая задача",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "",
+            "name": "random-tasks",
+            "source": {
+              "task": "В саду цветут яблони и груши.\nПчела опылила \\x цветочков, а шмель \\y.\nСколько цветочков они опылили вместе?\n",
+              "solve": "x+y",
+              "max_error": "0",
+              "ranges": [
+                {
+                  "variable": "x",
+                  "num_from": "1",
+                  "num_to": "20",
+                  "num_step": "1"
+                },
+                {
+                  "variable": "y",
+                  "num_from": "1",
+                  "num_to": "15",
+                  "num_step": "1"
+                }
+              ],
+              "combinations": "266"
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": "2"
+        }
+      }
+    },
+    {
+      "position": 3,
+      "type": "StepGennumber",
+      "header": "Погрешность",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "",
+            "name": "random-tasks",
+            "source": {
+              "task": "В саду цветут яблони и груши.\nПчела облетела яблоню по траектории с радиусом \\r м\nКакой путь пролетела пчела в сантиметрах?\n",
+              "solve": "2 * 3.14 * 100 * r",
+              "max_error": "2.0",
+              "ranges": [
+                {
+                  "variable": "r",
+                  "num_from": "0.2",
+                  "num_to": "2",
+                  "num_step": "0.1"
+                }
+              ],
+              "combinations": "17.0"
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
+        }
+      }
+    },
+    {
+      "position": 4,
+      "type": "StepGennumber",
+      "header": "Указание диапазонов значений",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "",
+            "name": "random-tasks",
+            "source": {
+              "task": "Мельница, работая по \\h часов в день, намолола за 6 дней \\a ц муки, причём каждый день - одинаковое количество. Сколько часов должна работать мельница ежедневно, чтобы за 8 дней намолоть \\b т муки при той же производительности?\n",
+              "solve": "(6 * b * 10) / (8 * a) * h",
+              "max_error": "0",
+              "ranges": [
+                {
+                  "variable": "h",
+                  "num_from": "1",
+                  "num_to": "24",
+                  "num_step": "1"
+                },
+                {
+                  "variable": "a",
+                  "num_from": "100",
+                  "num_to": "300",
+                  "num_step": "100"
+                },
+                {
+                  "variable": "b",
+                  "num_from": "0",
+                  "num_to": "100",
+                  "num_step": "1"
+                }
+              ],
+              "combinations": "4600"
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
+        }
+      }
+    }
+  ]
+}
