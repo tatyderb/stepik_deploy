@@ -51,6 +51,7 @@ class Lesson:
         new_length = len(self.steps)
         update_length = min(old_length, new_length)
 
+        print(f"DEPLOY lesson {self.lesson_id}")
         # Проверяем, что деплой одного шага не приходится на удаление или создание шага
         if step_position > new_length:
             print(f'Нельзя удалить один шаг урока {self.lesson_id} на позиции {step_position}. \

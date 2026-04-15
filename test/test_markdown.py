@@ -88,5 +88,32 @@ def test_parse_step_header(text, ok, step_type, skip, header):
 #     print(f'\n{res=}')
 #     assert {'config': {'score': '10', 'shuffle': 'true'}} == res
 
+# Проблемы с дампом
+def test_br_convertion():
+    original_text = """
+Это блок из первой строки. Перевод строки <br>
+И второй строки. Их нужно сделать в одном параграфе, но после первой строки поставить br.
+    """
+    from src.utils import markdown_to_html
+    from markdownify import markdownify as md
 
+    print(original_text)
+    print("----------------")
+    html = markdown_to_html(original_text)
+    print(html)
+    print("----------------")
+    resulted_text = md(
+            html,
+            heading_style="ATX",
+            code_language="",
+            code_block="```",
+            strip=['script', 'style'],
+            autolinks=True,
+            escape_underscores=False,
+            escape_asterisks=False,
+        )
+    print(resulted_text)
+    print("----------------")
+    for orig_str, result_str in zip(original_text.strip().splitlines(), resulted_text.strip().splitlines()):
+        assert result_str.rstrip() == orig_str.rstrip()
 
