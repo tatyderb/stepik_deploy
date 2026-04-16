@@ -321,10 +321,33 @@ class TableDump(BaseNotImplementedExporter):
     pass
 
 
-class CodeDump(BaseNotImplementedExporter):
-    """Заглушка для TASKINLINE шагов"""
-    pass
+class TaskinlineDump(BaseExporter):
+    """Обработка TASKINLINE шагов (задачи на программирование)"""
 
+    def set_type(self):
+        self.step_type = "TASKINLINE"
+
+    def format_output(self) -> str:
+        source: dict[str, any] = self.block.get("source", {})
+        
+        test_cases: list[list[str]] = source.get("test_cases", [])
+        
+        tests_lines = []
+        if test_cases:
+            tests_lines.append("TEST")
+            for test_input, test_output in test_cases:
+                tests_lines.extend([test_input.strip(), "----", test_output.strip(), "===="])
+            tests_lines.append("")
+        
+        result_parts: list[str] = [
+            self.html_to_markdown(self.soup).strip(),
+            "",
+            *tests_lines,
+            "CONFIG",
+            *self.dump_config(source, self.step_data)
+        ]
+        
+        return "\n".join(result_parts) + "\n"
 
 class VideoDump(BaseNotImplementedExporter):
     """Заглушка для VIDEO шагов"""
@@ -344,7 +367,7 @@ def get_exporter(step_data: Dict[str, Any], position: int) -> BaseExporter:
         "free-answer": EssayDump,
         "sorting": SortDump,
         "table": TableDump,
-        "code": CodeDump,
+        "code": TaskinlineDump,
         "video": VideoDump
     }
 
@@ -427,13 +450,13 @@ def dump_lesson(lesson_id: int, filename: str | Path | None = None) -> None:
 
 
 if __name__ == "__main__":
-    # if len(sys.argv) < 2:
-    #     print("Использование: python dump.py LESSON_ID [filename]")
-    #     sys.exit(1)
-    #
-    # lesson_id = int(sys.argv[1])
-    # filename = sys.argv[2] if len(sys.argv) > 2 else None
-    #
-    # dump_lesson(lesson_id, filename)
-    t = TextDump({'block': {'text': '', 'name': 'text'}}, 1)
-    print(t.export())
+    if len(sys.argv) < 2:
+        print("Использование: python dump.py LESSON_ID [filename]")
+        sys.exit(1)
+    
+    lesson_id = int(sys.argv[1])
+    filename = sys.argv[2] if len(sys.argv) > 2 else None
+    
+    dump_lesson(lesson_id, filename)
+    # t = TextDump({'block': {'text': '', 'name': 'text'}}, 1)
+    # print(t.export())
