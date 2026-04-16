@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Dict, Any
 
 from src.export.dump import StringDump
-from src.settings import settings
 
 
 pytestmark = pytest.mark.step_begin("---1234")
@@ -186,9 +185,6 @@ class TestStringDump:
 
     def test_simple_string(self, simple_step_data):
         """Тест: простой строковый шаг без дополнительных опций"""
-        original = settings.STEP_BEGIN
-        settings.STEP_BEGIN = '12345678!@#'
-        
         exporter = StringDump(simple_step_data, position=1)
         result = exporter.export()
 
@@ -206,13 +202,9 @@ use_re: False
 case_sensitive: False"""
 
         assert result.strip() == expected.strip()
-        settings.STEP_BEGIN = original
 
     def test_case_sensitive(self, case_sensitive_step_data):
         """Тест: шаг с учётом регистра"""
-        original = settings.STEP_BEGIN
-        settings.STEP_BEGIN = '12345678!@#'
-        
         exporter = StringDump(case_sensitive_step_data, position=1)
         result = exporter.export()
 
@@ -229,14 +221,10 @@ score: 1
 use_re: False
 case_sensitive: True"""
 
-        settings.STEP_BEGIN = original
         assert result.strip() == expected.strip()
 
     def test_regular_expression(self, regex_step_data):
         """Тест: шаг с регулярным выражением"""
-        original = settings.STEP_BEGIN
-        settings.STEP_BEGIN = '12345678!@#'
-        
         exporter = StringDump(regex_step_data, position=1)
         result = exporter.export()
 
@@ -253,14 +241,10 @@ score: 1
 use_re: True
 case_sensitive: False"""
 
-        settings.STEP_BEGIN = original
         assert result.strip() == expected.strip()
 
     def test_multiline_answer(self, multiline_step_data):
         """Тест: многострочный ответ"""
-        original = settings.STEP_BEGIN
-        settings.STEP_BEGIN = '12345678!@#'
-        
         exporter = StringDump(multiline_step_data, position=1)
         result = exporter.export()
 
@@ -279,14 +263,10 @@ score: 5
 use_re: False
 case_sensitive: False"""
 
-        settings.STEP_BEGIN = original
         assert result.strip() == expected.strip()
 
     def test_no_title(self, no_title_step_data):
         """Тест: шаг без заголовка"""
-        original = settings.STEP_BEGIN
-        settings.STEP_BEGIN = '12345678!@#'
-        
         exporter = StringDump(no_title_step_data, position=7)
         result = exporter.export()
 
@@ -302,13 +282,9 @@ use_re: False
 case_sensitive: False"""
 
         assert result.strip() == expected.strip()
-        settings.STEP_BEGIN = original
 
     def test_file_only(self, file_only_step_data):
         """Тест: шаг с загрузкой только файла"""
-        original = settings.STEP_BEGIN
-        settings.STEP_BEGIN = '12345678!@#'
-        
         exporter = StringDump(file_only_step_data, position=1)
         result = exporter.export()
 
@@ -325,14 +301,10 @@ score: 3
 use_re: False
 case_sensitive: False"""
 
-        settings.STEP_BEGIN = original
         assert result.strip() == expected.strip()
 
     def test_match_substring(self, substring_step_data):
         """Тест: шаг с поиском подстроки"""
-        original = settings.STEP_BEGIN
-        settings.STEP_BEGIN = '12345678!@#'
-        
         exporter = StringDump(substring_step_data, position=1)
         result = exporter.export()
 
@@ -349,14 +321,10 @@ score: 1
 use_re: False
 case_sensitive: False"""
 
-        settings.STEP_BEGIN = original
         assert result.strip() == expected.strip()
 
     def test_multiple_answers_as_regex(self, multiple_answers_step_data):
         """Тест: несколько ответов, объединённых в регулярное выражение"""
-        original = settings.STEP_BEGIN
-        settings.STEP_BEGIN = '12345678!@#'
-        
         exporter = StringDump(multiple_answers_step_data, position=1)
         result = exporter.export()
 
@@ -373,14 +341,10 @@ score: 1
 use_re: True
 case_sensitive: False"""
 
-        settings.STEP_BEGIN = original
         assert result.strip() == expected.strip()
 
     def test_skip_unnecessary_config_params(self):
         """Тест: проверка, что в CONFIG попадают только разрешенные параметры"""
-        original = settings.STEP_BEGIN
-        settings.STEP_BEGIN = '12345678!@#'
-        
         step_data = {
             "id": 8491284,
             "cost": 1,
@@ -415,7 +379,6 @@ score: 1
 use_re: False
 case_sensitive: False"""
 
-        settings.STEP_BEGIN = original
         assert result.strip() == expected.strip()
         # Проверяем, что лишние параметры не попали
         assert "options" not in result
@@ -425,9 +388,6 @@ case_sensitive: False"""
 
     def test_empty_pattern(self):
         """Тест: шаг с пустым pattern"""
-        original = settings.STEP_BEGIN
-        settings.STEP_BEGIN = '12345678!@#'
-        
         step_data = {
             "id": 8491285,
             "cost": 1,
@@ -462,14 +422,10 @@ score: 1
 use_re: False
 case_sensitive: False"""
 
-        settings.STEP_BEGIN = original
         assert result.strip() == expected.strip()
 
     def test_all_config_options(self):
         """Тест: шаг со всеми возможными опциями"""
-        original = settings.STEP_BEGIN
-        settings.STEP_BEGIN = '12345678!@#'
-        
         step_data = {
             "id": 8491286,
             "cost": 10,
@@ -506,7 +462,6 @@ use_re: True
 case_sensitive: True
 """
 
-        settings.STEP_BEGIN = original
         assert result.strip() == expected.strip()
         assert "match_substring" not in result
         assert "is_text_disabled" not in result

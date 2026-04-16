@@ -11,7 +11,6 @@ from src.export.dump import (
     get_lesson_info,
     BaseExporter,
 )
-from src.settings import settings
 
 pytestmark = pytest.mark.step_begin("---1234")
 
@@ -242,9 +241,6 @@ def test_get_exporter_for_unknown():
 @patch('src.export.dump.md')
 def test_textdump_export(mock_md):
     """Проверка экспорта текстового шага"""
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
-    
     mock_md.return_value = "Конвертированный текст"
     
     step_data = {
@@ -264,9 +260,6 @@ def test_textdump_export(mock_md):
 
 def test_textdump_without_title():
     """Проверка экспорта шага без заголовка"""
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
-    
     step_data = {
         'block': {
             'text': '<p>Просто текст без заголовка</p>',
@@ -309,9 +302,6 @@ print("Hello")
 @patch('builtins.open', new_callable=MagicMock)
 def test_dump_lesson_calls_api_correctly(mock_open, mock_logger, mock_auth, mock_session_class):
     """Проверка, что dump_lesson правильно вызывает API"""
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
-    
     mock_session_instance = MagicMock()
     mock_session_class.return_value = mock_session_instance
     
@@ -330,7 +320,6 @@ def test_dump_lesson_calls_api_correctly(mock_open, mock_logger, mock_auth, mock
     ]
     mock_session_instance.fetch_object.assert_has_calls(expected_calls, any_order=False)
     
-    settings.STEP_BEGIN = original
     mock_open.assert_called_once_with('test.md', 'w', encoding='utf-8')
 
 
@@ -357,9 +346,6 @@ def test_dump_lesson_handles_empty_steps_gracefully(mock_open, mock_logger, mock
 @patch('builtins.open', new_callable=MagicMock)
 def test_dump_lesson_with_custom_filename(mock_open, mock_logger, mock_auth, mock_session_class):
     """Проверка, что dump_lesson принимает кастомное имя файла"""
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
-    
     mock_session_instance = MagicMock()
     mock_session_class.return_value = mock_session_instance
     
@@ -369,7 +355,6 @@ def test_dump_lesson_with_custom_filename(mock_open, mock_logger, mock_auth, moc
     ]
     
     dump_lesson(789, 'custom_name.md')
-    settings.STEP_BEGIN = original
     mock_open.assert_called_once_with('custom_name.md', 'w', encoding='utf-8')
 
 
@@ -395,9 +380,6 @@ def mock_dependencies():
 
 def test_dump_lesson_basic_api_calls(mock_session, mock_dependencies):
     """Проверка базовых вызовов API при дампе урока"""
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
-    
     mock_session.fetch_object.side_effect = [
         {'title': 'Тестовый урок', 'steps': [1, 2]},
         {'block': {'name': 'text', 'text': '<h2>Шаг 1</h2><p>Текст</p>'}},
@@ -411,16 +393,12 @@ def test_dump_lesson_basic_api_calls(mock_session, mock_dependencies):
         call('step-source', 1),
         call('step-source', 2)
     ]
-    settings.STEP_BEGIN = original
     mock_session.fetch_object.assert_has_calls(expected_calls, any_order=False)
     mock_dependencies['open'].assert_called_once_with('test.md', 'w', encoding='utf-8')
 
 
 def test_dump_lesson_with_text_content(mock_session, mock_dependencies):
     """Проверка дампа урока с текстовыми шагами"""
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
-    
     mock_session.fetch_object.side_effect = [
         {'title': 'Тестовый урок', 'steps': [1]},
         {'block': {'name': 'text', 'text': '<h2>Привет</h2><p>Мир</p>'}}
@@ -448,24 +426,17 @@ def test_dump_lesson_empty_steps(mock_session, mock_dependencies):
 
 def test_dump_lesson_default_filename(mock_session, mock_dependencies):
     """Проверка генерации имени файла по умолчанию"""
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
-    
     mock_session.fetch_object.side_effect = [
         {'title': 'Тестовый урок', 'steps': [1]},
         {'block': {'name': 'text', 'text': '<h2>Шаг</h2>'}}
     ]
     
     dump_lesson(789)
-    settings.STEP_BEGIN = original
     mock_dependencies['open'].assert_called_once_with('lesson_789.md', 'w', encoding='utf-8')
 
 
 def test_dump_lesson_handles_step_error(mock_session, mock_dependencies, capsys):
     """Проверка обработки ошибки при экспорте шага"""
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
-    
     mock_session.fetch_object.side_effect = [
         {'title': 'Тестовый урок', 'steps': [1, 2]},
         Exception("Ошибка загрузки шага"),
@@ -476,5 +447,4 @@ def test_dump_lesson_handles_step_error(mock_session, mock_dependencies, capsys)
     
     # Проверяем, что ошибка была выведена
     captured = capsys.readouterr()
-    settings.STEP_BEGIN = original
     assert "Ошибка при обработке шага" in captured.out

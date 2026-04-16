@@ -2,7 +2,6 @@
 
 import pytest
 from src.export.dump import EssayDump, get_exporter
-from src.settings import settings
 
 
 pytestmark = pytest.mark.step_begin("---1234")
@@ -43,9 +42,6 @@ def essay_without_title():
 
 def test_essay_basic_export(basic_essay_data):
     """Проверка базового экспорта ESSAY шага"""
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = "12345678!@#"
-
     exporter = EssayDump(basic_essay_data, position=1)
     result = exporter.export()
 
@@ -61,15 +57,11 @@ is_attachments_enabled: False
 is_html_enabled: True
 manual_scoring: False"""
 
-    settings.STEP_BEGIN = original
     assert result.strip() == expected.strip()
 
 
 def test_essay_without_title(essay_without_title):
     """Проверка экспорта ESSAY шага без заголовка"""
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = "12345678!@#"
-
     exporter = EssayDump(essay_without_title, position=3)
     result = exporter.export()
 
@@ -83,15 +75,11 @@ is_attachments_enabled: True
 is_html_enabled: False
 manual_scoring: True"""
 
-    settings.STEP_BEGIN = original
     assert result.strip() == expected.strip()
 
 
 def test_essay_with_latex():
     """Проверка конвертации LaTeX в ESSAY шаге"""
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = "12345678!@#"
-
     step_data = {
         "block": {
             "name": "free-answer",
@@ -119,7 +107,6 @@ is_attachments_enabled: False
 is_html_enabled: True
 manual_scoring: False"""
 
-    settings.STEP_BEGIN = original
     assert result.strip() == expected.strip()
 
 
@@ -132,9 +119,6 @@ def test_get_exporter_returns_essay_dump():
 
 def test_essay_all_config_options():
     """Проверка экспорта ESSAY шага со всеми возможными опциями конфигурации"""
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = "12345678!@#"
-
     step_data = {
         "block": {
             "name": "free-answer",
@@ -162,15 +146,11 @@ is_attachments_enabled: True
 is_html_enabled: True
 manual_scoring: True"""
 
-    settings.STEP_BEGIN = original
     assert result.strip() == expected.strip()
 
 
 def test_essay_minimal_config():
     """Проверка экспорта ESSAY шага с минимальными настройками"""
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = "12345678!@#"
-
     step_data = {
         "block": {
             "name": "free-answer",
@@ -198,5 +178,4 @@ is_attachments_enabled: False
 is_html_enabled: False
 manual_scoring: True"""
 
-    settings.STEP_BEGIN = original
     assert result.strip() == expected.strip()
