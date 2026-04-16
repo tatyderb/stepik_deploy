@@ -11,6 +11,7 @@ from src.auth import read_or_create_auth_data
 from src.stepik_api import StepikSession
 from src.logged_requests import setup_logger
 from src.settings import settings
+import click
 
 
 class BaseExporter(ABC):
@@ -550,15 +551,37 @@ def dump_lesson(lesson_id: int, filename: str | Path | None = None) -> None:
 
     print(f"Дамп урока {lesson_id} сохранен в {filename}")
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+HELP_EPILOG = '''\b
+Примеры:
+  python dump.py 1945916                    Скачать урок с ID 1945916 в lesson_1945916.md
+  python dump.py 1945916 -o lesson.md       Скачать урок в указанный файл
+
+\b
+Об ошибках сообщайте по адресу: <https://github.com/tatyderb/stepik_deploy/issues>
+Репозиторий проекта: <https://github.com/tatyderb/stepik_deploy>
+'''
+
+
+@click.command(context_settings=CONTEXT_SETTINGS, epilog=HELP_EPILOG)
+@click.argument('lesson_id', type=int, required=True, metavar='LESSON_ID')
+@click.option('-o', '--output', type=click.Path(), default=None, metavar='FILENAME',
+              help='Имя выходного файла (по умолчанию: lesson_{LESSON_ID}.md)')
+@click.help_option('-h', '--help', help='Показать эту справку и выйти')
+def main(lesson_id: int, output: str | None):
+    """
+    Скачивание урока со Stepik в markdown файл.
+    
+    LESSON_ID - ID урока на Stepik (целое число)
+    """
+    dump_lesson(lesson_id, output)
+
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Использование: python dump.py LESSON_ID [filename]")
-        sys.exit(1)
-    
-    lesson_id = int(sys.argv[1])
-    filename = sys.argv[2] if len(sys.argv) > 2 else None
-    
-    dump_lesson(lesson_id, filename)
+    if len(sys.argv) > 1:
+        main()
+    else:
+        t = TextDump({'block': {'text': '', 'name': 'text'}}, 1)
+        print(t.export())
     # t = TextDump({'block': {'text': '', 'name': 'text'}}, 1)
     # print(t.export())
