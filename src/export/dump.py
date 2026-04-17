@@ -395,10 +395,128 @@ class SortDump(BaseNotImplementedExporter):
     """Заглушка для SORT шагов"""
     pass
 
+class TableDump(BaseExporter):
+    """Обработка TABLE шагов (табличные задачи)"""
 
-class TableDump(BaseNotImplementedExporter):
-    """Заглушка для TABLE шагов"""
-    pass
+    def set_type(self):
+        self.step_type = "TABLE"
+
+    def _calculate_column_widths(self, rows: list[list[str]]) -> list[int]:
+        """Вычисляет максимальную ширину каждой колонки для выравнивания."""
+        if not rows:
+            return []
+
+        num_cols = len(rows[0])
+        widths = [0] * num_cols
+
+        for row in rows:
+            for i, cell in enumerate(row):
+                cell_len = len(cell)
+                if cell_len > widths[i]:
+                    widths[i] = cell_len
+
+        return widths
+
+    def _format_table_row(self, row: list[str], widths: list[int]) -> str:
+        """Форматирует строку таблицы с выравниванием пробелами."""
+        formatted_cells = []
+        for i, cell in enumerate(row):
+            formatted_cells.append(cell.ljust(widths[i]))
+        return "| " + " | ".join(formatted_cells) + " |"
+
+    def _format_separator_row(self, widths: list[int]) -> str:
+        """Форматирует строку-разделитель (---) для таблицы."""
+        separators = []
+        for width in widths:
+            separators.append("-" * max(3, width))
+        return "| " + " | ".join(separators) + " |"
+
+    def format_output(self) -> str:
+        """Преобразует json в markdown"""
+        source: dict[str, any] = self.block.get("source", {})
+        options: dict[str, any] = source.get("options", {})
+
+        description = source.get("description", "")
+        desc_text = self.html_to_markdown(
+            BeautifulSoup(description, "html.parser"),
+            has_codeblock=False,
+            has_latex=True,
+        ).strip()
+
+        columns = source.get("columns", [])
+        column_names = []
+        for col in columns:
+            col_name = col.get("name", "")
+            col_text = self.html_to_markdown(
+                BeautifulSoup(col_name, "html.parser"),
+                has_codeblock=False,
+                has_latex=True,
+            ).strip()
+            column_names.append(col_text)
+
+        header_row = [desc_text] + column_names
+
+        rows = source.get("rows", [])
+        data_rows = []
+
+        for row in rows:
+            row_name = row.get("name", "")
+            row_text = self.html_to_markdown(
+                BeautifulSoup(row_name, "html.parser"),
+                has_codeblock=False,
+                has_latex=True,
+            ).strip()
+
+            columns_data = row.get("columns", [])
+            row_cells = [row_text]
+
+            for col_data in columns_data:
+                is_correct = col_data.get("choice", False)
+                row_cells.append("+" if is_correct else "")
+
+            data_rows.append(row_cells)
+
+        all_rows = [header_row] + data_rows
+
+        widths = self._calculate_column_widths(all_rows)
+
+        formatted_rows = []
+
+        formatted_rows.append(self._format_table_row(header_row, widths))
+
+        formatted_rows.append(self._format_separator_row(widths))
+
+        for row in data_rows:
+            formatted_rows.append(self._format_table_row(row, widths))
+
+        condition_text = self.html_to_markdown(
+            self.soup, has_codeblock=False, has_latex=True
+        ).strip()
+
+        config_lines = []
+
+        if "cost" in self.step_data:
+            config_lines.append(f"score: {self.step_data['cost']}")
+
+        is_randomize_rows = options.get("is_randomize_rows", True)
+        config_lines.append(f"shuffle_rows: {is_randomize_rows}")
+
+        is_randomize_columns = options.get("is_randomize_columns", True)
+        config_lines.append(f"shuffle_columns: {is_randomize_columns}")
+
+        is_always_correct = source.get("is_always_correct", False)
+        config_lines.append(f"accept_any_answer: {is_always_correct}")
+
+        is_checkbox = options.get("is_checkbox", False)
+        config_lines.append(f"allow_multiple: {is_checkbox}")
+
+        result_parts = [condition_text]
+        if condition_text:
+            result_parts.append("")
+
+        result_parts.extend(["TABLE", *formatted_rows, "", "CONFIG", *config_lines])
+
+        return "\n".join(result_parts) + "\n"
 
 
 class CodeDump(BaseNotImplementedExporter):
