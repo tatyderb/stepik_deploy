@@ -3,7 +3,10 @@
 """
 
 import pytest
-from src.export.dump import QuizDump, get_exporter, settings
+from src.export.dump import QuizDump, get_exporter
+
+
+pytestmark = pytest.mark.step_begin("---1234")
 
 
 @pytest.fixture
@@ -20,7 +23,8 @@ def quiz_single():
                     {'is_correct': False, 'text': '<p>0</p>'},
                     {'is_correct': False, 'text': '<p>55</p>'}
                 ],
-                'is_multiple_choice': False
+                'is_multiple_choice': False,
+                'is_html_enabled': True
             }
         },
         'cost': 1
@@ -41,7 +45,8 @@ def quiz_multiple():
                     {'is_correct': False, 'text': '<p>1 + 2</p>'},
                     {'is_correct': True, 'text': '<p>9 + 3</p>'}
                 ],
-                'is_multiple_choice': True
+                'is_multiple_choice': True,
+                'is_html_enabled': True
             }
         },
         'cost': 2
@@ -51,11 +56,9 @@ def quiz_multiple():
 # ========== ТЕСТ 1: БАЗОВЫЙ ==========
 
 def test_quiz_single(quiz_single):
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
     result = quiz_single.export()
     
-    expected = """12345678!@# QUIZ
+    expected = """---1234 QUIZ
 
 ## Выбор одного
 
@@ -69,18 +72,16 @@ D. 55
 ANSWER: A
 
 CONFIG
-score: 1"""
-    
-    settings.STEP_BEGIN = original
+score: 1
+"""
+
     assert result.strip() == expected.strip()
 
 
 def test_quiz_multiple(quiz_multiple):
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
     result = quiz_multiple.export()
     
-    expected = """12345678!@# QUIZ
+    expected = """---1234 QUIZ
 
 ## Выбор нескольких
 
@@ -94,9 +95,9 @@ D. 9 + 3
 ANSWER: A, D
 
 CONFIG
-score: 2"""
-    
-    settings.STEP_BEGIN = original
+score: 2
+"""
+
     assert result.strip() == expected.strip()
 
 
@@ -104,6 +105,7 @@ score: 2"""
 
 @pytest.mark.parametrize("step_begin", ['##', '12345678!@#', '##########', '###', ''])
 def test_step_begin_variations(quiz_single, step_begin):
+    from src.export.dump import settings
     original = settings.STEP_BEGIN
     settings.STEP_BEGIN = step_begin
     result = quiz_single.export()
@@ -115,16 +117,14 @@ def test_step_begin_variations(quiz_single, step_begin):
 # ========== ТЕСТ 3: БЕЗ ЗАГОЛОВКА ==========
 
 def test_no_title():
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
-    
     exporter = QuizDump({
         'block': {
             'name': 'choice',
             'text': '<p>Чему равно 2 + 3?</p>',
             'source': {
                 'options': [{'is_correct': True, 'text': '<p>5</p>'}],
-                'is_multiple_choice': False
+                'is_multiple_choice': False,
+                'is_html_enabled': True
             }
         },
         'cost': 1
@@ -132,7 +132,7 @@ def test_no_title():
     
     result = exporter.export()
     
-    expected = """12345678!@# QUIZ
+    expected = """---1234 QUIZ
 
 Чему равно 2 + 3?
 
@@ -141,25 +141,23 @@ A. 5
 ANSWER: A
 
 CONFIG
-score: 1"""
-    
-    settings.STEP_BEGIN = original
+score: 1
+"""
+
     assert result.strip() == expected.strip()
 
 
 # ========== ТЕСТ 4: LaTeX ==========
 
 def test_latex_in_condition():
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
-    
     exporter = QuizDump({
         'block': {
             'name': 'choice',
             'text': '<p>Чему равно \\(e=mc^2\\)?</p>',
             'source': {
                 'options': [{'is_correct': True, 'text': '<p>Формула</p>'}],
-                'is_multiple_choice': False
+                'is_multiple_choice': False,
+                'is_html_enabled': True
             }
         },
         'cost': 1
@@ -167,7 +165,7 @@ def test_latex_in_condition():
     
     result = exporter.export()
     
-    expected = """12345678!@# QUIZ
+    expected = """---1234 QUIZ
 
 Чему равно $e=mc^2$?
 
@@ -176,16 +174,13 @@ A. Формула
 ANSWER: A
 
 CONFIG
-score: 1"""
-    
-    settings.STEP_BEGIN = original
+score: 1
+"""
+
     assert result.strip() == expected.strip()
 
 
 def test_latex_in_options():
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
-    
     exporter = QuizDump({
         'block': {
             'name': 'choice',
@@ -195,7 +190,8 @@ def test_latex_in_options():
                     {'is_correct': True, 'text': '<p>$sin(x)$</p>'},
                     {'is_correct': True, 'text': '<p>$x^2$</p>'}
                 ],
-                'is_multiple_choice': True
+                'is_multiple_choice': True,
+                'is_html_enabled': True
             }
         },
         'cost': 1
@@ -203,7 +199,7 @@ def test_latex_in_options():
     
     result = exporter.export()
     
-    expected = """12345678!@# QUIZ
+    expected = """---1234 QUIZ
 
 Выберите функции
 
@@ -213,37 +209,33 @@ B. $x^2$
 ANSWER: A, B
 
 CONFIG
-score: 1"""
-    
-    settings.STEP_BEGIN = original
+score: 1
+"""
+
     assert result.strip() == expected.strip()
 
 
 # ========== ТЕСТ 5: GET_EXPORTER ==========
 
 def test_get_exporter():
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
-    
     step_data = {
         'block': {
             'name': 'choice',
             'text': '<p>Test</p>',
-            'source': {'options': []}
+            'source': {
+                'options': [],
+                'is_html_enabled': True
+            }
         }
     }
     
     exporter = get_exporter(step_data, 1)
-    settings.STEP_BEGIN = original
     assert isinstance(exporter, QuizDump)
 
 
 # ========== ТЕСТ 6: МНОГО ВАРИАНТОВ ==========
 
 def test_many_options():
-    original = settings.STEP_BEGIN
-    settings.STEP_BEGIN = '12345678!@#'
-    
     options = []
     for i in range(26):
         options.append({
@@ -257,7 +249,8 @@ def test_many_options():
             'text': '<h2>Тест</h2>',
             'source': {
                 'options': options,
-                'is_multiple_choice': False
+                'is_multiple_choice': False,
+                'is_html_enabled': True
             }
         },
         'cost': 1
@@ -265,7 +258,7 @@ def test_many_options():
     
     result = exporter.export()
     
-    expected = """12345678!@# QUIZ
+    expected = """---1234 QUIZ
 
 ## Тест
 
@@ -299,19 +292,89 @@ Z. Вариант Z
 ANSWER: A
 
 CONFIG
-score: 1"""
-    
-    settings.STEP_BEGIN = original
+score: 1
+"""
+
     assert result.strip() == expected.strip()
 
 
-# ========== ТЕСТ 7: ВОССТАНОВЛЕНИЕ STEP_BEGIN ==========
+# ========== ТЕСТ 7: HTML БЕЗ КОНВЕРТАЦИИ ==========
 
-def test_settings_restored():
-    """Проверяем, что STEP_BEGIN восстанавливается"""
-    original = settings.STEP_BEGIN
+def test_html_disabled_options():
+    """Тест: is_html_enabled=False - HTML теги должны быть удалены"""
+    exporter = QuizDump({
+        'block': {
+            'name': 'choice',
+            'text': '<h2>HTML отключен</h2><p>Выберите ответ</p>',
+            'source': {
+                'options': [
+                    {'is_correct': True, 'text': '<p><strong>Верный</strong> ответ</p>'},
+                    {'is_correct': False, 'text': '<p><em>Неверный</em> ответ</p>'}
+                ],
+                'is_multiple_choice': False,
+                'is_html_enabled': False
+            }
+        },
+        'cost': 2
+    }, 1)
     
-    settings.STEP_BEGIN = 'TEST_VALUE'
-    assert settings.STEP_BEGIN == 'TEST_VALUE'
-    settings.STEP_BEGIN = original
+    result = exporter.export()
     
+    expected = """---1234 QUIZ
+
+## HTML отключен
+
+Выберите ответ
+
+A. Верный ответ
+B. Неверный ответ
+
+ANSWER: A
+
+CONFIG
+score: 2
+"""
+
+    assert result.strip() == expected.strip()
+
+
+# ========== ТЕСТ 8: HTML С КОНВЕРТАЦИЕЙ ==========
+
+def test_html_enabled_options():
+    """Тест: is_html_enabled=True - HTML конвертируется в Markdown"""
+    exporter = QuizDump({
+        'block': {
+            'name': 'choice',
+            'text': '<h2>HTML в вариантах</h2><p>Выберите ответ</p>',
+            'source': {
+                'options': [
+                    {'is_correct': True, 'text': '<p><strong>Верный</strong> ответ</p>'},
+                    {'is_correct': False, 'text': '<p><em>Неверный</em> ответ</p>'},
+                    {'is_correct': False, 'text': '<p><a href="https://example.com">Ссылка</a></p>'}
+                ],
+                'is_multiple_choice': False,
+                'is_html_enabled': True
+            }
+        },
+        'cost': 3
+    }, 1)
+    
+    result = exporter.export()
+    
+    expected = """---1234 QUIZ
+
+## HTML в вариантах
+
+Выберите ответ
+
+A. **Верный** ответ
+B. *Неверный* ответ
+C. [Ссылка](https://example.com)
+
+ANSWER: A
+
+CONFIG
+score: 3
+"""
+
+    assert result.strip() == expected.strip()
