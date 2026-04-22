@@ -322,32 +322,200 @@ class TableDump(BaseNotImplementedExporter):
 
 
 class TaskinlineDump(BaseExporter):
-    """Обработка TASKINLINE шагов (задачи на программирование)"""
+    """
+    Обработка TASKINLINE шагов (задачи на программирование)
+    """
 
     def set_type(self):
         self.step_type = "TASKINLINE"
 
+    def _is_multilanguage_template(self, templates_data: str) -> bool:
+        """
+        Проверяет, является ли templates_data многоязычным шаблоном.
+        """
+        if not templates_data:
+            return False
+        
+        languages = set()
+        service_sections = {'header', 'code', 'footer', 'template'}
+        
+        for line in templates_data.splitlines():
+            if line.startswith('::'):
+                lang = line[2:].strip()
+                if lang and lang not in service_sections:
+                    languages.add(lang)
+        
+        return len(languages) > 1
+
+    def _extract_tests_from_code(self, code: str) -> list[list[str]]:
+        """
+        Извлекает тесты из source.code для mode = custom.
+        Ищет переменную my_tests = [('input1', 'output1'), ('input2', 'output2')]
+        """
+        tests = []
+        lines = code.splitlines()
+        
+        in_my_tests = False
+        my_tests_lines = []
+        
+        for line in lines:
+            if 'my_tests' in line and '=' in line and 'my_encoded_tests' not in line:
+                in_my_tests = True
+                eq_pos = line.find('=')
+                remaining = line[eq_pos + 1:].strip()
+                if remaining:
+                    my_tests_lines.append(remaining)
+                continue
+            
+            if in_my_tests:
+                if 'my_encoded_tests' in line:
+                    in_my_tests = False
+                    break
+                my_tests_lines.append(line)
+        
+        if not my_tests_lines:
+            return tests
+        
+        my_tests_text = ' '.join(my_tests_lines)
+        
+        i = 0
+        while i < len(my_tests_text):
+            if my_tests_text[i] in ('"', "'"):
+                quote = my_tests_text[i]
+                i += 1
+                start = i
+                while i < len(my_tests_text) and my_tests_text[i] != quote:
+                    i += 1
+                first_value = my_tests_text[start:i]
+                i += 1
+                
+                while i < len(my_tests_text) and my_tests_text[i] not in ('"', "'"):
+                    i += 1
+                if i < len(my_tests_text) and my_tests_text[i] in ('"', "'"):
+                    quote2 = my_tests_text[i]
+                    i += 1
+                    start2 = i
+                    while i < len(my_tests_text) and my_tests_text[i] != quote2:
+                        i += 1
+                    second_value = my_tests_text[start2:i]
+                    i += 1
+                    
+                    tests.append([first_value, second_value])
+            else:
+                i += 1
+        
+        return tests
+
     def format_output(self) -> str:
+        """
+        Преобразует json в markdown
+        {
+            "block": {
+                "name": "code",
+                "text": "<h2>Сумма чисел</h2><p>Условие</p>",
+                "source": {
+                "test_cases": [["2 3", "5"]],
+                "templates_data": "::c\\n::header\\n...\\n::code\\n...\\n::footer\\n..."
+                }
+            },
+        }
+        в
+        ## Сумма чисел
+
+        Условие
+
+        TEST
+        2 3
+        ----
+        5
+        ====
+
+        HEADER
+        ...
+
+        FOOTER
+        ...
+
+        CODE
+        ...
+
+        Для многоязычных задач используется TEMPLATE
+
+        :return: шаг в виде строки в формате markdown
+        """
         source: dict[str, any] = self.block.get("source", {})
-        
         test_cases: list[list[str]] = source.get("test_cases", [])
+        templates_data: str = source.get("templates_data", "")
+        code: str = source.get("code", "")
         
+        if not test_cases and code:
+            test_cases = self._extract_tests_from_code(code)
+        
+        is_template = self._is_multilanguage_template(templates_data)
+
         tests_lines = []
         if test_cases:
             tests_lines.append("TEST")
             for test_input, test_output in test_cases:
                 tests_lines.extend([test_input.strip(), "----", test_output.strip(), "===="])
             tests_lines.append("")
-        
+
+        if is_template:
+            template_lines = ["TEMPLATE", templates_data.strip(), ""]
+            header_lines = []
+            code_lines = []
+            footer_lines = []
+        else:
+            template_lines = []
+            header_lines = []
+            code_lines = []
+            footer_lines = []
+            
+            if templates_data:
+                lines = templates_data.splitlines()
+                current_section = None
+                current_content = []
+                
+                for line in lines:
+                    if line.startswith("::"):
+                        if current_section and current_content:
+                            content = "\n".join(current_content).strip()
+                            if content:
+                                if current_section == "code":
+                                    code_lines = ["CODE", content, ""]
+                                elif current_section == "header":
+                                    header_lines = ["HEADER", content, ""]
+                                elif current_section == "footer":
+                                    footer_lines = ["FOOTER", content, ""]
+                        current_section = line[2:].strip()
+                        current_content = []
+                    else:
+                        current_content.append(line)
+                
+                if current_section and current_content:
+                    content = "\n".join(current_content).strip()
+                    if content:
+                        if current_section == "code":
+                            code_lines = ["CODE", content, ""]
+                        elif current_section == "header":
+                            header_lines = ["HEADER", content, ""]
+                        elif current_section == "footer":
+                            footer_lines = ["FOOTER", content, ""]
+
         result_parts: list[str] = [
             self.html_to_markdown(self.soup).strip(),
             "",
             *tests_lines,
+            *header_lines,
+            *footer_lines,
+            *code_lines,
+            *template_lines,
             "CONFIG",
             *self.dump_config(source, self.step_data)
         ]
-        
+
         return "\n".join(result_parts) + "\n"
+    
 
 class VideoDump(BaseNotImplementedExporter):
     """Заглушка для VIDEO шагов"""
