@@ -189,6 +189,36 @@ class QuizDump(BaseExporter):
         self.step_type = "QUIZ"
 
     def format_output(self) -> str:
+        """
+        Из
+        {
+          "block": {
+            "name": "choice",
+            "text": "текст условия задачи в html",
+            "source": {
+              "options": [
+                {"is_correct": true, "text": "<p>5</p>"},
+                {"is_correct": false, "text": "<p>-5</p>"},
+                {"is_correct": false, "text": "<p>0</p>"},
+                {"is_correct": false, "text": "<p>55</p>"}
+              ],
+              "is_multiple_choice": false,
+              "is_html_enabled": true
+            }
+          },
+        }
+        возвращаем в виде строки
+        текст условия задачи в html
+
+        A. 5
+        B. -5
+        C. 0
+        D. 55
+
+        ANSWER: A
+
+        :return: шаг в формате markdown
+        """
         source: dict[str, any] = self.block.get("source", {})
         options: list[dict[str, any]] = source.get("options", [])
         is_html_enabled = source.get("is_html_enabled", False)
