@@ -52,11 +52,11 @@ https://stepik.org/lesson/308224/step/9
 
 import pyparsing as pp
 from pyparsing import ParseResults
-
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
-from copy import deepcopy
+
+from src.dump import BaseExporter
 
 
 class StepString(Step):
@@ -77,10 +77,10 @@ class StepString(Step):
                     "is_text_disabled": False,
                     "is_file_disabled": True
                 },
-                "subtitles":{},
-                "tests_archive":None,
-                "feedback_correct":"",
-                "feedback_wrong":""
+                "subtitles": {},
+                "tests_archive": None,
+                "feedback_correct": "",
+                "feedback_wrong": ""
             },
             'lesson': None,
             'position': None,
@@ -103,6 +103,7 @@ class StepString(Step):
             self.config = res['config']
 
     def to_dict(self) -> dict:
+        from copy import deepcopy
         d = deepcopy(self.DEFAULT_BODY)
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
         d['stepSource']['block']['source']['pattern'] = self.answer
@@ -111,7 +112,8 @@ class StepString(Step):
                 d['stepSource']['cost'] = self.config['score']
             else:
                 option = self.config[key]
-                d['stepSource']['block']['source'][key] = ParseSchema.to_boolean(option)
+                d['stepSource']['block']['source'][key] = ParseSchema.to_boolean(
+                    option)
         return d
 
 
@@ -121,11 +123,13 @@ class ParseSchemaStepString(ParseSchema):
         """Schema 'ANSWER: регулярное выражение'
          Пробелы или переносы строк перед текстом удаляются """
         keyword = pp.Keyword('ANSWER', caseless=True)
-        answer = pp.SkipTo(pp.CaselessKeyword('ANSWER') | pp.CaselessKeyword('CONFIG') | pp.StringEnd())
-        
-        schema = pp.Suppress(pp.Combine(pp.LineStart() + keyword) + pp.oneOf([":", "="])) + \
-            pp.Optional(pp.White(' ')) + pp.Optional(pp.LineEnd()) + answer()('answer') 
-        schema.setParseAction(
+        answer = pp.SkipTo(pp.CaselessKeyword('ANSWER') |
+                           pp.CaselessKeyword('CONFIG') | pp.StringEnd())
+
+        schema = pp.Suppress(pp.Combine(pp.LineStart() + keyword) + pp.one_of([":", "="])) + \
+            pp.Optional(pp.White(' ')) + \
+            pp.Optional(pp.LineEnd()) + answer()('answer')
+        schema.set_parse_action(
             lambda t: t.answer[0])
         return schema
 
@@ -160,8 +164,8 @@ class ParseSchemaStepString(ParseSchema):
         text_part = pp.SkipTo(text_bound)
 
         text_part = pp.SkipTo(pp.CaselessKeyword('ANSWER'))('text')
-        text_part.setParseAction(lambda t: t[0].strip())
-        
+        text_part.set_parse_action(lambda t: t[0].strip())
+
         schema = text_part + sections
 
         return schema
@@ -169,10 +173,10 @@ class ParseSchemaStepString(ParseSchema):
     @classmethod
     def parse_step_string(cls, text: str) -> ParseResults:
         try:
-            res = cls.step_string().parseString(text, parse_all=True).as_dict()
+            res = cls.step_string().parse_string(text, parse_all=True).as_dict()
             if len(res['answer']) == 1:
                 res['answer'] = res['answer'][0]
-            else: # если было несколько ANSWER, создаем регулярное выражение
+            else:  # если было несколько ANSWER, создаем регулярное выражение
                 if 'config' not in res:
                     res['config'] = {}
                 res['config']['use_re'] = 'true'
@@ -180,3 +184,49 @@ class ParseSchemaStepString(ParseSchema):
             return res
         except pp.ParseException as e:
             parse_error(1, text, e.msg)
+
+
+class StringDump(BaseExporter):
+    """Обработка STRING шагов"""
+
+    def format_output(self) -> str:
+        """
+        Преобразует json в markdown
+        {
+          "block": {
+            "name": "string",
+            "text": "<h2>Регулярные выражения</h2>\n<p>Напишите север или юг</p>",
+            "source": {
+              "pattern": "север|юг",
+              "use_re": true,
+              "match_substring": false,
+              "case_sensitive": false,
+              "is_text_disabled": false,
+              "is_file_disabled": true
+            }
+          },
+        }
+        в
+        ##  Регулярные выражения
+        Напишите север или юг
+        ANSWER: север|юг
+        CONFIG
+        use_re: false
+        match_substring: false
+        case_sensitive: false
+        is_text_disabled: false
+        is_file_disabled: true
+
+        :return: текст в формате markdown
+        """
+        source: dict[str, any] = self.block.get("source", {})
+
+        result_parts: list[str] = [
+            self.html_to_markdown(self.soup).strip(),
+            "",
+            f"ANSWER: {source['pattern']}",
+            "",
+            "CONFIG",
+            *self.dump_config(source, self.step_data)
+        ]
+        return "\n".join(result_parts) + "\n"

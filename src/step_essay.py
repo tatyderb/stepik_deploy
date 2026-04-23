@@ -27,6 +27,8 @@ from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
 
+from src.dump import BaseExporter
+
 
 class StepEssay(Step):
     DEFAULT_SCORE = 1
@@ -71,7 +73,8 @@ class StepEssay(Step):
                 d['stepSource']['cost'] = self.config['score']
             else:
                 option = self.config[key]
-                d['stepSource']['block']['source'][key] = ParseSchema.to_boolean(option)
+                d['stepSource']['block']['source'][key] = ParseSchema.to_boolean(
+                    option)
         return d
 
 
@@ -96,14 +99,32 @@ class ParseSchemaStepEssay(ParseSchema):
 
         config = cls.config()('config')
         text_part = pp.SkipTo(config | pp.StringEnd())('text')
-        
-        text_part.setParseAction(lambda t: [t[0].strip()])
+
+        text_part.set_parse_action(lambda t: [t[0].strip()])
         schema = text_part + pp.Optional(config)
         return schema
 
     @classmethod
     def parse_step_essay(cls, text: str) -> ParseResults:
         try:
-            return cls.step_essay().parseString(text, parse_all=True).as_dict()
+            return cls.step_essay().parse_string(text, parse_all=True).as_dict()
         except pp.ParseException as e:
             parse_error(1, text, e.msg)
+
+
+class EssayDump(BaseExporter):
+    """Обработка шагов с открытым ответом (ESSAY)"""
+
+    def set_type(self):
+        self.step_type = "ESSAY"
+
+    def format_output(self) -> str:
+        source: dict[str, any] = self.block.get("source", {})
+
+        result_parts: list[str] = [
+            self.html_to_markdown(self.soup).strip(),
+            "",
+            "CONFIG",
+            *self.dump_config(source, self.step_data)
+        ]
+        return "\n".join(result_parts) + "\n"

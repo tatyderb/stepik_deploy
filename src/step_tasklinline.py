@@ -130,6 +130,9 @@ from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
 
+from src.dump import BaseNotImplementedExporter
+
+
 # https://stepik.org/lesson/59057/step/9
 LANG_LIMITS = {
     "all": {
@@ -520,7 +523,7 @@ class ParseSchemaStepTaskinline(ParseSchema):
         sep_output = pp.AtLineStart(pp.Word('=', min=4)) + pp.LineEnd()
         test_data = (pp.SkipTo(sep_input)('input') + pp.Suppress(sep_input) +
                      pp.SkipTo(sep_output)('output') + pp.Suppress(sep_output))
-        test_data.setParseAction(lambda t: [t.input.rstrip(), t.output.rstrip()])
+        test_data.set_parse_action(lambda t: [t.input.rstrip(), t.output.rstrip()])
         section_title = cls.section_name('TEST')
         schema = pp.Suppress(section_title) + pp.OneOrMore(test_data)
         return schema
@@ -594,15 +597,18 @@ class ParseSchemaStepTaskinline(ParseSchema):
         # это не помогло починить пропажу \n перед началом quoted:
         statement = (text_part + pp.ZeroOrMore(cls.quoted + text_part))("text")
         # без этого пропадает \n перед началом ```
-        statement.setParseAction(lambda t: '\n'.join(map(str.strip, t.as_list())))
+        statement.set_parse_action(lambda t: '\n'.join(map(str.strip, t.as_list())))
         schema = statement + pp.OneOrMore(section)
         return schema
 
     @classmethod
     def parse_step_testinline(cls, text: str) -> ParseResults:
         try:
-            return cls.step_taskinline().parseString(text).as_dict()
+            return cls.step_taskinline().parse_string(text).as_dict()
         except pp.ParseException as e:
             parse_error(1, text, e.msg)
 
 
+class CodeDump(BaseNotImplementedExporter):
+    """Заглушка для TASKINLINE шагов"""
+    pass

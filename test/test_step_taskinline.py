@@ -84,16 +84,16 @@ expected_res3 = {'text': 'Даны два целых числа на одной 
                  'template': expected_template_text.rstrip()
                  }
 def test_step_inline_simple():
-    res = ParseSchemaStepTaskinline.step_taskinline().parseString(text1).as_dict()
+    res = ParseSchemaStepTaskinline.step_taskinline().parse_string(text1).as_dict()
     print(f'\nParseSchemaStepTaskinline.step_taskinline: \n{res=}')
     assert expected_res1 == res
 
-    res = ParseSchemaStepTaskinline.step_taskinline().parseString(text1 + text2).as_dict()
+    res = ParseSchemaStepTaskinline.step_taskinline().parse_string(text1 + text2).as_dict()
     print(f'\nParseSchemaStepTaskinline.step_taskinline: \n{res=}')
 
     assert expected_res2 == res
 
-    res = ParseSchemaStepTaskinline.step_taskinline().parseString(text1 + text3).as_dict()
+    res = ParseSchemaStepTaskinline.step_taskinline().parse_string(text1 + text3).as_dict()
     print(f'\nParseSchemaStepTaskinline.step_taskinline: \n{res=}')
 
     assert expected_res3 == res

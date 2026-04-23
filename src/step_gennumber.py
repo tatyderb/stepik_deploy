@@ -48,7 +48,8 @@ from pyparsing import ParseResults
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
-from copy import deepcopy
+
+from src.dump import BaseNotImplementedExporter
 
 
 class StepGennumber(Step):
@@ -59,11 +60,11 @@ class StepGennumber(Step):
                 'text': '',
                 'name': 'random-tasks',
                 'source': {
-                    'task': '', # текст задания
-                    'solve': '', # формула решения
-                    'max_error': '', # допустимая ошибка
-                    'ranges': [], # список используемых переменных с их диапазоном
-                    'combinations': 1 # число комбинаций
+                    'task': '',  # текст задания
+                    'solve': '',  # формула решения
+                    'max_error': '',  # допустимая ошибка
+                    'ranges': [],  # список используемых переменных с их диапазоном
+                    'combinations': 1  # число комбинаций
                 }
             },
             'lesson': None,
@@ -71,7 +72,7 @@ class StepGennumber(Step):
             'cost': DEFAULT_SCORE
         }
     }
-    DEFAULT_RANGE = { # составная часть 'ranges' из DEFAULT_BODY, описание переменных
+    DEFAULT_RANGE = {  # составная часть 'ranges' из DEFAULT_BODY, описание переменных
         'variable': '',
         'num_from': '',
         'num_to': '',
@@ -87,7 +88,8 @@ class StepGennumber(Step):
         print(f'StepGennumber.parse: {res=}')
 
         self.task = res['task']
-        self.solve, self.max_error = self._extract_solve_and_max_error(res['answer'])
+        self.solve, self.max_error = self._extract_solve_and_max_error(
+            res['answer'])
         self.ranges = res['ranges']
 
         self.config = {}
@@ -106,19 +108,19 @@ class StepGennumber(Step):
         if (len(parts) == 2):
             try:
                 return parts[0].strip(), float(parts[1])
-            except ValueError: # считает +- вычитанием в ответе
+            except ValueError:  # считает +- вычитанием в ответе
                 return answer.strip(), 0
         else:
             return answer.strip(), 0
 
     def to_dict(self) -> dict:
+        from copy import deepcopy
         d = deepcopy(self.DEFAULT_BODY)
-        d['stepSource']['block']['source']['task'] = self.task # markdown_to_html добавляет теги, которые этот тип задания не воспринимает
-        
-        
+        # markdown_to_html добавляет теги, которые этот тип задания не воспринимает
+        d['stepSource']['block']['source']['task'] = self.task
+
         d['stepSource']['block']['source']['solve'] = self.solve
         d['stepSource']['block']['source']['max_error'] = str(self.max_error)
-
 
         for var_range in self.ranges:
             r = deepcopy(self.DEFAULT_RANGE)
@@ -126,29 +128,30 @@ class StepGennumber(Step):
 
             # обработка содержимого 'range': [1, 20, 1]
 
-            if len(var_range['range']) == 1: # range(stop)
+            if len(var_range['range']) == 1:  # range(stop)
                 r['num_from'] = 0
                 r['num_to'] = var_range['range'][0]
                 r['num_step'] = 1
-            elif len(var_range['range']) == 2: # range(start, stop)
+            elif len(var_range['range']) == 2:  # range(start, stop)
                 r['num_from'] = var_range['range'][0]
                 r['num_to'] = var_range['range'][1]
                 r['num_step'] = 1
-            else: # range(start, stop, step)
+            else:  # range(start, stop, step)
                 r['num_from'] = var_range['range'][0]
                 r['num_to'] = var_range['range'][1]
                 r['num_step'] = var_range['range'][2]
 
-            d['stepSource']['block']['source']['combinations'] *= (r['num_to'] - r['num_from']) // r['num_step']
-            
+            d['stepSource']['block']['source']['combinations'] *= (
+                r['num_to'] - r['num_from']) // r['num_step']
+
             r['num_from'] = str(r['num_from'])
             r['num_to'] = str(r['num_to'])
             r['num_step'] = str(r['num_step'])
 
             d['stepSource']['block']['source']['ranges'].append(r)
-            
-        d['stepSource']['block']['source']['combinations'] = str(d['stepSource']['block']['source']['combinations'])
 
+        d['stepSource']['block']['source']['combinations'] = str(
+            d['stepSource']['block']['source']['combinations'])
 
         for key in self.config:
             if key == 'score':
@@ -158,8 +161,8 @@ class StepGennumber(Step):
                 option = self.config[key]
                 d['stepSource']['block']['source']['options'][key] = ParseSchema.to_boolean(
                     option)
-                
-        print(f"{d = }")
+
+        print(f"{d=}")
         return d
 
 
@@ -208,15 +211,14 @@ class ParseSchemaStepGennumber(ParseSchema):
         var_section_keyword = pp.LineStart() + "VAR"
 
         var_row = pp.Group(
-             # stepik допускает любые комбинации из английских букв, цифр и _
-             # (даже 4y_5 в качестве переменной)
+            # stepik допускает любые комбинации из английских букв, цифр и _
+            # (даже 4y_5 в качестве переменной)
             pp.Word(pp.alphanums + "_")('var')
             + pp.Suppress("(")
             + pp.Group(pp.DelimitedList(cls.number))('range')
             + pp.Suppress(")")
         )
         var_rows = var_section_keyword + pp.OneOrMore(var_row)('ranges')
-
 
         # БЛОК ANSWER
         answer_section_keyword = pp.LineStart() + "ANSWER"
@@ -228,7 +230,7 @@ class ParseSchemaStepGennumber(ParseSchema):
 
         text_bound = cls.quoted() | sections
         task = pp.SkipTo(text_bound)("task")
-        
+
         schema = task + sections
         return schema
 
@@ -241,22 +243,6 @@ class ParseSchemaStepGennumber(ParseSchema):
             parse_error(1, text, e.msg)
 
 
-text = r'''
-В саду цветут яблони и груши.
-Пчела опылила \x цветочков, а шмель \y.
-Сколько цветочков они опылили вместе?
-
-ANSWER 
-x+y
-
-VAR
-x (1, 20, 1)
-y (1, 15, 1)
-
-CONFIG
-score: 2
-'''
-if __name__ == "__main__":
-    import pprint
-    res = ParseSchemaStepGennumber.parse_step_gennumber(text)
-    pprint.pprint(res)
+class GennumberDump(BaseNotImplementedExporter):
+    """Заглушка для Gennumber шагов"""
+    pass

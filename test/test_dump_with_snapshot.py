@@ -2,6 +2,9 @@
 Тесты для проверки цикла markdown -> Stepik -> markdown с использованием снапшотов.
 """
 
+from src.verification.snapshops_manager import Verbose
+from src.verification.dump_manager import verify_dump
+import pytest
 import sys
 from pathlib import Path
 
@@ -10,10 +13,6 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-import pytest
-
-from src.verification.dump_manager import verify_dump
-from src.verification.snapshops_manager import Verbose
 
 base_dir = Path(__file__).parent.parent.resolve()
 markdown_dir = base_dir / "examples"
@@ -24,14 +23,14 @@ markdown_dir = base_dir / "examples"
     [
         "step_first.md",
         "step_second.md",
-        #"step1_markdown.md",
-        #"step2_quiz.md",
-        #"step2_sort.md",
-        #"step2_table.md",
-        #"step3_essay.md",
-        #"step3_number.md",
-        #"step3_string.md",
-        #"step4_taskinline.md",
+        # "step1_markdown.md",
+        # "step2_quiz.md",
+        # "step2_sort.md",
+        # "step2_table.md",
+        # "step3_essay.md",
+        # "step3_number.md",
+        # "step3_string.md",
+        # "step4_taskinline.md",
     ],
 )
 def test_dump_verification(markdown_filename):

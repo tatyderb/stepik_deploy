@@ -33,7 +33,7 @@ from src.step_number import ParseSchemaStepNumber
     ('ANSWER: 123.14 +-0.002', {'answer': 123.14, 'accuracy': 0.002}),
 ])
 def test_answer(text, expected_dict):
-    res = ParseSchemaStepNumber.answer().parseString(text)
+    res = ParseSchemaStepNumber.answer().parse_string(text)
     print(f'{res=}')
 
 text1 = '''

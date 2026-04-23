@@ -51,7 +51,8 @@ from pyparsing import ParseResults
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
-from copy import deepcopy
+
+from src.dump import BaseNotImplementedExporter
 
 
 class StepTable(Step):
@@ -95,11 +96,13 @@ class StepTable(Step):
             self.config = res['config']
 
     def to_dict(self) -> dict:
+        from copy import deepcopy
         d = deepcopy(self.DEFAULT_BODY)
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
 
         # обработка строк таблицы
-        d['stepSource']['block']['source']['description'] = markdown_to_html(self.table_rows[0][0])
+        d['stepSource']['block']['source']['description'] = markdown_to_html(
+            self.table_rows[0][0])
         columns_data = []
         for column_name in self.table_rows[0][1:]:
             column_dict = {
@@ -163,7 +166,7 @@ class ParseSchemaStepTable(ParseSchema):
     def step_table(cls) -> pp.ParserElement:
 
         keyword = pp.LineStart() + "TABLE"
-        
+
         table_row = pp.Group(
             pp.Suppress("|")
             + pp.DelimitedList(pp.CharsNotIn("|\n").set_parse_action(lambda t: t[0].strip()), delim="|")
@@ -181,7 +184,6 @@ class ParseSchemaStepTable(ParseSchema):
             lambda toks: ''.join(toks)
         )("text")
 
-        
         schema = statement + sections
         return schema
 
@@ -191,3 +193,8 @@ class ParseSchemaStepTable(ParseSchema):
             return cls.step_table().parse_string(text).as_dict()
         except pp.ParseException as e:
             parse_error(1, text, e.msg)
+
+
+class TableDump(BaseNotImplementedExporter):
+    """Заглушка для TABLE шагов"""
+    pass

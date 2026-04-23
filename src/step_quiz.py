@@ -60,6 +60,8 @@ from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
 
+from src.dump import BaseNotImplementedExporter
+
 
 class StepQuiz(Step):
     DEFAULT_SCORE = 2
@@ -98,7 +100,8 @@ class StepQuiz(Step):
         # print(f'StepQuiz.parse: {res=}')
 
         self.options = [
-            {'is_correct': d['letter'] in res['answer'], 'text': markdown_to_html(d['text']), 'feedback': ''}
+            {'is_correct': d['letter'] in res['answer'],
+                'text': markdown_to_html(d['text']), 'feedback': ''}
             for d in res['variants']
         ]
         self.is_multiple_choice = len(res['answer']) > 1
@@ -115,11 +118,13 @@ class StepQuiz(Step):
         d['stepSource']['block']['source']['options'] = self.options
         d['stepSource']['block']['source']['sample_size'] = len(self.options)
         d['stepSource']['block']['source']['is_multiple_choice'] = self.is_multiple_choice
-        d['stepSource']['block']['source']['preserve_order'] = bool(self.config.get('shuffle', False))
+        d['stepSource']['block']['source']['preserve_order'] = bool(
+            self.config.get('shuffle', False))
 
         d['stepSource']['score'] = self.config.get('score', self.DEFAULT_SCORE)
 
         return d
+
 
 class ParseSchemaStepQuiz(ParseSchema):
     @classmethod
@@ -128,8 +133,9 @@ class ParseSchemaStepQuiz(ParseSchema):
         keyword = pp.Keyword('ANSWER', caseless=True)
         letter = pp.Word(pp.alphas, exact=1)
         letters = (letter + pp.ZeroOrMore(pp.Suppress(',') + letter))('letters')
-        schema = pp.Suppress(pp.Combine(pp.LineStart() + keyword) + ':') + letters
-        schema.setParseAction(lambda t: t.letters)
+        schema = pp.Suppress(pp.Combine(
+            pp.LineStart() + keyword) + ':') + letters
+        schema.set_parse_action(lambda t: t.letters)
         return schema
 
     @classmethod
@@ -155,10 +161,11 @@ class ParseSchemaStepQuiz(ParseSchema):
 
         # A. variant1
         letter = pp.Word(pp.alphas, exact=1)
-        variant_letter = pp.Combine(pp.LineStart() + letter + pp.Suppress('.'))('letter')
+        variant_letter = pp.Combine(
+            pp.LineStart() + letter + pp.Suppress('.'))('letter')
         variant_text = pp.SkipTo(variant_letter | answer | config)('text')
         variant = variant_letter + variant_text
-        variant.setParseAction(lambda t: {'letter': t.letter, 'text': t.text})
+        variant.set_parse_action(lambda t: {'letter': t.letter, 'text': t.text})
 
         # условие - все до первого варианта ответа
         text_bound = cls.quoted() | variant
@@ -166,14 +173,20 @@ class ParseSchemaStepQuiz(ParseSchema):
         # это не помогло починить пропажу \n перед началом quoted:
         statement = (text_part + pp.ZeroOrMore(cls.quoted + text_part))("text")
         # без этого пропадает \n перед началом ```
-        statement.setParseAction(lambda t: '\n'.join(map(str.strip, t.as_list())))
-        schema = statement + pp.OneOrMore(variant)('variants') + answer + pp.Opt(config)
+        statement.set_parse_action(
+            lambda t: '\n'.join(map(str.strip, t.as_list())))
+        schema = statement + \
+            pp.OneOrMore(variant)('variants') + answer + pp.Opt(config)
         return schema
 
     @classmethod
     def parse_step_quiz(cls, text: str) -> ParseResults:
         try:
-            return cls.step_quiz().parseString(text).as_dict()
+            return cls.step_quiz().parse_string(text).as_dict()
         except pp.ParseException as e:
             parse_error(1, text, e.msg)
 
+
+class QuizDump(BaseNotImplementedExporter):
+    """Заглушка для QUIZ шагов"""
+    pass

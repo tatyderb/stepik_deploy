@@ -47,7 +47,7 @@ step3 = '''
 
 def test_split_document():
 
-    # res = ParseSchema.document().parseString(text)
+    # res = ParseSchema.document().parse_string(text)
     res = ParseSchema.parse_document(lesson_text)
     # print(f'\n{res=}')
     # for item in res:
@@ -74,7 +74,7 @@ def test_parse_lesson(text, expected_dict):
 def test_quoted_into_text():
     # pp.Quoted нормально вычленяет вставки
     quoted = ParseSchema.quoted
-    res = quoted().parseString( """```закавыченный 
+    res = quoted().parse_string( """```закавыченный 
     текст```""")
     # print(res.dump())
     assert res.as_list() == ['```закавыченный \n    текст```']
@@ -87,7 +87,7 @@ def test_quoted_into_text():
     # text_bound = quoted | h2_header | pp.stringEnd
     # text_part = pp.SkipTo(text_bound)
     # text = (text_part + pp.ZeroOrMore(quoted + text_part))("text")
-    # text.setParseAction(lambda t: ''.join(t.text))
+    # text.set_parse_action(lambda t: ''.join(t.text))
 #
 #     s = """до кавычек
 # ```
@@ -96,7 +96,7 @@ def test_quoted_into_text():
 # ```
 # после
 # """
-#     res = text.parseString(s)
+#     res = text.parse_string(s)
 #     print(res.dump())
 
     input = """# урок с кавычками

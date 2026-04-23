@@ -36,7 +36,8 @@ from pyparsing import ParseResults
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
-from copy import deepcopy
+
+from src.dump import BaseNotImplementedExporter
 
 
 class StepSort(Step):
@@ -72,6 +73,7 @@ class StepSort(Step):
             self.config = res['config']
 
     def to_dict(self) -> dict:
+        from copy import deepcopy
         d = deepcopy(self.DEFAULT_BODY)
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
         d['stepSource']['block']['source']['options'] = self.options
@@ -80,7 +82,8 @@ class StepSort(Step):
                 d['stepSource']['cost'] = self.config['score']
             else:
                 option = self.config[key]
-                d['stepSource']['block']['source'][key] = ParseSchema.to_boolean(option)
+                d['stepSource']['block']['source'][key] = ParseSchema.to_boolean(
+                    option)
         return d
 
 
@@ -102,22 +105,32 @@ class ParseSchemaStepSort(ParseSchema):
         config = cls.config()('config')
 
         keyword = pp.LineStart() + "SORT"
-        description = pp.SkipTo(keyword).setParseAction(lambda t: t[0].strip())("text")
+        description = pp.SkipTo(keyword).set_parse_action(
+            lambda t: t[0].strip())("text")
 
-        separator = pp.AtLineStart(pp.Word('=', min=4)) + pp.LineEnd().suppress()
+        separator = pp.AtLineStart(
+            pp.Word('=', min=4)) + pp.LineEnd().suppress()
 
-        option_text = pp.SkipTo(separator).setParseAction(lambda t: t[0].strip()) + pp.Optional(pp.LineEnd().suppress())
-        option = option_text.setParseAction(lambda t: {"text": t[0]})
+        option_text = pp.SkipTo(separator).set_parse_action(
+            lambda t: t[0].strip()) + pp.Optional(pp.LineEnd().suppress())
+        option = option_text.set_parse_action(lambda t: {"text": t[0]})
 
-        options = pp.delimitedList(option, delim=separator, allow_trailing_delim=True)("options")
+        options = pp.DelimitedList(
+            option, delim=separator, allow_trailing_delim=True)("options")
 
-        schema = pp.Optional(description) + keyword + options + pp.Optional(config)
+        schema = pp.Optional(description) + keyword + \
+            options + pp.Optional(config)
 
         return schema
 
     @classmethod
     def parse_step_sort(cls, text: str) -> ParseResults:
         try:
-            return cls.step_sort().parseString(text).as_dict()
+            return cls.step_sort().parse_string(text).as_dict()
         except pp.ParseException as e:
             parse_error(1, text, e.msg)
+
+
+class SortDump(BaseNotImplementedExporter):
+    """Заглушка для SORT шагов"""
+    pass

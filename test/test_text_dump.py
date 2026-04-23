@@ -3,14 +3,12 @@ import pytest
 import markdown
 from bs4 import BeautifulSoup
 
-from dump import (
+from dump_deploy import (
     dump_lesson,
-    get_exporter,
-    TextDump,
     generate_lesson_header,
     get_lesson_info,
-    BaseExporter,
 )
+from src.dump import BaseExporter, TextDump
 
 pytestmark = pytest.mark.step_begin("---1234")
 
@@ -220,17 +218,16 @@ def test_generate_lesson_header():
 def test_get_exporter_for_text():
     """Проверка получения экспортера для текстового шага"""
     step_data = {'block': {'name': 'text'}}
-    exporter = get_exporter(step_data, 1)
+    exporter = BaseExporter.get_exporter(step_data, 1)
     assert isinstance(exporter, TextDump)
     assert exporter.position == 1
 
 
 def test_get_exporter_for_unknown():
     """Проверка получения экспортера для неизвестного типа"""
-    from dump import get_exporter, TextDump
     
     step_data = {'block': {'name': 'unknown'}}
-    exporter = get_exporter(step_data, 1)
+    exporter = BaseExporter.get_exporter(step_data, 1)
     assert isinstance(exporter, TextDump)
     assert exporter.position == 1
 

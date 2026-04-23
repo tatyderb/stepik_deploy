@@ -63,7 +63,8 @@ import pyparsing as pp
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
-from copy import deepcopy
+
+from src.dump import BaseNotImplementedExporter
 
 
 class StepSpace(Step):
@@ -103,7 +104,6 @@ class StepSpace(Step):
         "is_correct": False
     }
 
-
     def __init__(self, header: str = '', skip: bool = False):
         super().__init__(header=header, skip=skip)
 
@@ -112,7 +112,7 @@ class StepSpace(Step):
         res = ParseSchemaStepSpace.parse_step_space(text)
         print(f'StepSpace.parse: {res=}')
 
-        self.text = self.h2() 
+        self.text = self.h2()
 
         # res состоит из списка с text/input/select и словаря с настройками в конце (опционально)
         if res and isinstance(res[-1], dict):
@@ -124,9 +124,10 @@ class StepSpace(Step):
             self.space_or_text = res
 
     def to_dict(self) -> dict:
+        from copy import deepcopy
         d = deepcopy(self.DEFAULT_BODY)
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
-        
+
         components = []
         for item in self.space_or_text:
             if isinstance(item, str):
@@ -137,31 +138,30 @@ class StepSpace(Step):
                 component["text"] = item.replace("\n", "<br>")
 
                 components.append(component)
-                
+
             elif isinstance(item, list):
                 component = deepcopy(self.DEFAULT_COMPONENT_INPUT_SELECT)
-                 
+
                 options_list = []
                 for option in item:
                     # опции парсятся в следующем формате:
                     # ['Пётр I'] правильный вариант
                     # ['*', 'Николай II'] неправильный
-                    
+
                     option_template = deepcopy(self.DEFAULT_OPTION)
                     option_template["text"] = option[-1]
                     option_template["is_correct"] = len(option) == 1
                     options_list.append(option_template)
-                    
 
                 # Если все опции верные, то определяем тип как input (без выпадающего списка)
                 # Иначе выпадающий список select
-                component["type"] = "input" if all(opt["is_correct"] for opt in options_list) else "select"
+                component["type"] = "input" if all(
+                    opt["is_correct"] for opt in options_list) else "select"
                 component["options"] = options_list
 
                 components.append(component)
-    
-        d['stepSource']['block']['source']['components'] = components
 
+        d['stepSource']['block']['source']['components'] = components
 
         for key in self.config:
             if key == 'score':
@@ -200,23 +200,22 @@ class ParseSchemaStepSpace(ParseSchema):
         error_marker = pp.Literal("*")
         option_text = pp.Regex(r'(?:[^\]\\]|\\.)+')
 
-        empty_text = pp.Empty().setParseAction(lambda: "")
-        option_text.setParseAction(
+        empty_text = pp.Empty().set_parse_action(lambda: "")
+        option_text.set_parse_action(
             lambda t: [t[0].replace('\]', ']', -1)]
         )
         option_text_or_empty = option_text ^ empty_text
 
-
         answer_option = pp.Group(
             (pp.Optional(error_marker)("marker") +
-            pp.Suppress(pp.Literal("[")) + 
-            option_text_or_empty("text") + 
-            pp.Suppress(pp.Literal("]")))
+             pp.Suppress(pp.Literal("[")) +
+             option_text_or_empty("text") +
+             pp.Suppress(pp.Literal("]")))
         )
 
         answer_list = pp.Group(
-            pp.Suppress(pp.Literal("<")) + 
-            pp.DelimitedList(answer_option) + 
+            pp.Suppress(pp.Literal("<")) +
+            pp.DelimitedList(answer_option) +
             pp.Suppress(pp.Literal(">"))
         )
 
@@ -224,10 +223,10 @@ class ParseSchemaStepSpace(ParseSchema):
         sections = answer_list & pp.Optional(config)
         text_bound = cls.quoted() | sections
         text_part = pp.SkipTo(text_bound)
-        
 
         schema = pp.ZeroOrMore(answer_list("SPACE") ^ text_part("TEXT")) \
-            + pp.Optional(pp.SkipTo(config | pp.StringEnd()))("TEXT") + pp.Optional(config)
+            + pp.Optional(pp.SkipTo(config | pp.StringEnd())
+                          )("TEXT") + pp.Optional(config)
 
         return schema
 
@@ -237,3 +236,8 @@ class ParseSchemaStepSpace(ParseSchema):
             return cls.step_space().parse_string(text, parse_all=True).as_list()
         except pp.ParseException as e:
             parse_error(1, text, e.msg)
+
+
+class SpaceDump(BaseNotImplementedExporter):
+    """Заглушка для SPACE шагов"""
+    pass

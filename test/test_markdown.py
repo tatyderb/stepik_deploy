@@ -10,7 +10,7 @@ def md_file():
 
 def test_common_number():
     text = '-12.34'
-    res = ParseSchema.number.parseString(text)
+    res = ParseSchema.number.parse_string(text)
     print(f'{res=}')
     assert res.as_list()[0] == -12.34
 
@@ -61,7 +61,7 @@ def test_wrong_var_parsing(text, error_message):
     (' \n', '', '', ''),
 ])
 def test_h2_schema(text, step_type, skip, header):
-    res = ParseSchema.step_header().parseString(text)
+    res = ParseSchema.step_header().parse_string(text)
     # print(text)
     # print(f'{res=}, {res.step_type=}, {res.skip=}, {res.header=}')
     assert res.type == step_type
@@ -84,7 +84,7 @@ def test_parse_step_header(text, ok, step_type, skip, header):
 
 # def test_config():
 #     text = 'CONFIG\nscore: 10\nshuffle: true\n'
-#     res = ParseSchema.config().parseString(text)
+#     res = ParseSchema.config().parse_string(text)
 #     print(f'\n{res=}')
 #     assert {'config': {'score': '10', 'shuffle': 'true'}} == res
 

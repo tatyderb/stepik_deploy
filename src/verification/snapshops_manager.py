@@ -34,17 +34,20 @@ from src.settings import settings
 from src.step import Step
 from src.stepik_api import StepikSession
 from src.utils import truncate, DEFAULT_MAX_LEN, context_diff_files
-import dump
+import dump_deploy as dump
 
 
 class CompareError(Exception):
     pass
 
 # Статусы
+
+
 class StatusLesson(StrEnum):
     PASSED = "✅ "
     FAILED = "❌ "
     IN_PROGRESS = "In progress"
+
 
 class StatusStep(StrEnum):
     PASSED = "✅ "
@@ -57,16 +60,20 @@ class StatusStep(StrEnum):
 class Verbose(IntEnum):
     ERROR = auto()          # только сообщения об ошибках (в норме ничего)
     SUMMARY = auto()        # только информация pass/fail об уроке
-    LESSON = auto()         # урок - количество шагов, из них .. pass, .. fail, .. skip.
-    STEP = auto()           # по каждому шагу - pass, fail, skip, расхождение количества шагов, неожиданный skip
+    # урок - количество шагов, из них .. pass, .. fail, .. skip.
+    LESSON = auto()
+    # по каждому шагу - pass, fail, skip, расхождение количества шагов, неожиданный skip
+    STEP = auto()
     DEBUG = auto()          # разница в полях dict шагов
-    DUMP = auto()           # не обрезаем строки, в которых найдено различие, ставит SnapshotManager.truncate = False
+    # не обрезаем строки, в которых найдено различие, ставит SnapshotManager.truncate = False
+    DUMP = auto()
 
 
 class SnapshotAction(Enum):
     CREATE = auto()         # создание снапшота
     CHECK_MD2JSON = auto()  # проверка процесса "деплоя" - перевода из markdown в json
     CHECK_JSON2MD = auto()  # проверка процесса "дампа" - перевода из json в markdown
+
 
 class SnapshotManager:
     LINE_LESSON_SEPARATOR = "=" * (DEFAULT_MAX_LEN // 2)
@@ -76,7 +83,8 @@ class SnapshotManager:
     BASE_DIR = Path(__file__).parent.parent.parent.resolve()
     SNAPSHOTS_DIR = BASE_DIR / "src/verification/snapshots"
     SNAPSHOT_EXTENSION = ".json"
-    MARKDOWN_TMP_DIR = BASE_DIR / "src/verification/tmp_markdown"  # src/verification/tmp_markdown
+    # src/verification/tmp_markdown
+    MARKDOWN_TMP_DIR = BASE_DIR / "src/verification/tmp_markdown"
     MAX_TEXT_LINES_PREVIEW = 3
     SNAPSHOT_ACTION = "Используйте опцию -u для создания снапшота .json"
     DUMP_ACTION = "Используйте опцию -U для создания эталонного дамп файла .dump.md"
@@ -190,7 +198,8 @@ class SnapshotManager:
         markdown_length = len(markdown_steps)
         snapshot_steps = expected_lesson["steps"]
         snapshot_length = len(snapshot_steps)
-        step_position = result_lesson.make_position_positive(step_position=step_position)
+        step_position = result_lesson.make_position_positive(
+            step_position=step_position)
 
         self.trace(Verbose.LESSON,
                    self.LINE_LESSON_SEPARATOR + '\n',
@@ -281,7 +290,7 @@ class SnapshotManager:
             return StatusLesson.FAILED
 
     @staticmethod
-    def create_dump(src_path: str | Path, dst_path: str | Path, deploy: bool = False, new_step_begin: str | None = None) :
+    def create_dump(src_path: str | Path, dst_path: str | Path, deploy: bool = False, new_step_begin: str | None = None):
         """Из src_path в формате markdown делает dst_path в формате markdown с разделителем шагов new_step_begin.
         Это нужно, потому что степик режет часть информации (например, ширину колонок в таблице).
         Если deploy=True, то src_path деплоится на степик, иначе из файла берется lesson_id и делается дамп этого урока.
@@ -309,7 +318,6 @@ class SnapshotManager:
         dump.dump_lesson(lesson_id=lesson_id, filename=dst_path)
         settings.STEP_BEGIN = old_step_begin
 
-
     def check_pulled_lesson_dump(self, markdown_filename: str | Path, step_position: int = 0) -> StatusLesson:
         """Проверяет урок из файла markdown_filename,
         * оттуда берем его lesson_id
@@ -334,10 +342,12 @@ class SnapshotManager:
             lesson_id = lesson.lesson_id
 
             # 2. Делаем дамп этого урока
-            dump.dump_lesson(lesson_id=lesson_id, filename=result_markdown_path)
+            dump.dump_lesson(lesson_id=lesson_id,
+                             filename=result_markdown_path)
 
             # 3. diff reference_markdown_path result_markdown_path
-            diff_text = context_diff_files(reference_markdown_path, result_markdown_path, context_line_number=0)
+            diff_text = context_diff_files(
+                reference_markdown_path, result_markdown_path, context_line_number=0)
             if diff_text:
                 self.trace(Verbose.LESSON, "DIFF: ")
                 self.trace(Verbose.LESSON, diff_text)
@@ -357,7 +367,6 @@ class SnapshotManager:
             self.trace(Verbose.ERROR, str(e))
             self.trace(Verbose.ERROR, self.DUMP_ACTION)
             return StatusLesson.FAILED
-
 
     def compare_step(self, position: int, markdown_step: Step, snapshot_step: dict) -> StatusStep:
         """Сравнивает содержимое markdown_step.to_dict() и snapshot_step.
@@ -391,7 +400,8 @@ class SnapshotManager:
 
         # трассировка внутри сравнения
         msg = ""
-        compare_result = self.compare_dict_as_json(snapshot_data, markdown_data)
+        compare_result = self.compare_dict_as_json(
+            snapshot_data, markdown_data)
         match compare_result:
             case StatusStep.PASSED:
                 msg = f"\t{StatusStep.PASSED} Шаг {position}: ok"
@@ -403,7 +413,6 @@ class SnapshotManager:
         self.trace(Verbose.STEP, msg)
         return compare_result
 
-
     def compare_dict_as_json(self, markdown_dict: dict, snapshot_dict: dict) -> StatusStep:
         """Сравниваем словари рекурсивно до первой разницы или до конца, если разницы нет.
         Возвращает True, если словари одинаковые."""
@@ -411,19 +420,23 @@ class SnapshotManager:
         # отступ при печати трассировки
         indent = '\t\t'
 
-        md_json = json.dumps(markdown_dict, indent=2, ensure_ascii=False, sort_keys=True).splitlines()
-        sn_json = json.dumps(snapshot_dict, indent=2, ensure_ascii=False, sort_keys=True).splitlines()
+        md_json = json.dumps(markdown_dict, indent=2,
+                             ensure_ascii=False, sort_keys=True).splitlines()
+        sn_json = json.dumps(snapshot_dict, indent=2,
+                             ensure_ascii=False, sort_keys=True).splitlines()
         self.trace(Verbose.DEBUG, self.LINE_INTERSTEP_SEPARATOR)
         for md_line, sn_line in zip(md_json, sn_json):
             if md_line == sn_line:
-                self.trace(Verbose.DEBUG, truncate(indent + md_line, ignore=self.truncate))
+                self.trace(Verbose.DEBUG, truncate(
+                    indent + md_line, ignore=self.truncate))
             else:
-                self.trace(Verbose.DEBUG, truncate(indent + StatusStep.ADD +    " markdown: "+ md_line, ignore=self.truncate))
-                self.trace(Verbose.DEBUG, truncate(indent + StatusStep.REMOVE + " snapshot: "+ sn_line, ignore=self.truncate))
+                self.trace(Verbose.DEBUG, truncate(
+                    indent + StatusStep.ADD + " markdown: " + md_line, ignore=self.truncate))
+                self.trace(Verbose.DEBUG, truncate(
+                    indent + StatusStep.REMOVE + " snapshot: " + sn_line, ignore=self.truncate))
                 return StatusStep.FAILED
 
         return StatusStep.PASSED
-
 
     @staticmethod
     def total_results(step_results: list[StatusStep]) -> dict:
@@ -453,13 +466,13 @@ class SnapshotManager:
         self.trace(Verbose.SUMMARY,
                    self.LINE_STEP_SEPARATOR,
                    f"{result['status']}  Урок DEPLOY: {filename}",
-                    f"\tВсего шагов: {result['steps_verified']}, из них",
-                    f"\tPASS: {result[StatusStep.PASSED]}",
-                    f"\tFAIL: {result[StatusStep.FAILED]}",
-                    f"\tSKIP: {result[StatusStep.SKIP]}",
+                   f"\tВсего шагов: {result['steps_verified']}, из них",
+                   f"\tPASS: {result[StatusStep.PASSED]}",
+                   f"\tFAIL: {result[StatusStep.FAILED]}",
+                   f"\tSKIP: {result[StatusStep.SKIP]}",
                    sep='\n',
                    end='\n'
-                )
+                   )
 
     @classmethod
     def md_tmp_dump_path(cls, path: str | Path) -> (Path, Path):
@@ -493,6 +506,7 @@ step - разница в шагах;
 debug - подробная разница содержимого шага, до первого различия.
 '''
 
+
 @click.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('filename', type=click.Path(exists=True), required=True)
 @click.option('-s', '--step', type=int, default=0, metavar='STEP',
@@ -502,10 +516,11 @@ debug - подробная разница содержимого шага, до 
 @click.option('-U', '--update_dump', is_flag=True, help='Обновить/создать образец дампа урока')
 @click.option('--dump', is_flag=True, help='Проверять дампа урока')
 @click.option('-v', '--verbose',
-              type=click.Choice(list(Verbose.__members__), case_sensitive=False),
+              type=click.Choice(list(Verbose.__members__),
+                                case_sensitive=False),
               default='summary',
               help=verbose_help
-)
+              )
 @click.help_option('-h', '--help', help='Показать эту справку и выйти')
 def main(filename: str, step: int, update: bool, update_dump: bool, dump: bool, verbose: str):
     """Менеджер снапшотов для верификации уроков Stepik"""
@@ -523,7 +538,8 @@ def main(filename: str, step: int, update: bool, update_dump: bool, dump: bool, 
             click.echo(result)
         if update_dump:
             md_dump_path = manager.md_dump_path(filename)
-            manager.create_dump(src_path=filename, dst_path=md_dump_path, new_step_begin='---1234')
+            manager.create_dump(
+                src_path=filename, dst_path=md_dump_path, new_step_begin='---1234')
 
         if dump:
             # проверка дампа урока по эталонному дампу
@@ -531,19 +547,22 @@ def main(filename: str, step: int, update: bool, update_dump: bool, dump: bool, 
             settings.STEP_BEGIN = '---1234'
             # по lesson_id из исходного markdown_filename делаем dump урока во временную директорию
             # и сравниваем с эталонным дампом
-            manager.check_pulled_lesson_dump(markdown_filename=filename, step_position=step)
+            manager.check_pulled_lesson_dump(
+                markdown_filename=filename, step_position=step)
 
         else:
             # TODO: тут должно быть запомнить старое значение и после проверок его восстановить, но зачем?
             settings.STEP_BEGIN = settings.LEGACY_STEP_BEGIN
             # проверяет исходный markdown файл и его преобразование в json, сравнивает с эталонным снапшотом
-            manager.check_lesson(markdown_filename=filename, step_position=step)
+            manager.check_lesson(
+                markdown_filename=filename, step_position=step)
 
     except Exception as e:
         click.echo(f"Ошибка: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

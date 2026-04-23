@@ -42,7 +42,8 @@ from pyparsing import ParseResults
 from src.markdown_parsing import ParseSchema, parse_error
 from src.step import Step
 from src.utils import markdown_to_html
-from copy import deepcopy
+
+from src.dump import BaseNotImplementedExporter
 
 
 class StepMatch(Step):
@@ -81,6 +82,7 @@ class StepMatch(Step):
             self.config = res['config']
 
     def to_dict(self) -> dict:
+        from copy import deepcopy
         d = deepcopy(self.DEFAULT_BODY)
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
         d['stepSource']['block']['source']['pairs'] = self.pairs
@@ -167,3 +169,8 @@ class ParseSchemaStepMatch(ParseSchema):
             return cls.step_match().parse_string(text).as_dict()
         except pp.ParseException as e:
             parse_error(1, text, e.msg)
+
+
+class MatchDump(BaseNotImplementedExporter):
+    """Заглушка для MATCH шагов"""
+    pass

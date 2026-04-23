@@ -18,7 +18,7 @@ ANSWER: B
                      {'letter': 'C', 'text': ' variant 3'}],
         'answer': ['B']
     }
-    res = ParseSchemaStepQuiz.step_quiz().parseString(text).as_dict()
+    res = ParseSchemaStepQuiz.step_quiz().parse_string(text).as_dict()
     print(f'\nParseSchemaStepQuiz.step_quiz: {res=}')
     assert res == expected_res
 
@@ -42,7 +42,7 @@ shuffle: false
         'answer': ['A', 'C'],
         'config': {'shuffle': 'false'}
     }
-    res = ParseSchemaStepQuiz.step_quiz().parseString(text).as_dict()
+    res = ParseSchemaStepQuiz.step_quiz().parse_string(text).as_dict()
     print(f'\nParseSchemaStepQuiz.step_quiz: {res=}')
     assert res == expected_res
 
@@ -77,6 +77,6 @@ shuffle: false
         'answer': ['B'],
         'config': {'shuffle': 'false'}
     }
-    res = ParseSchemaStepQuiz.step_quiz().parseString(text).as_dict()
+    res = ParseSchemaStepQuiz.step_quiz().parse_string(text).as_dict()
     print(f'\nParseSchemaStepQuiz.step_quiz: {res=}')
     # assert res == expected_res

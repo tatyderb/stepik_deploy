@@ -47,9 +47,9 @@ class ParseSchema:
         false_values = ["false", "0", "no", "off",
                         "n", "disable", "нет", "выкл", "-"]
 
-        true_parser = pp.oneOf(
+        true_parser = pp.one_of(
             true_values, caseless=True).set_parse_action(lambda: True)
-        false_parser = pp.oneOf(
+        false_parser = pp.one_of(
             false_values, caseless=True).set_parse_action(lambda: False)
 
         bool_parser = true_parser | false_parser
