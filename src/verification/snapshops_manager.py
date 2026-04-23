@@ -28,14 +28,13 @@ from enum import StrEnum, IntEnum, auto, Enum
 from pathlib import Path
 from typing import Any
 import click
-from bs4 import BeautifulSoup
 
 from src.lesson import Lesson
 from src.settings import settings
 from src.step import Step
 from src.stepik_api import StepikSession
 from src.utils import truncate, DEFAULT_MAX_LEN, context_diff_files
-import src.export.dump as dump
+import dump
 
 
 class CompareError(Exception):

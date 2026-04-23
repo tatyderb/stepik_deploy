@@ -1,7 +1,7 @@
 """Тесты для экспорта ESSAY шагов"""
 
 import pytest
-from src.export.dump import EssayDump, get_exporter
+from dump import EssayDump, get_exporter
 
 
 pytestmark = pytest.mark.step_begin("---1234")

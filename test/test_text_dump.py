@@ -3,7 +3,7 @@ import pytest
 import markdown
 from bs4 import BeautifulSoup
 
-from src.export.dump import (
+from dump import (
     dump_lesson,
     get_exporter,
     TextDump,
@@ -227,7 +227,7 @@ def test_get_exporter_for_text():
 
 def test_get_exporter_for_unknown():
     """Проверка получения экспортера для неизвестного типа"""
-    from src.export.dump import get_exporter, TextDump
+    from dump import get_exporter, TextDump
     
     step_data = {'block': {'name': 'unknown'}}
     exporter = get_exporter(step_data, 1)

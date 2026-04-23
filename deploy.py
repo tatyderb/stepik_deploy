@@ -3,7 +3,6 @@ import click
 from src import logged_requests
 from src.auth import read_or_create_auth_data
 from src.lesson import Lesson
-from src.logged_requests import LoggedSession
 from src.settings import settings
 from src.stepik_api import StepikSession
 from src.toc import get_file_from_toc

@@ -4,7 +4,7 @@
 
 import pytest
 
-from src.export.dump import NumberDump, get_exporter
+from dump import NumberDump, get_exporter
 
 
 pytestmark = pytest.mark.step_begin("---1234")

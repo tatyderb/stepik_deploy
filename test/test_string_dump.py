@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Dict, Any
 
-from src.export.dump import StringDump
+from dump import StringDump
 
 
 pytestmark = pytest.mark.step_begin("---1234")
