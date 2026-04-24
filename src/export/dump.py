@@ -438,7 +438,7 @@ HELP_EPILOG = '''\b
 '''
 
 
-@click.command(context_settings=CONTEXT_SETTINGS, epilog=HELP_EPILOG)
+@click.command(context_settings=CONTEXT_SETTINGS, epilog=HELP_EPILOG, no_args_is_help=True)
 @click.argument('lesson_id', type=int, required=True, metavar='LESSON_ID')
 @click.option('-o', '--output', type=click.Path(), default=None, metavar='FILENAME',
               help='Имя выходного файла (по умолчанию: lesson_{LESSON_ID}.md)')
@@ -453,8 +453,4 @@ def main(lesson_id: int, output: str | None):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        main()
-    else:
-        t = TextDump({'block': {'text': '', 'name': 'text'}}, 1)
-        print(t.export())
+    main()
