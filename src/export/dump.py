@@ -147,7 +147,7 @@ class BaseExporter(ABC):
             'text': [],
             'number': [],
             'string': ['case_sensitive', 'use_re'],
-            'choice': ['shuffle'],
+            'choice': [],
             'matching': ['shuffle', 'html'],
             'sorting': ['html'],
             'table': ['allow_multiple', 'shuffle_columns', 'accept_any_answer', 'shuffle_rows'],
@@ -183,8 +183,83 @@ class TextDump(BaseExporter):
         return text.strip()
 
 
-class QuizDump(BaseNotImplementedExporter):
-    pass
+class QuizDump(BaseExporter):
+    """Обработка QUIZ шагов (выбор одного или нескольких вариантов)"""
+
+    def set_type(self):
+        self.step_type = "QUIZ"
+
+    def format_output(self) -> str:
+        """
+        Из
+        {
+          "block": {
+            "name": "choice",
+            "text": "текст условия задачи в html",
+            "source": {
+              "options": [
+                {"is_correct": true, "text": "<p>5</p>"},
+                {"is_correct": false, "text": "<p>-5</p>"},
+                {"is_correct": false, "text": "<p>0</p>"},
+                {"is_correct": false, "text": "<p>55</p>"}
+              ],
+              "is_multiple_choice": false,
+              "is_html_enabled": true
+            }
+          },
+        }
+        возвращаем в виде строки
+        текст условия задачи в html
+
+        A. 5
+        B. -5
+        C. 0
+        D. 55
+
+        ANSWER: A
+
+        :return: шаг в формате markdown
+        """
+        source: dict[str, any] = self.block.get("source", {})
+        options: list[dict[str, any]] = source.get("options", [])
+        is_html_enabled = source.get("is_html_enabled", False)
+
+        variants = []
+        for idx, opt in enumerate(options):
+            opt_text = opt.get("text", "")
+            letter = chr(ord('A') + idx)
+
+            if is_html_enabled and opt_text:
+                soup = BeautifulSoup(opt_text, 'html.parser')
+                processed_text = self.html_to_markdown(
+                    soup, 
+                    has_codeblock=True, 
+                    has_latex=True
+                ).strip()
+            else:
+                processed_text = BeautifulSoup(opt_text, 'html.parser').get_text().strip()
+
+            variants.append(f"{letter}. {processed_text}")
+        
+        correct = []
+        for idx, opt in enumerate(options):
+            if opt.get("is_correct", False):
+                correct.append(chr(ord('A') + idx))
+        
+        answers = [f"ANSWER: {', '.join(correct)}"]
+        
+        result_parts: list[str] = [
+            self.html_to_markdown(self.soup),
+            "",
+            *variants,
+            "",
+            *answers,
+            "",
+            "CONFIG",
+            *self.dump_config(source, self.step_data)
+        ]
+        
+        return "\n".join(result_parts) + "\n"
 
 
 class NumberDump(BaseExporter):
@@ -220,6 +295,8 @@ class NumberDump(BaseExporter):
 
         source: dict[str, any] = self.block.get("source", {})
         options: list[dict[str, str]] = source.get("options", [])
+
+        self.soup = self.process_code_blocks(self.soup)
 
         # Правильных ответов может быть несколько
         answers: list[str] = []
@@ -302,6 +379,8 @@ class EssayDump(BaseExporter):
 
     def format_output(self) -> str:
         source: dict[str, any] = self.block.get("source", {})
+
+        self.soup = self.process_code_blocks(self.soup)
 
         result_parts: list[str] = [
             self.html_to_markdown(self.soup).strip(),
