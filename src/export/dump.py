@@ -428,8 +428,28 @@ class TableDump(BaseExporter):
         """Форматирует строку-разделитель (---) для таблицы."""
         separators = []
         for width in widths:
-            separators.append("-" * max(3, width))
+            separators.append("-" * max(0, width))
         return "| " + " | ".join(separators) + " |"
+
+    def dump_config(self, source: dict, step_data: dict) -> List[str]:
+        """Дополняем родительский метод специфичными для TABLE параметрами."""
+        config_lines = super().dump_config(source, step_data)
+
+        options = source.get("options", {})
+
+        is_randomize_rows = options.get("is_randomize_rows", True)
+        config_lines.append(f"shuffle_rows: {is_randomize_rows}")
+
+        is_randomize_columns = options.get("is_randomize_columns", True)
+        config_lines.append(f"shuffle_columns: {is_randomize_columns}")
+
+        is_always_correct = source.get("is_always_correct", False)
+        config_lines.append(f"accept_any_answer: {is_always_correct}")
+
+        is_checkbox = options.get("is_checkbox", False)
+        config_lines.append(f"allow_multiple: {is_checkbox}")
+
+        return config_lines
 
     def format_output(self) -> str:
         """Преобразует json в markdown"""
@@ -447,11 +467,7 @@ class TableDump(BaseExporter):
         column_names = []
         for col in columns:
             col_name = col.get("name", "")
-            col_text = self.html_to_markdown(
-                BeautifulSoup(col_name, "html.parser"),
-                has_codeblock=False,
-                has_latex=True,
-            ).strip()
+            col_text = self.html_to_markdown(BeautifulSoup(col_name, "html.parser")).strip()
             column_names.append(col_text)
 
         header_row = [desc_text] + column_names
@@ -461,11 +477,7 @@ class TableDump(BaseExporter):
 
         for row in rows:
             row_name = row.get("name", "")
-            row_text = self.html_to_markdown(
-                BeautifulSoup(row_name, "html.parser"),
-                has_codeblock=False,
-                has_latex=True,
-            ).strip()
+            row_text = self.html_to_markdown(BeautifulSoup(row_name, "html.parser")).strip()
 
             columns_data = row.get("columns", [])
             row_cells = [row_text]
@@ -477,38 +489,17 @@ class TableDump(BaseExporter):
             data_rows.append(row_cells)
 
         all_rows = [header_row] + data_rows
-
         widths = self._calculate_column_widths(all_rows)
 
         formatted_rows = []
-
         formatted_rows.append(self._format_table_row(header_row, widths))
-
         formatted_rows.append(self._format_separator_row(widths))
 
         for row in data_rows:
             formatted_rows.append(self._format_table_row(row, widths))
 
-        condition_text = self.html_to_markdown(
-            self.soup, has_codeblock=False, has_latex=True
-        ).strip()
-
-        config_lines = []
-
-        if "cost" in self.step_data:
-            config_lines.append(f"score: {self.step_data['cost']}")
-
-        is_randomize_rows = options.get("is_randomize_rows", True)
-        config_lines.append(f"shuffle_rows: {is_randomize_rows}")
-
-        is_randomize_columns = options.get("is_randomize_columns", True)
-        config_lines.append(f"shuffle_columns: {is_randomize_columns}")
-
-        is_always_correct = source.get("is_always_correct", False)
-        config_lines.append(f"accept_any_answer: {is_always_correct}")
-
-        is_checkbox = options.get("is_checkbox", False)
-        config_lines.append(f"allow_multiple: {is_checkbox}")
+        condition_text = self.html_to_markdown(self.soup, has_codeblock=False, has_latex=True).strip()
+        config_lines = self.dump_config(source, self.step_data)
 
         result_parts = [condition_text]
         if condition_text:
