@@ -347,64 +347,6 @@ class TaskinlineDump(BaseExporter):
         
         return len(languages) > 1
 
-    def _extract_tests_from_code(self, code: str) -> list[list[str]]:
-        """
-        Извлекает тесты из source.code для mode = custom.
-        Ищет переменную my_tests = [('input1', 'output1'), ('input2', 'output2')]
-        """
-        tests = []
-        lines = code.splitlines()
-        
-        in_my_tests = False
-        my_tests_lines = []
-        
-        for line in lines:
-            if 'my_tests' in line and '=' in line and 'my_encoded_tests' not in line:
-                in_my_tests = True
-                eq_pos = line.find('=')
-                remaining = line[eq_pos + 1:].strip()
-                if remaining:
-                    my_tests_lines.append(remaining)
-                continue
-            
-            if in_my_tests:
-                if 'my_encoded_tests' in line:
-                    in_my_tests = False
-                    break
-                my_tests_lines.append(line)
-        
-        if not my_tests_lines:
-            return tests
-        
-        my_tests_text = ' '.join(my_tests_lines)
-        
-        i = 0
-        while i < len(my_tests_text):
-            if my_tests_text[i] in ('"', "'"):
-                quote = my_tests_text[i]
-                i += 1
-                start = i
-                while i < len(my_tests_text) and my_tests_text[i] != quote:
-                    i += 1
-                first_value = my_tests_text[start:i]
-                i += 1
-                
-                while i < len(my_tests_text) and my_tests_text[i] not in ('"', "'"):
-                    i += 1
-                if i < len(my_tests_text) and my_tests_text[i] in ('"', "'"):
-                    quote2 = my_tests_text[i]
-                    i += 1
-                    start2 = i
-                    while i < len(my_tests_text) and my_tests_text[i] != quote2:
-                        i += 1
-                    second_value = my_tests_text[start2:i]
-                    i += 1
-                    
-                    tests.append([first_value, second_value])
-            else:
-                i += 1
-        
-        return tests
 
     def format_output(self) -> str:
         """
@@ -446,10 +388,6 @@ class TaskinlineDump(BaseExporter):
         source: dict[str, any] = self.block.get("source", {})
         test_cases: list[list[str]] = source.get("test_cases", [])
         templates_data: str = source.get("templates_data", "")
-        code: str = source.get("code", "")
-        
-        if not test_cases and code:
-            test_cases = self._extract_tests_from_code(code)
         
         is_template = self._is_multilanguage_template(templates_data)
 
