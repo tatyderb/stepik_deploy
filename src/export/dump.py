@@ -571,6 +571,94 @@ class TableDump(BaseExporter):
         result_parts.extend(["TABLE", *formatted_rows, "", "CONFIG", *config_lines])
 
         return "\n".join(result_parts) + "\n"
+    
+
+class GennumberDump(BaseExporter):
+    """Обработка GENNUMBER шагов (численная задача со случайной генерацией условия)"""
+
+    def set_type(self):
+        self.step_type = "GENNUMBER"
+
+    def format_output(self) -> str:
+        r"""
+        Преобразует json в markdown
+
+        Из:
+        {
+          "block": {
+            "name": "random-tasks",
+            "text": "",
+            "source": {
+              "task": "В саду цветут яблони и груши.\nПчела опылила \\x цветочков, а шмель \\y.\nСколько цветочков они опылили вместе?\n",
+              "solve": "x+y",
+              "max_error": "0",
+              "ranges": [
+                {
+                  "variable": "x",
+                  "num_from": "1",
+                  "num_to": "20",
+                  "num_step": "1"
+                },
+                {
+                  "variable": "y",
+                  "num_from": "1",
+                  "num_to": "15",
+                  "num_step": "1"
+                }
+              ],
+              "combinations": "266"
+            }
+          },
+        }
+
+        В:
+        В саду цветут яблони и груши.
+        Пчела опылила \x цветочков, а шмель \y.
+        Сколько цветочков они опылили вместе?
+
+        ANSWER
+        x+y
+
+        VAR
+        x (1, 20, 1)
+        y (1, 15, 1)
+
+        :return: шаг в формате markdown
+        """
+        source: dict[str, any] = self.block.get("source", {})
+        
+        task_text: str = source.get("task", "")
+        solve: str = source.get("solve", "")
+        max_error: str = source.get("max_error", "0")
+        ranges: list[dict] = source.get("ranges", [])
+
+
+        if max_error and float(max_error) != 0:
+            answer_line = f"ANSWER\n{solve} +- {max_error}"
+        else:
+            answer_line = f"ANSWER\n{solve}"
+
+        var_lines = ["VAR"]
+        for r in ranges:
+            variable = r.get("variable", "")
+            num_from = r.get("num_from", "")
+            num_to = r.get("num_to", "")
+            num_step = r.get("num_step", "")
+            
+            var_lines.append(f"{variable} ({num_from}, {num_to}, {num_step})")
+
+        result_parts: list[str] = [
+            task_text.strip(),
+            "",
+            answer_line,
+            "",
+            "\n".join(var_lines),
+            "",
+            "CONFIG",
+            *self.dump_config(source, self.step_data)
+        ]
+        
+        return "\n".join(result_parts) + "\n"
 
 
 class CodeDump(BaseNotImplementedExporter):
@@ -598,7 +686,8 @@ def get_exporter(step_data: Dict[str, Any], position: int) -> BaseExporter:
         "table": TableDump,
         "code": CodeDump,
         "video": VideoDump,
-        "matching": MatchDump
+        "matching": MatchDump,
+        "random-tasks": GennumberDump
     }
 
     exporter_class = exporters.get(step_type, TextDump)
