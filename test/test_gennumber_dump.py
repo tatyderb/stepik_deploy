@@ -34,6 +34,10 @@ def test_gennumber_basic():
 
     expected = r"""---1234 GENNUMBER
 
+
+
+CONDITION
+
 В саду цветут яблони и груши.
 Пчела опылила \x цветочков, а шмель \y.
 Сколько цветочков они опылили вместе?
@@ -73,6 +77,10 @@ def test_gennumber_with_tolerance():
     exporter = GennumberDump(step_data, 1)
 
     expected = r"""---1234 GENNUMBER
+
+
+
+CONDITION
 
 Пчела облетела яблоню по траектории с радиусом \r м
 Какой путь пролетела пчела в сантиметрах?
@@ -114,6 +122,10 @@ def test_gennumber_three_variables():
 
     expected = r"""---1234 GENNUMBER
 
+
+
+CONDITION
+
 Мельница, работая по \h часов в день, намолола за 6 дней \a ц муки. Сколько часов должна работать мельница, чтобы за 8 дней намолоть \b т муки?
 
 ANSWER
@@ -150,6 +162,10 @@ def test_gennumber_no_variables():
     exporter = GennumberDump(step_data, 1)
 
     expected = r"""---1234 GENNUMBER
+
+
+
+CONDITION
 
 Сколько будет 2 + 2?
 
