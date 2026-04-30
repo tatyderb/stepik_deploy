@@ -587,9 +587,9 @@ class GennumberDump(BaseExporter):
         {
           "block": {
             "name": "random-tasks",
-            "text": "",
+            "text": "<p><img alt=\"Картинка со шмелём\" src=\"https://stepik.org/media/attachments/lesson/2330913/%D0%BC%D0%B8%D0%BB%D1%8B%D0%B9_%D1%88%D0%BC%D0%B5%D0%BB%D1%8C.jpeg\" /></p>",
             "source": {
-              "task": "В саду цветут яблони и груши.\nПчела опылила \\x цветочков, а шмель \\y.\nСколько цветочков они опылили вместе?\n",
+              "task": \n\n"В саду цветут яблони и груши.\nПчела опылила \\x цветочков, а шмель \\y.\nСколько цветочков они опылили вместе?\n",
               "solve": "x+y",
               "max_error": "0",
               "ranges": [
@@ -612,6 +612,10 @@ class GennumberDump(BaseExporter):
         }
 
         В:
+        ![Картинка со шмелём](https://stepik.org/media/attachments/lesson/2330913/%D0%BC%D0%B8%D0%BB%D1%8B%D0%B9_%D1%88%D0%BC%D0%B5%D0%BB%D1%8C.jpeg)
+
+        CONDITION
+        
         В саду цветут яблони и груши.
         Пчела опылила \x цветочков, а шмель \y.
         Сколько цветочков они опылили вместе?
@@ -627,6 +631,7 @@ class GennumberDump(BaseExporter):
         """
         source: dict[str, any] = self.block.get("source", {})
         
+        text_html: str = self.block.get("text", "")
         task_text: str = source.get("task", "")
         solve: str = source.get("solve", "")
         max_error: str = source.get("max_error", "0")
@@ -648,6 +653,10 @@ class GennumberDump(BaseExporter):
             var_lines.append(f"{variable} ({num_from}, {num_to}, {num_step})")
 
         result_parts: list[str] = [
+            text_html.strip(),
+            "",
+            "CONDITION",
+            "",
             task_text.strip(),
             "",
             answer_line,
