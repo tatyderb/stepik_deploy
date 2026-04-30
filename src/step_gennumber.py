@@ -113,8 +113,12 @@ class StepGennumber(Step):
 
     def to_dict(self) -> dict:
         d = deepcopy(self.DEFAULT_BODY)
-        d['stepSource']['block']['source']['task'] = self.task # markdown_to_html добавляет теги, которые этот тип задания не воспринимает
-        
+
+
+        html_part, condition_part = (self.task).rsplit("CONDITION", 1)
+        d['stepSource']['block']['text'] = markdown_to_html(html_part)
+        d['stepSource']['block']['source']['task'] = condition_part
+
         
         d['stepSource']['block']['source']['solve'] = self.solve
         d['stepSource']['block']['source']['max_error'] = str(self.max_error)
