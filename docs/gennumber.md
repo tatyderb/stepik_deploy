@@ -14,13 +14,13 @@
   "status": "ready",
   "block": {
     "name": "random-tasks",
-    "text": "",
+    "text": "<p><img alt=\"Картинка со шмелём\" src=\"https://stepik.org/media/attachments/lesson/2330913/%D0%BC%D0%B8%D0%BB%D1%8B%D0%B9_%D1%88%D0%BC%D0%B5%D0%BB%D1%8C.jpeg\" /></p>",
     "video": null,
     "options": {},
     "subtitle_files": [],
     "is_deprecated": false,
     "source": {
-      "task": "В саду цветут яблони и груши.\nПчела опылила \\x цветочков, а шмель \\y.\nСколько цветочков они опылили вместе?\n",
+      "task": "\n\nВ саду цветут яблони и груши.\nПчела опылила \\x цветочков, а шмель \\y.\nСколько цветочков они опылили вместе?\n",
       "solve": "x+y",
       "max_error": "0",
       "ranges": [
@@ -56,6 +56,8 @@
 #### Специфичные поля шага GENNUMBER
 
 `block.name` : Всегда равен `"random-tasks"` — определяет тип шага.
+
+`block.text` : Часть условий, которая форматируется в html (не содержащая переменных).
 
 `block.source` : **Самый важный объект, в котором хранятся все данные для генерации и проверки задачи.**
 
