@@ -115,6 +115,7 @@ TEST
 HEADER
 #include <stdio.h>
 int module(int x);
+
 FOOTER
 int main()
 {
@@ -123,10 +124,12 @@ int main()
     printf("%d\n", module(x));
     return 0;
 }
+
 CODE
 int module(int x) {
     // здесь нужно написать код
 }
+
 CONFIG
 lang: c
 
