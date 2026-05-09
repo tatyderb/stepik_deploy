@@ -1,5 +1,8 @@
+import json
 import sys
 from abc import abstractmethod, ABC
+from collections import defaultdict
+from importlib import invalidate_caches
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Type
 from markdownify import markdownify as md
@@ -329,23 +332,53 @@ class TaskinlineDump(BaseExporter):
     def set_type(self):
         self.step_type = "TASKINLINE"
 
-    def _is_multilanguage_template(self, templates_data: str) -> bool:
+    @classmethod
+    def _parse_template_part(cls, template) -> tuple[str|None, list[str]]:
         """
-        Проверяет, является ли templates_data многоязычным шаблоном.
+        Из различных вариантов содержимого block.template_data получаем
+        Или блоки HEADER/FOOTER/CODE (если есть указанные части)
+        Или блок TEMPLATE, если языков указано несколько и невозможно раскидать по HEADER/FOOTER/CODE
+        :param template:
+        :return: язык или None и преобразованное поле block.template_data в виде списка строк с заголовками секций
+        None, []
+        None, ['TEMPLATE', template]
+        'c_valgrind', ['CODE', *code_lines, 'FOOTER', *footer_lines, 'HEADER', *header_lines]
         """
-        if not templates_data:
-            return False
-        
-        languages = set()
-        service_sections = {'header', 'code', 'footer', 'template'}
-        
-        for line in templates_data.splitlines():
-            if line.startswith('::'):
-                lang = line[2:].strip()
-                if lang and lang not in service_sections:
-                    languages.add(lang)
-        
-        return len(languages) > 1
+
+        # убираем пустые строки в начале и в конце
+        template_lines: list[str] = template.strip().splitlines()
+        # раздел может быть пустым
+        if not template_lines:
+            return None, []
+
+        # Если несколько языков, то формируем единый блок TEMPLATE
+        section_keywords = {'header', 'code', 'footer'}
+        sections = {line[2:].rstrip() for line in template_lines if line.startswith("::")}
+        languages = sections - section_keywords
+        # TODO: список поддерживаемых языков и проверка, что указанные языки строго из списка
+        if len(languages) > 1:
+            return None, ["TEMPLATE", template, ""]
+
+        # один язык разбиваем на блоки HEADER/FOOTER/CODE и если они не пустые, добавляем
+        # сначала идет определение языка
+        language = template_lines.pop(0)[2:].rstrip()
+
+        lines = defaultdict(list)
+        template_part: str | None = None
+        for line in template_lines:
+            if line.startswith("::"):
+                template_part = line[2:].rstrip()
+                continue
+            lines[template_part].append(line)
+
+        invalid_sections = set(lines.keys()) - section_keywords
+        if invalid_sections:
+            raise KeyError(f"Недопустимые заголовки секций {invalid_sections}. Разрешены только {section_keywords}")
+
+        result = []
+        for section, section_lines in lines.items():
+            result.extend([section.upper(), '\n'.join(section_lines), ""])
+        return language, result
 
 
     def format_output(self) -> str:
@@ -357,7 +390,8 @@ class TaskinlineDump(BaseExporter):
                 "text": "<h2>Сумма чисел</h2><p>Условие</p>",
                 "source": {
                 "test_cases": [["2 3", "5"]],
-                "templates_data": "::c\\n::header\\n...\\n::code\\n...\\n::footer\\n..."
+                "templates_data": "::c\\n::header\\n...\\n::code\\n...\\n::footer\\n...",
+                "samples_count": 1,
                 }
             },
         }
@@ -380,6 +414,9 @@ class TaskinlineDump(BaseExporter):
 
         CODE
         ...
+        CONFIG
+        lang=c
+        open_tests=1  (не пишется, если количество тестов совпадает с количеством открытых тестов)
 
         Для многоязычных задач используется TEMPLATE
 
@@ -388,9 +425,9 @@ class TaskinlineDump(BaseExporter):
         source: dict[str, any] = self.block.get("source", {})
         test_cases: list[list[str]] = source.get("test_cases", [])
         templates_data: str = source.get("templates_data", "")
+        open_tests: int = source.get("samples_count", 0)
         
-        is_template = self._is_multilanguage_template(templates_data)
-
+        # тесты
         tests_lines = []
         if test_cases:
             tests_lines.append("TEST")
@@ -398,58 +435,24 @@ class TaskinlineDump(BaseExporter):
                 tests_lines.extend([test_input.strip(), "----", test_output.strip(), "===="])
             tests_lines.append("")
 
-        if is_template:
-            template_lines = ["TEMPLATE", templates_data.strip(), ""]
-            header_lines = []
-            code_lines = []
-            footer_lines = []
-        else:
-            template_lines = []
-            header_lines = []
-            code_lines = []
-            footer_lines = []
-            
-            if templates_data:
-                lines = templates_data.splitlines()
-                current_section = None
-                current_content = []
-                
-                for line in lines:
-                    if line.startswith("::"):
-                        if current_section and current_content:
-                            content = "\n".join(current_content).strip()
-                            if content:
-                                if current_section == "code":
-                                    code_lines = ["CODE", content, ""]
-                                elif current_section == "header":
-                                    header_lines = ["HEADER", content, ""]
-                                elif current_section == "footer":
-                                    footer_lines = ["FOOTER", content, ""]
-                        current_section = line[2:].strip()
-                        current_content = []
-                    else:
-                        current_content.append(line)
-                
-                if current_section and current_content:
-                    content = "\n".join(current_content).strip()
-                    if content:
-                        if current_section == "code":
-                            code_lines = ["CODE", content, ""]
-                        elif current_section == "header":
-                            header_lines = ["HEADER", content, ""]
-                        elif current_section == "footer":
-                            footer_lines = ["FOOTER", content, ""]
+        # вкладка языки и шаблоны
+        task_language, template_lines = self._parse_template_part(templates_data)
+        # язык указываем в конфиге задачи
+        task_language_config = f"lang: {task_language}" if task_language else ""
+
+        # количество открытых тестов указываем в конфиге только если оно не совпадает с общим количеством тестов
+        open_test_config = f"open_tests: {open_tests}" if open_tests != len(test_cases) else ""
 
         result_parts: list[str] = [
             self.html_to_markdown(self.soup).strip(),
             "",
             *tests_lines,
-            *header_lines,
-            *footer_lines,
-            *code_lines,
             *template_lines,
             "CONFIG",
-            *self.dump_config(source, self.step_data)
+            *self.dump_config(source, self.step_data),
+            # TODO: добавить в dump_config следующие параметры
+            task_language_config,
+            open_test_config
         ]
 
         return "\n".join(result_parts) + "\n"
@@ -536,7 +539,7 @@ def dump_lesson(lesson_id: int, filename: str | Path | None = None) -> None:
         try:
             print(f"Обработка шага {i}/{len(step_ids)} (ID: {step_id})...")
             step_data: Dict[str, Any] = session.fetch_object("step-source", step_id)
-
+            # print("\n-----\n", repr(json.dumps(step_data, ensure_ascii=False, indent=2)), '\n----\n')
             exporter = get_exporter(step_data, i)
             step_markdown: str = exporter.export()
 
