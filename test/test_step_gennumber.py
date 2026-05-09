@@ -26,6 +26,7 @@ class TestExtractSolveAndMaxError:
         
 
 text1 = r'''
+CONDITION
 В саду цветут яблони и груши.
 Пчела опылила \x цветочков, а шмель \y.
 Сколько цветочков они опылили вместе?
@@ -41,6 +42,7 @@ CONFIG
 score: 2
 '''
 text2 = r'''
+CONDITION
 В саду цветут яблони и груши.
 Пчела облетела яблоню по траектории с радиусом \r м
 Какой путь пролетела пчела в сантиметрах?
@@ -56,7 +58,7 @@ def test_parse_step_gennumber():
     res = ParseSchemaStepGennumber.parse_step_gennumber(text1)
     print(f'\nparse_step_gennumber: {res=}')
     expected_dict = {
-        'task': 'В саду цветут яблони и груши.\nПчела опылила \\x цветочков, а шмель \\y.\nСколько цветочков они опылили вместе?\n',
+        'task': 'CONDITION\nВ саду цветут яблони и груши.\nПчела опылила \\x цветочков, а шмель \\y.\nСколько цветочков они опылили вместе?\n', # т.к. разделение условия на части происходит на следующей стадии
         'answer': ' \nx+y\n',
         'ranges': 
         [
@@ -75,7 +77,7 @@ def test_parse_step_gennumber():
     res = ParseSchemaStepGennumber.parse_step_gennumber(text2)
     print(f'\nparse_step_gennumber: {res=}')
     expected_dict = {
-        'task': 'В саду цветут яблони и груши.\nПчела облетела яблоню по траектории с радиусом \\r м\nКакой путь пролетела пчела в сантиметрах?\n',
+        'task': 'CONDITION\nВ саду цветут яблони и груши.\nПчела облетела яблоню по траектории с радиусом \\r м\nКакой путь пролетела пчела в сантиметрах?\n',
         'answer': '\n3.14 * 100 * r +- 1\n',
         'ranges': 
         [

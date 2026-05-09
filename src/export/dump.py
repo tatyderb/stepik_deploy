@@ -14,6 +14,7 @@ from src.auth import read_or_create_auth_data
 from src.stepik_api import StepikSession
 from src.logged_requests import setup_logger
 from src.settings import settings
+import click
 
 
 class BaseExporter(ABC):
@@ -149,7 +150,7 @@ class BaseExporter(ABC):
             'text': [],
             'number': [],
             'string': ['case_sensitive', 'use_re'],
-            'choice': ['shuffle'],
+            'choice': [],
             'matching': ['shuffle', 'html'],
             'sorting': ['html'],
             'table': ['allow_multiple', 'shuffle_columns', 'accept_any_answer', 'shuffle_rows'],
@@ -185,8 +186,83 @@ class TextDump(BaseExporter):
         return text.strip()
 
 
-class QuizDump(BaseNotImplementedExporter):
-    pass
+class QuizDump(BaseExporter):
+    """Обработка QUIZ шагов (выбор одного или нескольких вариантов)"""
+
+    def set_type(self):
+        self.step_type = "QUIZ"
+
+    def format_output(self) -> str:
+        """
+        Из
+        {
+          "block": {
+            "name": "choice",
+            "text": "текст условия задачи в html",
+            "source": {
+              "options": [
+                {"is_correct": true, "text": "<p>5</p>"},
+                {"is_correct": false, "text": "<p>-5</p>"},
+                {"is_correct": false, "text": "<p>0</p>"},
+                {"is_correct": false, "text": "<p>55</p>"}
+              ],
+              "is_multiple_choice": false,
+              "is_html_enabled": true
+            }
+          },
+        }
+        возвращаем в виде строки
+        текст условия задачи в html
+
+        A. 5
+        B. -5
+        C. 0
+        D. 55
+
+        ANSWER: A
+
+        :return: шаг в формате markdown
+        """
+        source: dict[str, any] = self.block.get("source", {})
+        options: list[dict[str, any]] = source.get("options", [])
+        is_html_enabled = source.get("is_html_enabled", False)
+
+        variants = []
+        for idx, opt in enumerate(options):
+            opt_text = opt.get("text", "")
+            letter = chr(ord('A') + idx)
+
+            if is_html_enabled and opt_text:
+                soup = BeautifulSoup(opt_text, 'html.parser')
+                processed_text = self.html_to_markdown(
+                    soup, 
+                    has_codeblock=True, 
+                    has_latex=True
+                ).strip()
+            else:
+                processed_text = BeautifulSoup(opt_text, 'html.parser').get_text().strip()
+
+            variants.append(f"{letter}. {processed_text}")
+        
+        correct = []
+        for idx, opt in enumerate(options):
+            if opt.get("is_correct", False):
+                correct.append(chr(ord('A') + idx))
+        
+        answers = [f"ANSWER: {', '.join(correct)}"]
+        
+        result_parts: list[str] = [
+            self.html_to_markdown(self.soup),
+            "",
+            *variants,
+            "",
+            *answers,
+            "",
+            "CONFIG",
+            *self.dump_config(source, self.step_data)
+        ]
+        
+        return "\n".join(result_parts) + "\n"
 
 
 class NumberDump(BaseExporter):
@@ -223,6 +299,8 @@ class NumberDump(BaseExporter):
         source: dict[str, any] = self.block.get("source", {})
         options: list[dict[str, str]] = source.get("options", [])
 
+        self.soup = self.process_code_blocks(self.soup)
+
         # Правильных ответов может быть несколько
         answers: list[str] = []
         for opt in options:
@@ -240,7 +318,7 @@ class NumberDump(BaseExporter):
                 )
 
         result_parts: list[str] = [
-            self.html_to_markdown(self.soup),
+            self.html_to_markdown(self.soup).strip(),
             "",
             *answers,
             "",
@@ -305,6 +383,8 @@ class EssayDump(BaseExporter):
     def format_output(self) -> str:
         source: dict[str, any] = self.block.get("source", {})
 
+        self.soup = self.process_code_blocks(self.soup)
+
         result_parts: list[str] = [
             self.html_to_markdown(self.soup).strip(),
             "",
@@ -314,14 +394,283 @@ class EssayDump(BaseExporter):
         return "\n".join(result_parts) + "\n"
 
 
-class SortDump(BaseNotImplementedExporter):
-    """Заглушка для SORT шагов"""
-    pass
+class SortDump(BaseExporter):
+    """Обработка SORT шагов (задачи на сортировку/упорядочивание)"""
+
+    def set_type(self):
+        self.step_type = "SORT"
+
+    def format_output(self) -> str:
+        source: dict[str, any] = self.block.get("source", {})
+        options: list[dict[str, str]] = source.get("options", [])
+        
+        sort_items = []
+        for opt in options:
+            opt_text = opt.get("text", "").strip()
+            if opt_text:
+                sort_items.append(opt_text)
+                sort_items.append("====")
+        
+        result_parts: list[str] = [
+            self.html_to_markdown(self.soup).strip(),
+            "",
+            "SORT",
+            *sort_items,
+            "",
+            "CONFIG",
+            *self.dump_config(source, self.step_data)
+        ]
+        
+        return "\n".join(result_parts) + "\n"
 
 
-class TableDump(BaseNotImplementedExporter):
-    """Заглушка для TABLE шагов"""
-    pass
+class MatchDump(BaseExporter):
+    """Обработка MATCH шагов (задачи на сопоставление)"""
+
+    def set_type(self):
+        self.step_type = "MATCH"
+
+    def format_output(self) -> str:
+        source: dict[str, any] = self.block.get("source", {})
+        pairs: list[dict[str, str]] = source.get("pairs", [])
+        preserve_firsts_order: bool = source.get("preserve_firsts_order", True)
+        
+        match_items = []
+        if pairs:
+            for pair in pairs:
+                first = pair.get("first", "").strip()
+                second = pair.get("second", "").strip()
+                match_items.append(first)
+                match_items.append("----")
+                match_items.append(second)
+                match_items.append("====")
+        
+        config_lines = self.dump_config(source, self.step_data)
+        config_lines.insert(0, f"shuffle: {not preserve_firsts_order}")   
+
+        result_parts: list[str] = [
+            self.html_to_markdown(self.soup).strip(),
+            "",
+            "MATCH",
+            *match_items,
+            "",
+            "CONFIG",
+            *config_lines
+        ]
+        
+        return "\n".join(result_parts) + "\n"    
+
+
+class TableDump(BaseExporter):
+    """Обработка TABLE шагов (табличные задачи)"""
+
+    def set_type(self):
+        self.step_type = "TABLE"
+
+    def _calculate_column_widths(self, rows: list[list[str]]) -> list[int]:
+        """Вычисляет максимальную ширину каждой колонки для выравнивания."""
+        if not rows:
+            return []
+
+        num_cols = len(rows[0])
+        widths = [0] * num_cols
+
+        for row in rows:
+            for i, cell in enumerate(row):
+                cell_len = len(cell)
+                if cell_len > widths[i]:
+                    widths[i] = cell_len
+
+        return widths
+
+    def _format_table_row(self, row: list[str], widths: list[int]) -> str:
+        """Форматирует строку таблицы с выравниванием пробелами."""
+        formatted_cells = []
+        for i, cell in enumerate(row):
+            formatted_cells.append(cell.ljust(widths[i]))
+        return "| " + " | ".join(formatted_cells) + " |"
+
+    def _format_separator_row(self, widths: list[int]) -> str:
+        """Форматирует строку-разделитель (---) для таблицы."""
+        separators = []
+        for width in widths:
+            separators.append("-" * max(0, width))
+        return "| " + " | ".join(separators) + " |"
+
+    def dump_config(self, source: dict, step_data: dict) -> List[str]:
+        """Дополняем родительский метод специфичными для TABLE параметрами."""
+        config_lines = super().dump_config(source, step_data)
+
+        options = source.get("options", {})
+
+        is_randomize_rows = options.get("is_randomize_rows", True)
+        config_lines.append(f"shuffle_rows: {is_randomize_rows}")
+
+        is_randomize_columns = options.get("is_randomize_columns", True)
+        config_lines.append(f"shuffle_columns: {is_randomize_columns}")
+
+        is_always_correct = source.get("is_always_correct", False)
+        config_lines.append(f"accept_any_answer: {is_always_correct}")
+
+        is_checkbox = options.get("is_checkbox", False)
+        config_lines.append(f"allow_multiple: {is_checkbox}")
+
+        return config_lines
+
+    def format_output(self) -> str:
+        """Преобразует json в markdown"""
+        source: dict[str, any] = self.block.get("source", {})
+        options: dict[str, any] = source.get("options", {})
+
+        description = source.get("description", "")
+        desc_text = self.html_to_markdown(
+            BeautifulSoup(description, "html.parser"),
+            has_codeblock=False,
+            has_latex=True,
+        ).strip()
+
+        columns = source.get("columns", [])
+        column_names = []
+        for col in columns:
+            col_name = col.get("name", "")
+            col_text = self.html_to_markdown(BeautifulSoup(col_name, "html.parser")).strip()
+            column_names.append(col_text)
+
+        header_row = [desc_text] + column_names
+
+        rows = source.get("rows", [])
+        data_rows = []
+
+        for row in rows:
+            row_name = row.get("name", "")
+            row_text = self.html_to_markdown(BeautifulSoup(row_name, "html.parser")).strip()
+
+            columns_data = row.get("columns", [])
+            row_cells = [row_text]
+
+            for col_data in columns_data:
+                is_correct = col_data.get("choice", False)
+                row_cells.append("+" if is_correct else "")
+
+            data_rows.append(row_cells)
+
+        all_rows = [header_row] + data_rows
+        widths = self._calculate_column_widths(all_rows)
+
+        formatted_rows = []
+        formatted_rows.append(self._format_table_row(header_row, widths))
+        formatted_rows.append(self._format_separator_row(widths))
+
+        for row in data_rows:
+            formatted_rows.append(self._format_table_row(row, widths))
+
+        condition_text = self.html_to_markdown(self.soup, has_codeblock=False, has_latex=True).strip()
+        config_lines = self.dump_config(source, self.step_data)
+
+        result_parts = [condition_text]
+        if condition_text:
+            result_parts.append("")
+
+        result_parts.extend(["TABLE", *formatted_rows, "", "CONFIG", *config_lines])
+
+        return "\n".join(result_parts) + "\n"
+    
+
+class GennumberDump(BaseExporter):
+    """Обработка GENNUMBER шагов (численная задача со случайной генерацией условия)"""
+
+    def set_type(self):
+        self.step_type = "GENNUMBER"
+
+    def format_output(self) -> str:
+        r"""
+        Преобразует json в markdown
+
+        Из:
+        {
+          "block": {
+            "name": "random-tasks",
+            "text": "<p><img alt=\"Картинка со шмелём\" src=\"https://stepik.org/media/attachments/lesson/2330913/%D0%BC%D0%B8%D0%BB%D1%8B%D0%B9_%D1%88%D0%BC%D0%B5%D0%BB%D1%8C.jpeg\" /></p>",
+            "source": {
+              "task": \n\n"В саду цветут яблони и груши.\nПчела опылила \\x цветочков, а шмель \\y.\nСколько цветочков они опылили вместе?\n",
+              "solve": "x+y",
+              "max_error": "0",
+              "ranges": [
+                {
+                  "variable": "x",
+                  "num_from": "1",
+                  "num_to": "20",
+                  "num_step": "1"
+                },
+                {
+                  "variable": "y",
+                  "num_from": "1",
+                  "num_to": "15",
+                  "num_step": "1"
+                }
+              ],
+              "combinations": "266"
+            }
+          },
+        }
+
+        В:
+        ![Картинка со шмелём](https://stepik.org/media/attachments/lesson/2330913/%D0%BC%D0%B8%D0%BB%D1%8B%D0%B9_%D1%88%D0%BC%D0%B5%D0%BB%D1%8C.jpeg)
+
+        CONDITION
+        
+        В саду цветут яблони и груши.
+        Пчела опылила \x цветочков, а шмель \y.
+        Сколько цветочков они опылили вместе?
+
+        ANSWER
+        x+y
+
+        VAR
+        x (1, 20, 1)
+        y (1, 15, 1)
+
+        :return: шаг в формате markdown
+        """
+        source: dict[str, any] = self.block.get("source", {})
+        
+        text_html: str = self.block.get("text", "")
+        task_text: str = source.get("task", "")
+        solve: str = source.get("solve", "")
+        max_error: str = source.get("max_error", "0")
+        ranges: list[dict] = source.get("ranges", [])
+
+
+        if max_error and float(max_error) != 0:
+            answer_line = f"ANSWER\n{solve} +- {max_error}"
+        else:
+            answer_line = f"ANSWER\n{solve}"
+
+        var_lines = ["VAR"]
+        for r in ranges:
+            variable = r.get("variable", "")
+            num_from = r.get("num_from", "")
+            num_to = r.get("num_to", "")
+            num_step = r.get("num_step", "")
+            
+            var_lines.append(f"{variable} ({num_from}, {num_to}, {num_step})")
+
+        result_parts: list[str] = [
+            text_html.strip(),
+            "",
+            "CONDITION",
+            "",
+            task_text.strip(),
+            "",
+            answer_line,
+            "",
+            "\n".join(var_lines),
+            "",
+            "CONFIG",
+            *self.dump_config(source, self.step_data)
+        ]
+        
+        return "\n".join(result_parts) + "\n"
 
 
 class TaskinlineDump(BaseExporter):
@@ -477,7 +826,9 @@ def get_exporter(step_data: Dict[str, Any], position: int) -> BaseExporter:
         "sorting": SortDump,
         "table": TableDump,
         "code": TaskinlineDump,
-        "video": VideoDump
+        "video": VideoDump,
+        "matching": MatchDump,
+        "random-tasks": GennumberDump
     }
 
     exporter_class = exporters.get(step_type, TextDump)
@@ -557,15 +908,31 @@ def dump_lesson(lesson_id: int, filename: str | Path | None = None) -> None:
 
     print(f"Дамп урока {lesson_id} сохранен в {filename}")
 
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+HELP_EPILOG = '''\b
+Примеры:
+  python dump.py 1945916                    Скачать урок с ID 1945916 в lesson_1945916.md
+  python dump.py 1945916 -o lesson.md       Скачать урок в указанный файл
+
+\b
+Об ошибках сообщайте по адресу: <https://github.com/tatyderb/stepik_deploy/issues>
+Репозиторий проекта: <https://github.com/tatyderb/stepik_deploy>
+'''
+
+
+@click.command(context_settings=CONTEXT_SETTINGS, epilog=HELP_EPILOG, no_args_is_help=True)
+@click.argument('lesson_id', type=int, required=True, metavar='LESSON_ID')
+@click.option('-o', '--output', type=click.Path(), default=None, metavar='FILENAME',
+              help='Имя выходного файла (по умолчанию: lesson_{LESSON_ID}.md)')
+@click.help_option('-h', '--help', help='Показать эту справку и выйти')
+def main(lesson_id: int, output: str | None):
+    """
+    Скачивание урока со Stepik в markdown файл.
+    
+    LESSON_ID - ID урока на Stepik (целое число)
+    """
+    dump_lesson(lesson_id, output)
+
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Использование: python dump.py LESSON_ID [filename]")
-        sys.exit(1)
-    
-    lesson_id = int(sys.argv[1])
-    filename = sys.argv[2] if len(sys.argv) > 2 else None
-    
-    dump_lesson(lesson_id, filename)
-    # t = TextDump({'block': {'text': '', 'name': 'text'}}, 1)
-    # print(t.export())
+    main()
