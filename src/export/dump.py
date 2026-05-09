@@ -155,7 +155,8 @@ class BaseExporter(ABC):
             'sorting': ['html'],
             'table': ['allow_multiple', 'shuffle_columns', 'accept_any_answer', 'shuffle_rows'],
             'free-answer': ['is_attachments_enabled', 'is_html_enabled', 'manual_scoring'],
-            'code': ['lang', 'mode', 'open_tests', 'checker']
+            'code': ['lang', 'mode', 'open_tests', 'checker'],
+            'fill-blanks': ['case_sensitive', 'visual_feedback', 'partial_correct']
         }
 
         step_type = self.block.get('name', 'unknown')
@@ -576,6 +577,105 @@ class TableDump(BaseExporter):
         return "\n".join(result_parts) + "\n"
     
 
+class SpaceDump(BaseExporter):
+    """Обработка SPACE шагов (заполнение пропусков)"""
+
+    def set_type(self):
+        self.step_type = "SPACE"
+
+    def dump_config(self, source: dict, step_data: dict) -> List[str]:
+        """Дополняем родительский метод специфичными для TABLE параметрами."""
+        
+        config_lines = super().dump_config(source, step_data)
+
+        is_case_sensitive = source.get("is_case_sensitive", False)
+        config_lines.append(f"case_sensitive: {is_case_sensitive}")
+
+        is_detailed_feedback = source.get("is_detailed_feedback", False)
+        config_lines.append(f"visual_feedback: {is_detailed_feedback}")
+
+        is_partially_correct = source.get("is_partially_correct", False)
+        config_lines.append(f"partial_correct: {is_partially_correct}")
+
+        return config_lines
+
+    def format_output(self) -> str:
+        """
+        Преобразует json в markdown
+        {
+          "block": {
+            "name": "fill-blanks",
+            "text": "<h2>Заголовок</h2><p>Условие</p>",
+            "source": {
+              "components": [
+                {
+                  "type": "text", 
+                  "text": "Поэму написал ", "options": []},
+                {
+                  "type": "select",
+                  "options": [{"text": "Пушкин", "is_correct": false}, {"text": "Некрасов", "is_correct": true}]
+                }
+              ],
+              "is_case_sensitive": false,
+              "is_detailed_feedback": false,
+              "is_partially_correct": false
+              }
+            },
+          "cost": 2
+        }
+        в
+        ## Заголовок
+        Условие
+        Поэму написал <*[Пушкин], [Некрасов]>
+        CONFIG
+        score: 2
+        case_sensitive: False
+        visual_feedback: False
+        partial_correct: False
+
+        :return: шаг в виде строки в формате markdown
+        """
+        source: dict[str, any] = self.block.get("source", {})
+        components: list[dict] = source.get("components", [])
+
+        output_parts = []
+        for comp in components:
+            comp_type = comp.get("type")
+            
+            if comp_type == "text":
+                text = comp.get("text", "")
+                soup = BeautifulSoup(text, 'html.parser')
+                md_text = self.html_to_markdown(soup, has_codeblock=True, has_latex=True)
+                output_parts.append(md_text)
+
+            elif comp_type in ("input", "select"):
+                options = comp.get("options", [])
+                option_strings = []
+                for opt in options:
+                    text = opt.get("text", "")
+                    if comp_type == "select" and not opt.get("is_correct", False):
+                        option_strings.append(f"*[{text}]")
+                    else:
+                        option_strings.append(f"[{text}]")
+                if option_strings:
+                    output_parts.append("<" + ", ".join(option_strings) + ">")
+                else:
+                    output_parts.append("<[]>")
+
+        markdown_text = "".join(output_parts).strip()
+        config_lines = self.dump_config(source, self.step_data)
+
+        result_parts = [
+            self.html_to_markdown(self.soup, has_codeblock=True, has_latex=True).strip(),
+            "",
+            markdown_text,
+            "",
+            "CONFIG",
+            *config_lines
+        ]
+        return "\n".join(result_parts) + "\n"
+
+
 class GennumberDump(BaseExporter):
     """Обработка GENNUMBER шагов (численная задача со случайной генерацией условия)"""
 
@@ -828,6 +928,7 @@ def get_exporter(step_data: Dict[str, Any], position: int) -> BaseExporter:
         "code": TaskinlineDump,
         "video": VideoDump,
         "matching": MatchDump,
+        "fill-blanks": SpaceDump
         "random-tasks": GennumberDump
     }
 
