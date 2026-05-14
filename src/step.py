@@ -1,3 +1,4 @@
+import json
 import sys
 from abc import abstractmethod, ABC
 
@@ -39,7 +40,9 @@ class Step(ABC):
         return ""
 
     @classmethod
-    def create_by_type(cls, step_type: str = 'TEXT', header: str = '', skip: bool = False, step_body: str=''):
+    def create_by_type(cls, step_type: str = 'TEXT', header: str = '', skip: bool = False, step_body: str='',
+                       task_language: str | None = None
+                       ):
         match step_type:
             case 'ESSAY':
                 from src.step_essay import StepEssay
@@ -70,7 +73,9 @@ class Step(ABC):
                 return StepTable(header=header, skip=skip)
             case 'TASKINLINE':
                 from src.step_tasklinline import StepTaskinline
-                return StepTaskinline(header=header, skip=skip)
+                if task_language is None:
+                    task_language = StepTaskinline.DEFAULT_LANG
+                return StepTaskinline(header=header, skip=skip, lang=task_language)
             case 'TEXT':
                 return StepText(header=header, skip=skip)
             case '_':
@@ -97,6 +102,7 @@ class Step(ABC):
             return
         print(f'UPDATE step: {step_id=}, {position=}, {lesson_id=}')
         body = self.body(lesson_id, position)
+        print("body=", json.dumps(body, indent=2, ensure_ascii=False))
         session.update_object('step-sources', step_id, body)
 
     def create(self, session: StepikSession, lesson_id: int, position: int) -> int:

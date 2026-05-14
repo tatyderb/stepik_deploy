@@ -331,9 +331,9 @@ class StepTaskinline(Step):
     }
 }
 
-    def __init__(self, header: str = '', skip: bool = False):
+    def __init__(self, header: str = '', skip: bool = False, lang: str = DEFAULT_LANG):
         super().__init__(header=header, skip=skip)
-        self.lang = self.DEFAULT_LANG
+        self.lang = lang
         self.tests = []         # список тестов в формате [['in1', 'out1'], ['in2', 'out2']]
         self.part_before = ''   # код, вставляемый до студенческого, секция HEADER и часть после ::header
         self.part_after = ''    # код, вставляемый после студенческого, секция FOOTER и часть после ::footer
@@ -504,12 +504,11 @@ class StepTaskinline(Step):
         if self.lang == 'all':
             return ''
 
-        return '\n'.join ([
-            '::' + self.lang,
-            '::code\n' + self.code,
-            '::header\n' + self.part_before,
-            '::footer\n' + self.part_after
-        ])
+        template = self.LANG_TEMPLATE.format(lang=self.lang)
+        template += self.CODE_TEMPLATE.format(code=self.code) if self.code else ""
+        template += self.HEADER_TEMPLATE.format(header=self.part_before) if self.part_before else ""
+        template += self.FOOTER_TEMPLATE.format(footer=self.part_after) if self.part_after else ""
+        return template
 
 
 class ParseSchemaStepTaskinline(ParseSchema):

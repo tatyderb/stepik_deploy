@@ -137,7 +137,7 @@ class Lesson:
         for position, entity in enumerate(lesson_info['steps'], 1):
             ok, step_type, skip, h2 = ParseSchema.parse_step_header(entity['h2'])
             # print(f'{ok=}, {step_type=}, {skip=}, {h2=}')
-            step = Step.create_by_type(step_type=step_type, header=h2, skip=skip)
+            step = Step.create_by_type(step_type=step_type, header=h2, skip=skip, task_language=self.task_language)
 
             # парсим только если не SKIP и надо парсить все или нужный номер позиции
             if not skip and (step_position == 0 or position == step_position):
