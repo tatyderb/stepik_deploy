@@ -155,7 +155,7 @@ class ParseSchemaStepMatch(ParseSchema):
         text_part = pp.SkipTo(text_bound)
 
         statement = (text_part + pp.ZeroOrMore(cls.quoted + text_part)).set_parse_action(
-            lambda toks: ''.join(toks)
+            lambda toks: '\n'.join(toks)
         )("text")
 
         schema = statement + sections
