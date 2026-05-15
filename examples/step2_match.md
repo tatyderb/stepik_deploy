@@ -99,3 +99,32 @@ MATCH
 CONFIG
 shuffle: true
 score: 3
+
+## MATCH Вставка кода в условие и варианты
+
+В файле `a.c` написано вне всяких блоков и функций:
+
+
+```cpp
+extern double z;
+int x;
+static char k;
+```
+
+MATCH
+`extern double z;`
+----
+Переменная будет объявлена в этом или другом файле.
+====
+`int x;`
+----
+Объявлена глобальная переменная.
+====
+`static char k;`
+----
+Эта переменная видна только в этом файле.
+====
+
+CONFIG
+shuffle: true
+html: true

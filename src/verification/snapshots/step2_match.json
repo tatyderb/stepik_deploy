@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "total_steps": 4,
+    "total_steps": 5,
     "lesson_id": 2237157,
     "title": "Шаг MATCH - задача на сопоставление"
   },
@@ -129,6 +129,43 @@
           "lesson": null,
           "position": null,
           "cost": "3"
+        }
+      }
+    },
+    {
+      "position": 5,
+      "type": "StepMatch",
+      "header": "Вставка кода в условие и варианты",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Вставка кода в условие и варианты</h2>\n<p>В файле <code>a.c</code> написано вне всяких блоков и функций:</p>\n<pre><code class=\"language-cpp\">extern double z;\nint x;\nstatic char k;\n</code></pre>",
+            "name": "matching",
+            "video": null,
+            "options": {},
+            "source": {
+              "preserve_firsts_order": false,
+              "is_html_enabled": true,
+              "pairs": [
+                {
+                  "first": "<p><code>extern double z;</code></p>",
+                  "second": "<p>Переменная будет объявлена в этом или другом файле.</p>"
+                },
+                {
+                  "first": "<p><code>int x;</code></p>",
+                  "second": "<p>Объявлена глобальная переменная.</p>"
+                },
+                {
+                  "first": "<p><code>static char k;</code></p>",
+                  "second": "<p>Эта переменная видна только в этом файле.</p>"
+                }
+              ]
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
         }
       }
     }

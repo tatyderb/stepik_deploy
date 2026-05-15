@@ -928,8 +928,8 @@ def get_exporter(step_data: Dict[str, Any], position: int) -> BaseExporter:
         "code": TaskinlineDump,
         "video": VideoDump,
         "matching": MatchDump,
-        "fill-blanks": SpaceDump
-        "random-tasks": GennumberDump
+        "fill-blanks": SpaceDump,
+        "random-tasks": GennumberDump,
     }
 
     exporter_class = exporters.get(step_type, TextDump)
