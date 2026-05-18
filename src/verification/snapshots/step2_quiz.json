@@ -1,6 +1,5 @@
 {
   "metadata": {
-    "source_md": "..\\..\\examples\\step2_quiz.md",
     "total_steps": 7,
     "lesson_id": 1950068,
     "title": "Шаг QUIZ - тест"
@@ -175,12 +174,12 @@
         "stepSource": {
           "block": {
             "name": "choice",
-            "text": "<h2>Код</h2>\n<p>Варианты с кодом.<br/><br />\nИспользуйте только <code>&lt;pre&gt;</code> для обрамления кода или вставку ```. <br/><br />\nОстальное показывается некорректно.</p>\n<p>Какой код написан на языке С?</p>",
+            "text": "<h2>Код</h2>\n<p>Варианты с кодом.<br/>\nИспользуйте только <code>&lt;pre&gt;</code> или <code>&lt;pre&gt;&lt;code class=\"language-язык\"&gt;</code>для обрамления кода или вставку ```. <br/>\nОстальное показывается некорректно.</p>\n<p>Какой код написан на языке С?</p>\n<p>Этот же блок в словии показывается корректно:</p>\n<pre><code class=\"language-cpp\">#include &lt;stdin.h&gt;\nint main(void) {\n    printf(&quot;Hello\\n&quot;);\n    return 0;\n}\n</code></pre>\n<p>А в вариантах - только моноширинный текст без подстветки синтаксиса и копирования.</p>",
             "source": {
               "options": [
                 {
                   "is_correct": true,
-                  "text": "<p>with &lt;code&gt; tag<br />\n<code><br />\nint main(void) {<br />\n    printf(\"Hello\\n\");<br />\n    return 0;<br />\n}<br />\n</code></p>",
+                  "text": "<p>with &lt;code&gt; tag\n<code>\nint main(void) {\n    printf(\"Hello\\n\");\n    return 0;\n}\n</code></p>",
                   "feedback": ""
                 },
                 {
@@ -190,7 +189,7 @@
                 },
                 {
                   "is_correct": false,
-                  "text": "<p>markdown</p>\n<pre><code class=\"language-python\">#include &lt;stdin.h&gt;\nint main(void) {\n    printf(&quot;Hello\\n&quot;);\n    return 0;\n}\n</code></pre>",
+                  "text": "<p>markdown</p>\n<pre><code class=\"language-cpp\">#include &lt;stdin.h&gt;\nint main(void) {\n    printf(&quot;Hello\\n&quot;);\n    return 0;\n}\n</code></pre>",
                   "feedback": ""
                 }
               ],
