@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "total_steps": 5,
+    "total_steps": 6,
     "lesson_id": 2237157,
     "title": "Шаг MATCH - задача на сопоставление"
   },
@@ -159,6 +159,43 @@
                 {
                   "first": "<p><code>static char k;</code></p>",
                   "second": "<p>Эта переменная видна только в этом файле.</p>"
+                }
+              ]
+            }
+          },
+          "lesson": null,
+          "position": null,
+          "cost": 1
+        }
+      }
+    },
+    {
+      "position": 6,
+      "type": "StepMatch",
+      "header": "Вставка многострочного кода с отступами в условие и варианты",
+      "skip": false,
+      "data": {
+        "stepSource": {
+          "block": {
+            "text": "<h2>Вставка многострочного кода с отступами в условие и варианты</h2>\n<p><strong>Не используйте многострочные фрагменты кода с отступами. Ибо степик не поддерживает их в вариантах ответа.</strong></p>\n<p>Сопоставьте функцию, которая складывает два целых числа и язык программирования, на котором она написана.</p>\n<p>В условии блок кода показан корректно</p>\n<pre><code class=\"language-cpp\">int add(int x, int y) {\n    return x + y;\n}\n</code></pre>",
+            "name": "matching",
+            "video": null,
+            "options": {},
+            "source": {
+              "preserve_firsts_order": false,
+              "is_html_enabled": true,
+              "pairs": [
+                {
+                  "first": "<pre><code class=\"language-cpp\">int add(int x, int y) {\n    return x + y;\n}\n</code></pre>",
+                  "second": "<p>c, с++, java</p>"
+                },
+                {
+                  "first": "<pre><code class=\"language-python\">def add(x: int, y: int) -&gt; int:\n    return x + y\n</code></pre>",
+                  "second": "<p>python</p>"
+                },
+                {
+                  "first": "<pre><code class=\"language-pascal\">function Sum(a, b: integer): integer;\nbegin\n    Sum := a + b;\nend;\n</code></pre>",
+                  "second": "<p>pascal</p>"
                 }
               ]
             }

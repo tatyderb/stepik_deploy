@@ -128,3 +128,46 @@ MATCH
 CONFIG
 shuffle: true
 html: true
+
+## MATCH Вставка многострочного кода с отступами в условие и варианты
+
+**Не используйте многострочные фрагменты кода с отступами. Ибо степик не поддерживает их в вариантах ответа.**
+
+Сопоставьте функцию, которая складывает два целых числа и язык программирования, на котором она написана.
+
+В условии блок кода показан корректно
+```cpp
+int add(int x, int y) {
+    return x + y;
+}
+```
+
+MATCH
+```cpp
+int add(int x, int y) {
+    return x + y;
+}
+```
+----
+c, с++, java
+====
+```python
+def add(x: int, y: int) -> int:
+    return x + y
+```
+----
+python
+====
+```pascal
+function Sum(a, b: integer): integer;
+begin
+    Sum := a + b;
+end;
+```
+----
+pascal
+====
+
+CONFIG
+shuffle: true
+html: true
