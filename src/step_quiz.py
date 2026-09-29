@@ -117,7 +117,7 @@ class StepQuiz(Step):
         d['stepSource']['block']['source']['is_multiple_choice'] = self.is_multiple_choice
         d['stepSource']['block']['source']['preserve_order'] = bool(self.config.get('shuffle', False))
 
-        d['stepSource']['score'] = self.config.get('score', self.DEFAULT_SCORE)
+        d['stepSource']['cost'] = int(self.config.get('score', self.DEFAULT_SCORE))
 
         return d
 

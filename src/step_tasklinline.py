@@ -451,7 +451,8 @@ class StepTaskinline(Step):
         # d['stepSource']['block']['source']['test_archive'] = []
         # d['stepSource']['block']['tests_archive'] = "/api/step-sources/{}/tests",  # id шага
 
-        d['stepSource']['score'] = self.config.get('score', self.DEFAULT_SCORE)
+        # стоимость шага - поле cost в API Stepik, в CONFIG разметки - score
+        d['stepSource']['cost'] = int(self.config.get('score', self.DEFAULT_SCORE))
         d['stepSource']['block']['text'] = markdown_to_html(self.text)
 
         return d
