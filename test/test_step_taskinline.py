@@ -204,8 +204,29 @@ def test_to_dict():
             "is_enabled": True,
             "needs_plan": None,
             "instruction": None,
-            "lesson": "1950070",
-            "score": 10
+            "lesson": "1950070"
         }
     }
     assert res == expected_dict
+
+
+def test_config_score_applied_to_cost():
+    """CONFIG score должен менять стоимость шага (cost), а не несуществующее поле score."""
+    step = StepTaskinline(header='')
+    step.parse(text1 + text2)
+
+    res = step.to_dict()
+
+    assert res['stepSource']['cost'] == 5
+    assert 'score' not in res['stepSource']
+
+
+def test_default_cost_without_score_config():
+    """Без CONFIG score стоимость шага берется из StepTaskinline.DEFAULT_SCORE."""
+    step = StepTaskinline(header='')
+    step.parse(text1)
+
+    res = step.to_dict()
+
+    assert res['stepSource']['cost'] == StepTaskinline.DEFAULT_SCORE
+    assert 'score' not in res['stepSource']
