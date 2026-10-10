@@ -32,7 +32,7 @@ CONFIG
 lang: python3
 mode: custom
 open_tests: 3
-checker: std_float_seq
+checker: cmp_double_seq
 additional_params: "EPS=0.01"
 ```
 
@@ -57,9 +57,10 @@ additional_params: "EPS=0.01"
         * `stepik` - средствами Stepik, в поле `samples` записывается значение `open_tests` и функция `check` просто вызывает чекер. Тут будет ссылка на пример далее в шагах.
         * `custom` - `samples`= 0, тестовые данные пишутся в тексте условия задачи, в функции `check` осуществляется разбор открытый тест или нет, и для открытого теста выводятся input, output, correct output, diff. Тут будет ссылка на пример далее в шагах.
     * `checker` - название стандартных проверяющих программ
-        * `check_asis` - текст без пробельных символов в начале и в конце
-        * `check_int_seq` - последовательность целых чисел
-        * `check_float_seq` - последовательность нецелых чисел, с точностью до `EPS`, по умолчанию `EPS=0.001`
+        * `cmp_file` - текст без пробельных символов в начале и в конце
+        * `cmp_int_seq` - последовательность целых чисел
+        * `cmp_double_seq` - последовательность нецелых чисел, с точностью до `EPS`, по умолчанию `EPS=0.001`
+        * для обратной совместимости поддерживаются и устаревшие названия: `check_asis` (то же, что `cmp_file`), `check_int_seq` (то же, что `cmp_int_seq`), `check_float_seq` и `std_float_seq` (то же, что `cmp_double_seq`)
     * `additional_params` - дополнительные параметры для чекеров и тп.
 
 ## SKIP TASKINLINE Сумма - на этой задаче исследуем REST API
@@ -252,7 +253,7 @@ TEST
 -3
 ====
 CONFIG
-checker: check_int_seq
+checker: cmp_int_seq
 open_tests: 2
 mode: custom
 

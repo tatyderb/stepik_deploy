@@ -1,6 +1,8 @@
 import pytest
 
-from src.checker import (check_asis, check_int_seq, check_float_seq)
+from src.checker import (cmp_file, cmp_int_seq, cmp_double_seq,
+                         check_asis, check_int_seq, check_float_seq,
+                         CHECKERS, LEGACY_CHECKER_NAMES, get_checker_function_by_name)
 import src.checker as checker
 
 
@@ -12,8 +14,8 @@ import src.checker as checker
     ('Hello, \nworld!\n', 'Hello, world!', False, None),
     ('hello', 'Hello', False, None),
 ])
-def test_checker_asis(reply, clue, exp_ok, exp_diff):
-    ok = check_asis(reply, clue)
+def test_checker_cmp_file(reply, clue, exp_ok, exp_diff):
+    ok = cmp_file(reply, clue)
     # diff не вернули, только сошлось или нет
     # ok, diff = (res, None) if isinstance(res, bool) else *res
     assert ok == exp_ok
@@ -24,8 +26,8 @@ def test_checker_asis(reply, clue, exp_ok, exp_diff):
     ('12 34', '12 34 56', False, 'Output  : 2 numbers\nExpected: 3 numbers'),
     ('12 35 56', '12 34 56', False, 'Output  : 35\nExpected: 34\n'),
 ])
-def test_checker_int_seq(reply, clue, exp_ok, exp_diff):
-    res = check_int_seq(reply, clue)
+def test_checker_cmp_int_seq(reply, clue, exp_ok, exp_diff):
+    res = cmp_int_seq(reply, clue)
     # diff не вернули, только сошлось или нет
     ok, diff = (res, None) if isinstance(res, bool) else res
     assert ok == exp_ok
@@ -38,22 +40,71 @@ def test_checker_int_seq(reply, clue, exp_ok, exp_diff):
     ('12 34.5 56', '12 34.4 56', 0.00001, False, 'Output  : 34.5\nExpected: 34.4\nAccuracy: 1e-05\n'),
     ('12 34.5 56', '12 34.4 56', 0.11, True, None),
 ])
-def test_checker_float_seq(reply, clue, eps, exp_ok, exp_diff):
+def test_checker_cmp_double_seq(reply, clue, eps, exp_ok, exp_diff):
     checker.EPS = eps
-    res = check_float_seq(reply, clue)
+    res = cmp_double_seq(reply, clue)
     # diff не вернули, только сошлось или нет
     ok, diff = (res, None) if isinstance(res, bool) else res
     assert ok == exp_ok
     assert diff == exp_diff
 
 
+@pytest.mark.parametrize('actual_name, legacy_names', [
+    ('cmp_file', ['check_asis']),
+    ('cmp_int_seq', ['check_int_seq']),
+    ('cmp_double_seq', ['check_float_seq', 'std_float_seq']),
+])
+def test_get_checker_function_by_name(actual_name, legacy_names):
+    """По актуальному и по устаревшим названиям возвращается одна и та же функция."""
+    expected_function = CHECKERS[actual_name]
+
+    assert get_checker_function_by_name(actual_name) is expected_function
+    for legacy_name in legacy_names:
+        assert LEGACY_CHECKER_NAMES[legacy_name] == actual_name
+        assert get_checker_function_by_name(legacy_name) is expected_function
+        # пробелы вокруг названия не важны
+        assert get_checker_function_by_name(f'  {legacy_name}\n') is expected_function
+
+
+def test_legacy_checker_names_are_aliases():
+    """Устаревшие названия функций - псевдонимы актуальных (для обратной совместимости)."""
+    assert check_asis is cmp_file
+    assert check_int_seq is cmp_int_seq
+    assert check_float_seq is cmp_double_seq
+
+
+def test_unknown_checker_name():
+    with pytest.raises(ValueError, match='Чекер cmp_unknown не найден'):
+        get_checker_function_by_name('cmp_unknown')
+
+
+@pytest.mark.parametrize('actual_name, legacy_names', [
+    ('cmp_file', ['check_asis']),
+    ('cmp_int_seq', ['check_int_seq']),
+    ('cmp_double_seq', ['check_float_seq']),
+])
+def test_genchecksolve_uses_actual_checker_name(actual_name, legacy_names):
+    """В сгенерированный код попадает актуальное название чекера,
+    какое бы название (новое или устаревшее) ни было указано в CONFIG.
+    """
+    expected_code = checker.stepik_genchecksolve(CHECKERS[actual_name])
+
+    assert f'def {actual_name}(reply, clue):' in expected_code
+    assert f'return {actual_name}(reply, clue)' in expected_code
+
+    for legacy_name in legacy_names:
+        assert checker.stepik_genchecksolve(get_checker_function_by_name(legacy_name)) == expected_code
+        assert checker.custom_genchecksolve([['1', '1']], get_checker_function_by_name(legacy_name)) == \
+            checker.custom_genchecksolve([['1', '1']], CHECKERS[actual_name])
+
+
 def test_mode_stepik_genchecksolve():
     """TODO: починить тест, ибо то что напечатанный text внесен в expected_text, но assert не проходит из-за \n"""
-    text = checker.stepik_genchecksolve(check_float_seq, 'EPS = 0.02')
+    text = checker.stepik_genchecksolve(cmp_double_seq, 'EPS = 0.02')
     print(text)
     expected_text = '''
 EPS = 0.02
-def check_float_seq(replay, clue):
+def cmp_double_seq(replay, clue):
     """Сравнение последовательности нецелых чисел с точностью EPS"""
     import math
 
@@ -77,7 +128,7 @@ def generate():
     return []
 
 def check(reply, clue):
-    return check_float_seq(replay, clue)
+    return cmp_double_seq(replay, clue)
 
 # def solve(dataset):
 #     a, b = dataset.split()

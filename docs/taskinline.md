@@ -18,7 +18,7 @@
     "video": null,
     "options": null,
     "source": {
-      "code": "\n\ndef check_asis(reply, clue):\n    \"\"\"Сравнение текста, без пробельных символов в конце текста.\"\"\"\n    return reply.strip() == clue.strip()\n        \n        \n# This is a sample Code Challenge\n# Learn more: https://stepik.org/lesson/9172\n# Ask your questions via help@stepik.org\n\ndef generate():\n    return []\n\ndef check(reply, clue):\n    return check_asis(reply, clue)\n\n# def solve(dataset):\n#     a, b = dataset.split()\n#     return str(int(a) + int(b))        \n    ",
+      "code": "\n\ndef cmp_file(reply, clue):\n    \"\"\"Сравнение текста, без пробельных символов в конце текста.\"\"\"\n    return reply.strip() == clue.strip()\n        \n        \n# This is a sample Code Challenge\n# Learn more: https://stepik.org/lesson/9172\n# Ask your questions via help@stepik.org\n\ndef generate():\n    return []\n\ndef check(reply, clue):\n    return cmp_file(reply, clue)\n\n# def solve(dataset):\n#     a, b = dataset.split()\n#     return str(int(a) + int(b))        \n    ",
       "execution_time_limit": 5,
       "execution_memory_limit": 256,
       "samples_count": 2,

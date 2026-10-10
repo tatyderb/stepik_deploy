@@ -163,7 +163,7 @@ LANG_LIMITS = {
 class StepTaskinline(Step):
     DEFAULT_SCORE = 10
     DEFAULT_LANG = 'all'
-    DEFAULT_CHECKER_NAME = 'check_asis'
+    DEFAULT_CHECKER_NAME = 'cmp_file'
     DEFAULT_MODE = 'stepik'
     LANG_TEMPLATE = '::{lang}\n'
     CODE_TEMPLATE = '::code\n{code}\n'
@@ -547,7 +547,7 @@ class ParseSchemaStepTaskinline(ParseSchema):
         GENCHECKSOLVE
         полное содержимое вкладки расширенного редактора, самое приоритетное
         CONFIG:
-        checker: checker_float_seq
+        checker: cmp_double_seq
         additional_parameters: EPS = 0.01
         mode: stepik
         open_tests: 3
@@ -562,7 +562,7 @@ class ParseSchemaStepTaskinline(ParseSchema):
             'code': 'void sum (int a, int b)\n{\n\n}\n',
             'genchecksolve': text,
             'config': [
-                'checker': checker_float_seq,
+                'checker': cmp_double_seq,
                 'additional_parameters': 'EPS = 0.01',
                 'mode': 'stepik',
                 'open_tests': '3',

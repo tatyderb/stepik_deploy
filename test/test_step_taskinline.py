@@ -172,7 +172,7 @@ def test_to_dict():
                 "video": None,
                 "options": None,
                 "source": {
-                    "code": "\n\ndef check_asis(reply, clue):\n    \"\"\"Сравнение текста, без пробельных символов в конце текста.\"\"\"\n    return reply.strip() == clue.strip()\n        \n        \n# This is a sample Code Challenge\n# Learn more: https://stepik.org/lesson/9172\n# Ask your questions via help@stepik.org\n\ndef generate():\n    return []\n\ndef check(reply, clue):\n    return check_asis(reply, clue)\n\n# def solve(dataset):\n#     a, b = dataset.split()\n#     return str(int(a) + int(b))        \n    ",
+                    "code": "\n\ndef cmp_file(reply, clue):\n    \"\"\"Сравнение текста, без пробельных символов в конце текста.\"\"\"\n    return reply.strip() == clue.strip()\n        \n        \n# This is a sample Code Challenge\n# Learn more: https://stepik.org/lesson/9172\n# Ask your questions via help@stepik.org\n\ndef generate():\n    return []\n\ndef check(reply, clue):\n    return cmp_file(reply, clue)\n\n# def solve(dataset):\n#     a, b = dataset.split()\n#     return str(int(a) + int(b))        \n    ",
                     "execution_time_limit": 5,
                     "execution_memory_limit": 256,
                     "samples_count": 2,
@@ -230,3 +230,23 @@ def test_default_cost_without_score_config():
 
     assert res['stepSource']['cost'] == StepTaskinline.DEFAULT_SCORE
     assert 'score' not in res['stepSource']
+
+
+def _code_by_checker_name(checker_name: str) -> str:
+    step = StepTaskinline(header='')
+    step.parse(text1 + f'CONFIG\nchecker: {checker_name}\n')
+    return step.to_dict()['stepSource']['block']['source']['code']
+
+
+def test_default_checker_name():
+    """Без CONFIG checker используется чекер по умолчанию - сравнение двух файлов."""
+    assert StepTaskinline.DEFAULT_CHECKER_NAME == 'cmp_file'
+    assert _code_by_checker_name('cmp_file') == _code_by_checker_name('check_asis')
+
+
+def test_legacy_checker_name_in_config():
+    """Устаревшее название чекера в CONFIG работает так же, как актуальное."""
+    assert _code_by_checker_name('check_int_seq') == _code_by_checker_name('cmp_int_seq')
+    assert _code_by_checker_name('check_float_seq') == _code_by_checker_name('cmp_double_seq')
+    # название из старой версии README
+    assert _code_by_checker_name('std_float_seq') == _code_by_checker_name('cmp_double_seq')

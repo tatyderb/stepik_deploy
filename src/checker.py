@@ -3,12 +3,15 @@ import types
 
 # from test.test_checker import test_encode
 
+# Названия проверяющих программ - как в системе ejudge,
+# https://ejudge.ru/wiki/index.php/Стандартные_проверяющие_программы
 
-def check_asis(reply, clue):
+
+def cmp_file(reply, clue):
     """Сравнение текста, без пробельных символов в конце текста."""
     return reply.strip() == clue.strip()
 
-def check_int_seq(reply, clue):
+def cmp_int_seq(reply, clue):
     """Сравнение последовательности целых чисел."""
     reply_numbers = list(map(int, reply.split()))
     clue_numbers = list(map(int, clue.split()))
@@ -21,9 +24,9 @@ def check_int_seq(reply, clue):
             return False, f'Output  : {reply_x}\nExpected: {clue_x}\n'
     return True
 
-# EPS - additional_parameter для check_float_seq
+# EPS - понятно чё это
 EPS: float = 0.001
-def check_float_seq(reply, clue):
+def cmp_double_seq(reply, clue):
     """Сравнение последовательности нецелых чисел с точностью EPS, по умолчанию 0.001.
     EPS для чекера можно задать в секции CONFIG через additional_params
     additional_params: "EPS=0.01"
@@ -42,19 +45,43 @@ def check_float_seq(reply, clue):
             return False, f'Output  : {reply_x}\nExpected: {clue_x}\nAccuracy: {EPS}\n'
     return True
 
+# Актуальные названия проверяющих программ
+CHECKERS = {
+    'cmp_file': cmp_file,
+    'cmp_int_seq': cmp_int_seq,
+    'cmp_double_seq': cmp_double_seq,
+}
+
+# Устаревшие названия -> актуальные названия
+# В CONFIG можно писать чекер как по-старому
+LEGACY_CHECKER_NAMES = {
+    'check_asis': 'cmp_file',
+    'check_int_seq': 'cmp_int_seq',
+    'check_float_seq': 'cmp_double_seq',
+    'std_float_seq': 'cmp_double_seq',  # название было только в README
+}
+
+# Псевдонимы устаревших названий функций
+check_asis = cmp_file
+check_int_seq = cmp_int_seq
+check_float_seq = cmp_double_seq
+
+
 def get_checker_function_by_name(name: str) -> types.FunctionType:
-    """По названию чекера name возвращает указатель на функцию. С валидацией."""
-    available_checkers = {
-        'check_asis': check_asis,
-        'check_int_seq': check_int_seq,
-        'check_float_seq': check_float_seq,
-    }
-    if name not in available_checkers.keys():
-        error_msg = f'Чекер {name} не найден. Доступные чекеры: {available_checkers.keys()}'
+    """По названию чекера name возвращает указатель на функцию. С валидацией.
+    Принимаются как актуальные названия (cmp_file, cmp_int_seq, cmp_double_seq),
+    так и устаревшие (check_asis, check_int_seq, check_float_seq, std_float_seq).
+    """
+    checker_name = name.strip()
+    # старое название чекера заменяем на актуальное
+    checker_name = LEGACY_CHECKER_NAMES.get(checker_name, checker_name)
+
+    if checker_name not in CHECKERS:
+        error_msg = f'Чекер {name} не найден. Доступные чекеры: {", ".join(CHECKERS)}. Устаревшие названия: {", ".join(LEGACY_CHECKER_NAMES)}'
         print(error_msg)
         raise ValueError(error_msg)
 
-    return available_checkers[name]
+    return CHECKERS[checker_name]
 
 def stepik_genchecksolve(checker_function: types.FunctionType, additional_parameter='') -> str:
     """Степик по умолчанию вставляет это содержимое при создании задачи на программирование,
