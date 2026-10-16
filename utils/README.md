@@ -10,7 +10,7 @@
 
 ### Скачайте файл `run_all_tests.sh`
 
-[run_all_tests.sh]()
+[run_all_tests.sh](https://github.com/tatyderb/stepik_deploy/blob/main/utils/run_all_tests.sh)
 
 Запускать его будете в терминале Linux/UNIX/Mac (у кого Windows - под WSL или cygwin).
 
