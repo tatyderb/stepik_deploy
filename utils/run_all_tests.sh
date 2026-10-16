@@ -67,10 +67,10 @@ DATA_BASE="$(basename "$DATA")"
 # Разбираем файл на тесты.
 awk -v dir="$DATA_DIR" -v base="$DATA_BASE" '
 BEGIN { n = 0; part = "in"; in_test = 0 }
-/^----$/ {
+/^----.*$/ {
     if (part == "in") { part = "out"; next }
 }
-/^====$/ {
+/^====.*$/ {
     part = "in"; in_test = 0; next
 }
 {
