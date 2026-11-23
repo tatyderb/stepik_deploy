@@ -907,6 +907,38 @@ class TaskinlineDump(BaseExporter):
         return "\n".join(result_parts) + "\n"
     
 
+class SqlDump(BaseExporter):
+    """Обработка SQL шагов"""
+
+    def export(self) -> str:
+        content = self.format_output()
+        title = ''
+        if content.startswith('## '):
+            heading, _, content = content.partition('\n')
+            title = ' ' + heading[3:].strip()
+        content = content.lstrip('\n')
+        return f'{settings.STEP_BEGIN} SQL{title}\n\n{content}\n'
+
+    def format_output(self) -> str:
+        from src.step_sql import StepSql
+
+        source = self.block.get('source')
+        if not isinstance(source, dict) or not source.get('check_code'):
+            raise ValueError('Для экспорта нужен step-source с check_code (авторский доступ).')
+        parts = [self.html_to_markdown(self.soup).strip()]
+        for section, field, language in [('INIT', 'init_sql', 'sql'), ('SOLUTION', 'solve_sql', 'sql'),('CHECK', 'check_code', 'python')]:
+            code = source.get(field, '').strip('\r\n')
+
+            if '```' in code:
+                raise ValueError(f'Экспорт {section} с вложенными ``` не поддерживается.')
+            parts.append(f'{section}\n```{language}\n{code}\n```')
+        config = [f"score: {self.step_data.get('cost', StepSql.DEFAULT_SCORE)}"]
+        for option, (field, default) in StepSql.SOURCE_FLAGS.items():
+            config.append(f'{option}: {str(source.get(field, default)).lower()}')
+        parts.append('CONFIG\n' + '\n'.join(config))
+        return '\n\n'.join(parts)
+
+
 class VideoDump(BaseNotImplementedExporter):
     """Заглушка для VIDEO шагов"""
     pass
@@ -930,6 +962,7 @@ def get_exporter(step_data: Dict[str, Any], position: int) -> BaseExporter:
         "matching": MatchDump,
         "fill-blanks": SpaceDump,
         "random-tasks": GennumberDump,
+        "sql": SqlDump,
     }
 
     exporter_class = exporters.get(step_type, TextDump)
