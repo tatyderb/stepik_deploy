@@ -10,7 +10,7 @@ class Step(ABC):
     # убран тип шага 'CHOICE' (нет такого, по крайней мере сейчас)
     STEP_TYPES = ['ESSAY', 'GENNUMBER', 'MATCH', 'NUMBER',
                   'QUIZ', 'SORT', 'SPACE', 'STRING',
-                  'TABLE', 'TASKINLINE', 'TEXT']
+                  'TABLE', 'TASKINLINE', 'TEXT', 'SQL']
 
     def __init__(self, header: str = '', skip: bool = False):
         self.header = header  # текст заголовка шага без ##
@@ -44,6 +44,9 @@ class Step(ABC):
                        task_language: str | None = None
                        ):
         match step_type:
+            case 'SQL':
+                from src.step_sql import StepSql
+                return StepSql(header=header, skip=skip)
             case 'ESSAY':
                 from src.step_essay import StepEssay
                 return StepEssay(header=header, skip=skip)
